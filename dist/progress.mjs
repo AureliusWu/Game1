@@ -1,19 +1,20 @@
 /** Device-local metaprogression. Pure functions; storage is owned by the application. */
 import {ACHIEVEMENTS,GEAR_BY_ID,GEAR,TALENTS,TALENT_COST,NPCS,ENDINGS,BESTIARY,CONTRACTS} from './content.mjs';
+import {isEndless} from './endless.mjs';
 import {equippedSets} from './systems.mjs';
-const numeric=['kills','collected','beacons','deliveries','chests','purchases','forges','events','coinsEarned','runs','wins','contracts'];
+const numeric=['kills','collected','beacons','deliveries','chests','purchases','forges','events','coinsEarned','runs','wins','contracts','endlessBosses'];
 const finite=n=>Number.isFinite(n)&&n>=0?n:0;
 const known=(values,allowed)=>[...new Set(Array.isArray(values)?values.filter(v=>allowed.includes(v)):[])];
 const newFlags=['courier-route','warden-block','dawn-echo','mixed-route','side-route','fair-route','small-route','express-route'];
 export function challengeKey(s){return `1.2.0:${s.daily||s.seed}:${[...(s.v12?.conditions||[])].sort().join('+')||'plain'}`;}
 export function createProfile(legacy={}){
   const totals=Object.fromEntries(numeric.map(k=>[k,0]));for(const k of ['beacons','runs','wins'])totals[k]=finite(legacy[k]);
-  return {version:1,stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false,...Object.fromEntries(newFlags.map(id=>[id,false]))},bestCombo:0,bestLevel:1,ledger:{},dailies:[],challengeClaims:[],challengeBests:{},lastRewards:null};
+  return {version:1,endless:{bestFloor:0,bestScore:0,runs:0,bosses:0},stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false,...Object.fromEntries(newFlags.map(id=>[id,false]))},bestCombo:0,bestLevel:1,ledger:{},dailies:[],challengeClaims:[],challengeBests:{},lastRewards:null};
 }
 export function readProfile(raw,legacy={}){
   try{
     const data=typeof raw==='string'?JSON.parse(raw):raw;if(!data||data.version!==1)return createProfile(legacy);
-    const p=createProfile();for(const k of ['stamps','earned','spent','bestCombo','bestLevel'])p[k]=finite(data[k]);
+    const p=createProfile();for(const k of Object.keys(p.endless))p.endless[k]=finite(data.endless?.[k]);for(const k of ['stamps','earned','spent','bestCombo','bestLevel'])p[k]=finite(data[k]);
     p.stamps=Math.floor(p.stamps);p.earned=Math.floor(p.earned);p.spent=Math.floor(p.spent);
     for(const t of TALENTS)p.talents[t.id]=Math.min(t.max,Math.floor(finite(data.talents?.[t.id])));
     for(const k of numeric)p.totals[k]=finite(data.totals?.[k]);
@@ -48,7 +49,8 @@ export function recordProgress(p,s,{final=false}={}){
   // Each running journey contributes only the positive difference since its last observation.
   const id=s.journeyId;if(['__proto__','constructor','prototype'].includes(id))return unlocked;
   const previous=p.ledger[id]||{final:false};
-  const values={kills:s.kills,collected:s.collected,beacons:s.litTotal,deliveries:s.metrics.deliveries,chests:s.metrics.chests,purchases:s.metrics.purchases,forges:s.metrics.forges,events:s.metrics.events,coinsEarned:s.metrics.coinsEarned};
+  const values={kills:s.kills,collected:s.collected,beacons:s.litTotal,deliveries:s.metrics.deliveries,chests:s.metrics.chests,purchases:s.metrics.purchases,forges:s.metrics.forges,events:s.metrics.events,coinsEarned:s.metrics.coinsEarned,endlessBosses:isEndless(s)?s.endless.bosses:0};
+  if(isEndless(s)){p.endless.bestFloor=Math.max(p.endless.bestFloor,s.endless.cleared);p.endless.bestScore=Math.max(p.endless.bestScore,s.score);p.endless.bosses+=Math.max(0,s.endless.bosses-(previous.endlessBosses||0));}
   for(const [key,value]of Object.entries(values)){const n=finite(value);p.totals[key]+=Math.max(0,n-(previous[key]||0));previous[key]=Math.max(n,previous[key]||0);}
   for(const item of s.foundGear)if(!p.collection.includes(item))p.collection.push(item);
   for(const letter of s.story.delivered)if(!p.letters.includes(letter))p.letters.push(letter);
@@ -58,11 +60,12 @@ export function recordProgress(p,s,{final=false}={}){
   if(Object.values(equippedSets(s)).some(n=>n>=3))p.flags.fullSet=true;
   if(s.rulesVersion===120){const v=s.v12;
     if(v.courierDeliveries>0)p.flags['courier-route']=true;if(v.wardenBlocks>0)p.flags['warden-block']=true;if(v.echoes>0)p.flags['dawn-echo']=true;if(v.riskCleared>0)p.flags['side-route']=true;
-    if(s.phase==='won'){if(Object.keys(equippedSets(s)).length>=2)p.flags['mixed-route']=true;if(v.mode==='challenge')p.flags['fair-route']=true;if(v.conditions.includes('small-bag'))p.flags['small-route']=true;if(v.conditions.includes('express')&&s.totalTime<=180)p.flags['express-route']=true;}
+    if(s.phase==='won'&&!isEndless(s)){if(Object.keys(equippedSets(s)).length>=2)p.flags['mixed-route']=true;if(v.mode==='challenge')p.flags['fair-route']=true;if(v.conditions.includes('small-bag'))p.flags['small-route']=true;if(v.conditions.includes('express')&&s.totalTime<=180)p.flags['express-route']=true;}
   }
   if(final&&['won','lost'].includes(s.phase)&&!previous.final){
     previous.final=true;p.totals.runs++;
-    const won=s.phase==='won',fair=s.v12?.mode==='challenge',key=fair?challengeKey(s):'';let base=(won?2:0)+Math.floor(s.litTotal/3),contract=0,daily=0,conditionBonus=0;
+    if(isEndless(s))p.endless.runs++;
+    const won=s.phase==='won'&&!isEndless(s),fair=s.v12?.mode==='challenge',key=fair?challengeKey(s):'';let base=isEndless(s)?Math.min(20,s.endless.cleared+s.endless.bosses*2):(won?2:0)+Math.floor(s.litTotal/3),contract=0,daily=0,conditionBonus=0;
     if(won){p.totals.wins++;if(!p.endings.includes(s.story.ending))p.endings.push(s.story.ending);if(s.difficulty==='night')p.flags.night=true;if(s.damageTaken===0)p.flags.flawless=true;if(s.totalTime<=180)p.flags.swift=true;}
     if(s.contract.complete){contract=CONTRACTS.find(c=>c.id===s.contract.id).reward;p.totals.contracts++;}
     if(won&&s.daily&&!p.dailies.includes(s.daily)){daily=3;p.dailies.push(s.daily);if(p.dailies.length>100)p.dailies.shift();}

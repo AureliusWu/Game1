@@ -1,4 +1,5 @@
 import { WORLD, CHAPTERS, distance, clamp } from './core.mjs';
+import {isEndless,orbitPositions,rankOf,evolved} from './endless.mjs';
 import {NPCS,EVENTS,GEAR_BY_ID} from './content.mjs';
 const TAU=Math.PI*2;
 const gold='#f8c67a', cream='#f3e2bc';
@@ -114,10 +115,12 @@ function drawEnemy(c,e,t){
     c.beginPath();c.moveTo(-20,-10);c.quadraticCurveTo(-70,-60,-86,4);c.lineTo(-27,27);c.fill();
     c.beginPath();c.moveTo(20,-10);c.quadraticCurveTo(70,-60,86,4);c.lineTo(27,27);c.fill();
   }
-  c.fillStyle=e.stun>0?'#8b7c82':boss?'#54445a':e.kind==='brute'?'#4e4a61':e.kind==='caster'?'#76577d':e.kind==='warder'?'#4c6d76':'#2d354b';
+  c.fillStyle=e.stun>0?'#8b7c82':boss?['#54445a','#695152','#485c78'][e.bossType??0]:e.kind==='brute'?'#4e4a61':e.kind==='caster'?'#76577d':e.kind==='warder'?'#4c6d76':'#2d354b';
   c.beginPath();c.moveTo(-r,-r*.5);c.lineTo(-r*.8,-r*1.35);c.lineTo(-r*.2,-r*.9);c.quadraticCurveTo(0,-r*1.1,r*.3,-r*.9);c.lineTo(r*.9,-r*1.35);c.lineTo(r,-r*.4);c.quadraticCurveTo(r*1.3,r*.7,r*.5,r);c.lineTo(0,r*.7);c.lineTo(-r*.5,r);c.quadraticCurveTo(-r*1.3,r*.7,-r,-r*.5);c.fill();
   for(const ex of [-r*.36,r*.36]){circle(c,ex,-r*.18,boss?6:3,'#dc9fbc');circle(c,ex,-r*.18,boss?2.5:1.2,'#3c2545');}
   if(e.kind==='caster')line(c,[[r,12],[r,-35],[r+10,-28],[r,-21]],'#dfc1a4',3);
+  if(boss&&e.bossType===1)line(c,[[-r*.7,-r*.8],[0,-r*1.4],[r*.7,-r*.8]],'#f0b492',4);
+  if(boss&&e.bossType===2)for(let i=0;i<5;i++){const a=t+i*TAU/5;circle(c,Math.cos(a)*68,Math.sin(a)*38-12,4,'#b6c8ee');}
   if(e.kind==='warder')circle(c,0,0,r+5,null,'#94c4d9',3);
   if(e.patrolElite)circle(c,0,0,r+10,null,'#dca17f',2);
   if(e.kind==='runner')line(c,[[-r*.7,r*.2],[0,r*.4],[r*.7,r*.2]],'#7c687d',1.5);
@@ -128,7 +131,7 @@ export class Renderer{
   constructor(canvas,mini){this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.mini=mini;this.particles=[];this.shake=0;this.chapter=-1;this.lowMotion=false;this.camera={x:0,y:0};this.resize();}
   resize(){const r=this.canvas.getBoundingClientRect();this.w=r.width;this.h=r.height;const dpr=Math.min(window.devicePixelRatio||1,1.75);this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);this.dpr=dpr;this.zoom=this.w<650?.77:1;this.ctx.setTransform(dpr,0,0,dpr,0,0);}
   buildMap(s){
-    this.chapter=s.chapter;this.seed=s.seed;const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
+    this.chapter=s.chapter;this.seed=s.seed;this.floor=s.endless?.floor||0;const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
     const c=map.getContext('2d'),rand=rng(9281+s.chapter*477);c.fillStyle=['#193c3d','#1d383f','#303a40'][s.chapter];c.fillRect(0,0,map.width,map.height);
     // Quiet stone streets and narrow seams.
     for(let y=0;y<WORLD.height;y+=64)for(let x=0;x<WORLD.width;x+=84){
@@ -155,6 +158,7 @@ export class Renderer{
     this.map=map;
   }
   react(events){for(const e of events){
+    if(e.type==='damage-number'){this.numbers??=[];if(this.numbers.length<42)this.numbers.push({...e,life:.65});}
     if(e.type==='hurt'&&!this.lowMotion)this.shake=8;
     if(['collect','hit','death','beacon','boss-defeated'].includes(e.type)){
       const n=this.lowMotion?2:e.type==='beacon'?30:e.type==='death'?12:6;
@@ -164,7 +168,7 @@ export class Renderer{
   }if(this.particles.length>180)this.particles.splice(0,this.particles.length-180);}
   draw(s,dt=1/60){
     if(!s||!this.w)return;
-    if(this.chapter!==s.chapter||this.seed!==s.seed)this.buildMap(s);
+    if(this.chapter!==s.chapter||this.seed!==s.seed||this.floor!==(s.endless?.floor||0))this.buildMap(s);
     const c=this.ctx,z=this.zoom,p=s.player,t=this.lowMotion?0:s.time;
     const vw=this.w/z,vh=this.h/z;
     this.camera.x=clamp(p.x-vw/2,-35,Math.max(-35,WORLD.width-vw+35));
@@ -179,13 +183,13 @@ export class Renderer{
       const x=(i*137+s.time*8)%WORLD.width,y=(i*239+s.time*3)%WORLD.height;
       line(c,[[x,y],[x+12,y-3]],'#b5c5ac13',1);
     }}
-    const ex=s.exit;c.save();c.translate(ex.x,ex.y);
+    const ex=s.exit;if(!isEndless(s)){c.save();c.translate(ex.x,ex.y);
     circle(c,0,0,63,'#294643',ex.open?'#e5c486':'#6a7b6c',2);
     if(ex.open)glow(c,0,-30,120,'#f4c48344');
     round(c,-40,-80,80,100,35,ex.open?'#997e50':'#263b3d','#80917a');
     round(c,-28,-69,56,89,26,ex.open?'#ffe0a0':'#132f35');
     if(ex.open){c.globalAlpha=.5+Math.sin(t*3)*.2;round(c,-21,-63,42,82,22,'#fff0c0');}c.globalAlpha=1;
-    c.fillStyle=ex.open?cream:'#9ca790';c.font='12px sans-serif';c.textAlign='center';c.fillText(ex.open?(s.chapter===2?'把黎明送达':'前往下一片街区'):'归途 · 等待灯火',0,48);c.restore();
+    c.fillStyle=ex.open?cream:'#9ca790';c.font='12px sans-serif';c.textAlign='center';c.fillText(ex.open?(s.chapter===2?'把黎明送达':'前往下一片街区'):'归途 · 等待灯火',0,48);c.restore();}
     for(const e of s.embers){const bob=Math.sin(t*3+e.wobble)*3;glow(c,e.x,e.y+bob,20,'#eac67a44');
       c.save();c.translate(e.x,e.y+bob);c.rotate(Math.PI/4);round(c,-4,-4,8,8,2,'#ffdc92');c.restore();circle(c,e.x-1,e.y+bob-2,1.5,'#fff1c6');}
     const actors=s.obstacles.map(o=>({y:o.y+o.h,draw:()=>drawBuilding(c,o,s.chapter)}));
@@ -206,29 +210,32 @@ export class Renderer{
       if(p.invincible>0)circle(c,p.x,p.y,29,null,'#f3dca444',1);
     }});
     actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
+    if(isEndless(s)){for(const z of s.endless.zones){circle(c,z.x,z.y,z.r,'#b07ad02b','#dbacfa',2);circle(c,z.x,z.y,z.r*(1-z.warning/1.25),null,'#e9caff',3);line(c,[[z.x-9,z.y],[z.x+9,z.y]],'#efcaff',2);line(c,[[z.x,z.y-9],[z.x,z.y+9]],'#efcaff',2);}
+       for(const f of s.endless.pools){glow(c,f.x,f.y,85,'#ff975244');circle(c,f.x,f.y,55,null,'#ffb56a77',2);}for(const b of orbitPositions(s)){const a=Math.atan2(b.y-p.y,b.x-p.x);c.save();c.translate(b.x,b.y);c.rotate(a+.8);glow(c,0,0,25,'#d5ebaa55');c.fillStyle=evolved(s,'orbit')?'#fff6cb':'#c6e0ab';c.beginPath();c.ellipse(0,0,6,19,0,0,TAU);c.fill();line(c,[[0,-19],[0,19]],'#f5ffe8',1.5);c.restore();}}
     for(const b of s.projectiles){glow(c,b.x,b.y,b.enemy?22:17,b.enemy?'#ca84ae44':'#fbd38455');circle(c,b.x,b.y,b.r,b.enemy?'#c78ea8':'#ffe3a0');if(!b.enemy)line(c,[[b.x-b.vx*.02,b.y-b.vy*.02],[b.x,b.y]],'#f6ce8f77',3);}
-    for(const f of s.effects){if(f.type==='beam'){line(c,[[f.x,f.y],[f.toX,f.toY]],'#edbbce99',35);continue;}const k=1-f.life/f.maxLife;circle(c,f.x,f.y,f.r*k,null,`rgba(250,215,147,${(1-k)*.7})`,4*(1-k)+1);if(k<.5)glow(c,f.x,f.y,Math.max(1,f.r*k),'#ffe3a033');}
+    for(const f of s.effects){if(f.type==='lightning'){line(c,[[f.x,f.y],[(f.x+f.toX)/2+12,(f.y+f.toY)/2-14],[f.toX,f.toY]],'#d1b7ff',4);continue;}if(f.type==='beam'){line(c,[[f.x,f.y],[f.toX,f.toY]],'#edbbce99',35);continue;}const k=1-f.life/f.maxLife;circle(c,f.x,f.y,f.r*k,null,f.type==='frost'?`rgba(150,225,238,${(1-k)*.85})`:f.type==='lightning-burst'?`rgba(207,173,255,${(1-k)*.85})`:`rgba(250,190,110,${(1-k)*.8})`,4*(1-k)+1);if(k<.5)glow(c,f.x,f.y,Math.max(1,f.r*k),'#ffe3a033');}
     for(const a of this.particles){a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;c.globalAlpha=Math.max(0,a.life/a.max);circle(c,a.x,a.y,2,a.color);}c.globalAlpha=1;this.particles=this.particles.filter(a=>a.life>0);
     // Labels appear only nearby, leaving most of the city quiet.
     for(const b of s.beacons)if(!b.lit&&distance(p,b)<165){
-      c.textAlign='center';c.font='12px sans-serif';const text=p.embers>=4?(b.progress>0?'正在点灯…':'靠近自动点亮'):`需要 4 枚火种 · 已有 ${p.embers}`;
+      c.textAlign='center';c.font='12px sans-serif';const text=isEndless(s)?(p.embers>=b.cost?'5 火种 · 恢复 20% 生命':`一次补给需要 5 火种 · 已有 ${p.embers}`):p.embers>=4?(b.progress>0?'正在点灯…':'靠近自动点亮'):`需要 4 枚火种 · 已有 ${p.embers}`;
       const tw=c.measureText(text).width+22;round(c,b.x-tw/2,b.y+51,tw,27,8,'#0d272ddd','#7e8c6877');c.fillStyle=cream;c.fillText(text,b.x,b.y+69);
     }
     if(s.v12?.conditions.includes('fog')){const fog=c.createRadialGradient(p.x,p.y,150,p.x,p.y,350);fog.addColorStop(0,'#10283500');fog.addColorStop(1,'#102835f2');c.fillStyle=fog;c.fillRect(this.camera.x,this.camera.y,vw,vh);}
     for(const e of s.enemies){
       if(e.kind==='warder'&&e.hp>0)circle(c,e.x,e.y,130,null,'#94c4d955',2);
       if((e.markUntil||0)>s.totalTime)circle(c,e.x,e.y,e.r+9,null,'#f7d58c',2);
-      if(e.cast>0){c.save();c.setLineDash([12,9]);if(e.castType==='beam'){line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',5);c.globalAlpha=.13;line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',100);}else{const b=s.beacons.find(b=>b.id===e.castBeacon);if(b){circle(c,b.x,b.y,150,null,'#f1b9d4',4);c.fillStyle='#f6d7e5';c.font='bold 15px sans-serif';c.textAlign='center';c.fillText('即将压灯 · 换位',b.x,b.y-145);}}c.restore();}
+      if(e.cast>0){c.save();c.setLineDash([12,9]);if(e.castType==='beam'||e.castType==='charge'){line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',5);c.globalAlpha=.13;line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',100);}else if(e.castType==='rain'){circle(c,e.x,e.y,120,null,'#edb1da',4);c.fillStyle='#f5d8e9';c.font='bold 14px sans-serif';c.textAlign='center';c.fillText('弹幕将至',e.x,e.y-100);}else{const b=s.beacons.find(b=>b.id===e.castBeacon);if(b){circle(c,b.x,b.y,150,null,'#f1b9d4',4);c.fillStyle='#f6d7e5';c.font='bold 15px sans-serif';c.textAlign='center';c.fillText('即将压灯 · 换位',b.x,b.y-145);}}c.restore();}
     }
+    for(const n of this.numbers||[]){n.life-=dt;c.globalAlpha=Math.max(0,n.life/.65);c.fillStyle=n.critical?'#fff4c1':'#e8d8b8';c.font=(n.critical?'bold 18px':'12px')+' sans-serif';c.textAlign='center';c.fillText(n.damage,n.x,n.y-26-(.65-n.life)*30);}c.globalAlpha=1;this.numbers=(this.numbers||[]).filter(n=>n.life>0);
     c.restore();
     // A soft vignette creates depth without obscuring the character.
     const g=c.createRadialGradient(this.w/2,this.h*.5,Math.min(this.w,this.h)*.2,this.w/2,this.h*.5,Math.max(this.w,this.h)*.75);g.addColorStop(0,'#04171900');g.addColorStop(1,'#0417199a');c.fillStyle=g;c.fillRect(0,0,this.w,this.h);
     this.compass(s);this.minimap(s);
   }
   compass(s){
-    const p=s.player,targets=s.beacons.filter(b=>!b.lit);let target;
+    const p=s.player,targets=isEndless(s)?[]:s.beacons.filter(b=>!b.lit);let target;
     if(targets.length)target=targets.reduce((a,b)=>distance(p,a)<distance(p,b)?a:b);
-    else if(s.exit.open)target=s.exit;else target=s.enemies.find(e=>e.kind==='boss');
+    else if(s.exit.open)target=s.exit;else target=s.enemies.find(e=>e.kind==='boss')||(isEndless(s)?s.enemies.filter(e=>e.hp>0).sort((a,b)=>distance(p,a)-distance(p,b))[0]:null);
     if(!target)return;
     const tx=(target.x-this.camera.x)*this.zoom,ty=(target.y-this.camera.y)*this.zoom;
     if(tx>55&&tx<this.w-55&&ty>150&&ty<this.h-145)return;

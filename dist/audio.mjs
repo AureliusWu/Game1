@@ -32,6 +32,11 @@ export class AudioEngine {
     if(['level','delivery','gear'].includes(type)){this.tone(659,.5,'sine',.13);this.tone(880,.7,'sine',.1,.1);}
     if(type==='forge'){this.tone(440,.14,'triangle',.13);this.tone(990,.3,'sine',.1,.08);}
     if(type==='purchase'||type==='potion')this.tone(520,.3,'sine',.12,0,780);
+    if(type==='thunder'){this.tone(95,.2,'sawtooth',.035,0,40);this.tone(940,.12,'sine',.05);}
+    if(type==='frost')this.tone(1200,.3,'sine',.06,0,460);
+    if(type==='room-clear') [440,660,880].forEach((n,i)=>this.tone(n,.45,'triangle',.08,i*.09));
+    if(type==='evolution'||type==='revive') [262,392,523,784,1047].forEach((n,i)=>this.tone(n,.9,'sine',.11,i*.12));
+    if(type==='storm-warning')this.tone(320,.15,'triangle',.08,0,700);
     if(type==='click')this.tone(520,.07,'sine',.08);
   }
   update(active,chapter=0){

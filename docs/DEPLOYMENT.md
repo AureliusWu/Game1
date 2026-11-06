@@ -15,7 +15,7 @@
 
 ## GitHub Actions
 
-`ci.yml` 在 main 推送、PR 与手动触发时运行所有测试和静态检查，上传 `Ember-Courier-web-v1.2.0` 成品。下载并解压后，仍需通过 HTTP 服务器打开。
+`ci.yml` 在 main 推送、PR 与手动触发时运行所有测试和静态检查，上传按提交 SHA 标识的 `Ember-Courier-web-*` 成品。下载并解压后，仍需通过 HTTP 服务器打开。
 
 `pages.yml` 是独立的可选镜像：仓库 Settings → Pages → Source 选择 GitHub Actions 后，在 Actions 手动运行 Publish GitHub Pages。它不会修改当前公开站点的访问范围。本次交付不将尚未启用的 Pages 当作已发布地址。
 
@@ -39,3 +39,5 @@ node scripts/check.mjs
 发行流程见 [ANDROID.md](ANDROID.md)，双端发行说明见 [v1.2.0](releases/v1.2.0.md)。网页 ZIP 和签名 APK 一起出现在 GitHub Releases。
 
 v1.2.0 使用 schema 3，并显式保存运行规则版本。旧运行继续旧规则，永久存储键保持；新资源 `routes.mjs`、`expedition.mjs` 已加入 `ember-courier-v1.2.0` 离线缓存。
+
+当前 v1.3.0「无尽夜航」增加 `endless.mjs`，全部 18 个静态资源已纳入 `ember-courier-v1.3.0` 缓存。现有 Sites 身份和公开受众保持，发行流程继续同时验证 APK 与网页资源。详见 [发行说明](releases/v1.3.0.md)。

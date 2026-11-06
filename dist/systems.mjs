@@ -2,6 +2,7 @@
 import {GEAR,GEAR_BY_ID,NPCS,EVENTS,CONTRACTS,TALENTS} from './content.mjs';
 import {modern,has,condition,randomStream,heal} from './expedition.mjs';
 import {safePoint} from './routes.mjs';
+import {isEndless,applyEndlessStats,gainEndlessXP} from './endless.mjs';
 const emit=(s,type,data={})=>s.events.push({type,...data});
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const cap=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -39,17 +40,19 @@ export function recalculate(s){
     if(id==='magnet'){st.pickup*=1.65;st.heal+=3;}
   }
   const talents=s.talentSnapshot||{};st.maxHp+=(talents.lamp||0)*6;st.speed+=(talents.wing||0)*5;st.damage+=(talents.focus||0)*2;
-  const level=s.journal?.level||1;st.maxHp+=(level-1)*6;st.damage+=(level-1)*2;st.maxHp+=s.blessings?.hp||0;
+  const level=isEndless(s)?1:s.journal?.level||1;st.maxHp+=(level-1)*6;st.damage+=(level-1)*2;st.maxHp+=s.blessings?.hp||0;
   if(s.gear)for(const [slot,id]of Object.entries(s.gear.slots)){
     const item=s.gear.inventory.find(g=>g.id===id),def=GEAR_BY_ID[id];if(!item||!def||def.slot!==slot)continue;
     const mult=1+(item.level-1)*(modern(s)?.25:.4);for(const [key,value]of Object.entries(def.stats))st[key]+=value*mult;
   }
   if(s.gear){const sets=equippedSets(s);if(sets.courier>=2)st.speed+=12;if(sets.warden>=2)st.armor+=.08;if(sets.warden===3&&!modern(s)){st.maxHp+=20;st.heal+=3;}if(sets.dawn>=2)st.crit+=.12;if(sets.dawn===3&&!modern(s))st.pulseMax-=1.2;}
+  applyEndlessStats(s,st);
   st.dashMax=Math.max(1.05,st.dashMax);st.pulseMax=Math.max(2.2,st.pulseMax);st.attackRate=Math.max(.5,st.attackRate);st.armor=cap(st.armor,0,.5);st.crit=cap(st.crit,0,.65);
   Object.assign(p,st);p.hp=Math.min(hp,st.maxHp);p.dashCd=Math.min(p.dashCd,p.dashMax);p.pulseCd=Math.min(p.pulseCd,p.pulseMax);
 }
 export function addCoins(s,amount){if(amount<=0)return;s.journal.coins+=amount;s.metrics.coinsEarned+=amount;}
 export function addXP(s,amount){
+  if(isEndless(s)){gainEndlessXP(s,amount);return;}
   s.journal.xp+=amount;let level=1;while(level<XP_THRESHOLDS.length&&s.journal.xp>=XP_THRESHOLDS[level])level++;
   if(level>s.journal.level){const delta=level-s.journal.level;s.journal.level=level;recalculate(s);heal(s,12*delta);emit(s,'level',{level});}
 }
@@ -149,14 +152,14 @@ export function chooseEvent(s,poiId,choiceId){
 export function onKill(s,e){
   const j=s.journal;if(j.comboTimer<=0)j.combo=0;j.combo++;j.comboTimer=5;j.bestCombo=Math.max(j.bestCombo,j.combo);
   s.score+=Math.min(5,j.combo)*3;
-  const coins=e.kind==='boss'?35:e.elite?24:modern(s)?(e.rewardCoins||0):e.kind==='brute'?7:4;
+  const coins=isEndless(s)?e.rewardCoins||0:e.kind==='boss'?35:e.elite?24:modern(s)?(e.rewardCoins||0):e.kind==='brute'?7:4;
   const xp=e.kind==='boss'?60:e.elite?25:modern(s)?(e.rewardXP||0):e.kind==='brute'?12:6;
-  addCoins(s,coins);if(!modern(s)&&equippedSets(s).courier===3)addCoins(s,2);addXP(s,xp);
-  if(modern(s)&&!e.elite&&e.kind!=='boss'){s.v12.goldClaimed+=coins;s.v12.xpClaimed+=xp;}
+  addCoins(s,coins);if(!modern(s)&&equippedSets(s).courier===3)addCoins(s,2);if(!isEndless(s))addXP(s,xp);
+  if(modern(s)&&!isEndless(s)&&!e.elite&&e.kind!=='boss'){s.v12.goldClaimed+=coins;s.v12.xpClaimed+=xp;}
   if(modern(s)&&e.route)s.v12.riskCleared++;
   if(e.elite)grantGear(s,rollGear(s));
 }
-export function onBeacon(s){addCoins(s,10);addXP(s,25);}
+export function onBeacon(s){addCoins(s,isEndless(s)?4:10);addXP(s,isEndless(s)?5:25);}
 export function contractProgress(s){
   const c=CONTRACTS.find(c=>c.id===s.contract.id);if(!c)return {current:0,total:1};
   const current=c.metric==='swift'?(s.phase==='won'&&s.totalTime<=180?1:0):c.metric==='resolve'?(s.phase==='won'&&s.metrics.potionsUsed===0?1:0):s[c.metric]??s.metrics[c.metric]??0;
@@ -179,7 +182,7 @@ export function validateSystems(s){
     const j=s.journal,m=s.metrics;if(!j||!m)return false;
     for(const k of ['coins','xp','level','potions','potionCd','combo','comboTimer','bestCombo'])if(!Number.isFinite(j[k])||j[k]<0)return false;
     for(const k of ['coinsEarned','deliveries','chests','events','purchases','forges','potionsUsed','dashes','pulses','equips'])if(!Number.isFinite(m[k])||m[k]<0)return false;
-    if(!Number.isInteger(j.level)||j.level<1||j.level>8||!Number.isInteger(j.potions)||j.potions>5)return false;
+    if(!Number.isInteger(j.level)||j.level<1||j.level>(isEndless(s)?100000:8)||!Number.isInteger(j.potions)||j.potions>5)return false;
     if(!s.gear||!Array.isArray(s.gear.inventory)||s.gear.inventory.length>GEAR.length||!s.gear.slots)return false;
     const ids=new Set();for(const g of s.gear.inventory){if(!GEAR_BY_ID[g.id]||ids.has(g.id)||!Number.isInteger(g.level)||g.level<1||g.level>3)return false;ids.add(g.id);}
     for(const slot of ['lamp','cape','bag'])if(!ids.has(s.gear.slots[slot])||GEAR_BY_ID[s.gear.slots[slot]].slot!==slot)return false;
@@ -191,7 +194,7 @@ export function validateSystems(s){
     if(st.choices.some(c=>!NPCS.some(n=>n.id===c.npc&&n.choices.some(o=>o.id===c.choice)))||new Set(st.choices.map(c=>c.npc)).size!==st.choices.length)return false;
     if(st.tasks.some(t=>!NPCS.some(n=>n.letter===t.id)||typeof t.complete!=='boolean'||!Number.isFinite(t.progress)||t.progress<0||t.progress>.75)||st.delivered.some(id=>!st.tasks.some(t=>t.id===id&&t.complete)))return false;
     if(!s.contract||!CONTRACTS.some(c=>c.id===s.contract.id)||typeof s.contract.complete!=='boolean')return false;
-    if(!Array.isArray(s.pois)||s.pois.length!==(modern(s)?5:4))return false;
+    if(!Array.isArray(s.pois)||s.pois.length!==(isEndless(s)?0:modern(s)?5:4))return false;
     for(const p of s.pois){if(!['npc','chest','shop','event','risk'].includes(p.kind)||typeof p.id!=='string'||!Number.isFinite(p.x)||!Number.isFinite(p.y)||typeof p.used!=='boolean')return false;
       if(p.kind==='npc'&&!NPCS[p.npc])return false;if(p.kind==='event'&&!EVENTS[p.event])return false;
       if(p.kind==='shop'&&(!Array.isArray(p.stock)||p.stock.length>8||p.stock.some(i=>(!GEAR_BY_ID[i.id]&&!['tea','potion'].includes(i.id))||!Number.isInteger(i.left)||i.left<0||i.left>2||!Number.isFinite(i.price)||i.price<1)))return false;

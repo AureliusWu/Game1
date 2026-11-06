@@ -33,8 +33,9 @@ public final class OfflineGameTest {
         assertTrue("WebView callback timed out", done.await(15, TimeUnit.SECONDS));
         return value.get();
     }
-    private void await(String condition) throws Exception {
-        for (int attempt = 0; attempt < 150; attempt++) {
+    private void await(String condition) throws Exception { await(condition, 150); }
+    private void await(String condition, int attempts) throws Exception {
+        for (int attempt = 0; attempt < attempts; attempt++) {
             if ("true".equals(js(condition))) return;
             Thread.sleep(100);
         }
@@ -55,12 +56,12 @@ public final class OfflineGameTest {
             PackageInfo info = activity.getPackageManager().getPackageInfo(activity.getPackageName(), PackageManager.GET_PERMISSIONS);
             if (info.requestedPermissions != null) for (String permission : info.requestedPermissions)
                 assertFalse("Game must work with no network permission", "android.permission.INTERNET".equals(permission));
-            assertEquals("true", js("document.getElementById('start').click(); !document.getElementById('game').hidden"));
+            assertEquals("true", js("document.querySelector('[data-mode=endless]').click(); document.getElementById('start').click(); !document.getElementById('game').hidden"));
             assertEquals("true", js("window.emberCourierNative.pause(); document.getElementById('pause-dialog').open"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')) !== null"));
             assertEquals("true", js("window.emberCourierNative.back(); !document.getElementById('pause-dialog').open"));
-            assertEquals("true", js("document.getElementById('game-hub').click(); document.getElementById('hub-dialog').open"));
-            assertEquals("true", js("window.emberCourierNative.back(); !document.getElementById('hub-dialog').open"));
+            assertEquals("true", js("document.getElementById('game-hub').click(); document.getElementById('build-dialog').open"));
+            assertEquals("true", js("window.emberCourierNative.back(); !document.getElementById('build-dialog').open"));
             js("window.emberCourierNative.pause(); document.getElementById('save-exit').click()");
             assertEquals("false", js("window.emberCourierNative.back()"));
             assertEquals("true", js("document.getElementById('continue').click(); !document.getElementById('game').hidden"));
@@ -79,7 +80,7 @@ public final class OfflineGameTest {
             assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
             // Emulator pointer capabilities differ; exercise the actual touch setting explicitly.
             js("document.getElementById('settings-open').click(); if(!document.getElementById('touch-setting').checked)document.getElementById('touch-setting').click(); document.querySelector('#settings [data-close]').click()");
-            js("if(!document.getElementById('daily-setting').checked)document.getElementById('daily-setting').click(); document.getElementById('start').click()");
+            js("document.querySelector('[data-mode=story]').click(); if(!document.getElementById('daily-setting').checked)document.getElementById('daily-setting').click(); document.getElementById('start').click()");
             await("!document.getElementById('game').hidden");
             await("document.getElementById('joystick').getBoundingClientRect().width > 70 && document.getElementById('run-time').textContent !== '00:00'");
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).v12.mode === 'challenge'"));
@@ -130,4 +131,33 @@ public final class OfflineGameTest {
             assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
     }
+    @Test public void testEndlessRealDraftSaveAndResume() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.starter === 'thunder'"));
+            // The real auto-attacks and enemies produce this draft. No simulation state is edited.
+            await("document.getElementById('upgrade-dialog').open", 600);
+            assertEquals("true", js("document.querySelectorAll('#upgrade-options button').length === 3"));
+            String before = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls");
+            js("document.getElementById('draft-reroll').click()");
+            assertTrue(Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls")) < Integer.parseInt(before));
+            String offered = js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered)");
+            String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
+            js("document.getElementById('upgrade-exit').click()");
+            assertEquals("true", js("!document.getElementById('continue').hidden"));
+            js("document.getElementById('continue').click()");
+            assertEquals("true", js("document.getElementById('upgrade-dialog').open"));
+            assertEquals(offered, js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered)"));
+            assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
+            js("document.querySelector('#upgrade-options button').click()");
+            await("!document.getElementById('upgrade-dialog').open || document.querySelectorAll('#upgrade-options button').length > 0");
+            assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
+            js("window.emberCourierNative.pause()");
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
+    }
+
 }

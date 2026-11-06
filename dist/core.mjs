@@ -4,7 +4,9 @@ import {UPGRADES as UPGRADE_DATA} from './content.mjs';
 import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
-export const VERSION = '1.2.0';
+import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
+export {rerollEndless,retireEndless} from './endless.mjs';
+export const VERSION = '1.3.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -26,7 +28,7 @@ function random(s) {
   return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 function event(s, type, data = {}) { s.events.push({ type, ...data }); }
-export function createGame({ seed = Date.now(), difficulty = 'normal',profile={},contract='lamps',daily='',id,mode='story',conditions=[],firstJourney=false } = {}) {
+export function createGame({ seed = Date.now(), difficulty = 'normal',profile={},contract='lamps',daily='',id,mode='story',conditions=[],firstJourney=false,starter='cinder' } = {}) {
   const s = {
     version: SAVE_VERSION, seed: seed >>> 0, rng: seed >>> 0,
     difficulty: DIFFICULTIES[difficulty] ? difficulty : 'normal',
@@ -44,6 +46,7 @@ export function createGame({ seed = Date.now(), difficulty = 'normal',profile={}
   initExpedition(s,{mode:daily?'challenge':mode,conditions,firstJourney});
   if(s.v12.mode==='challenge'){profile={collection:['brass-lamp'],heirloom:'brass-lamp'};s.difficulty='normal';}
   initSystems(s,profile,{contract,daily,id});s.player.hp=s.player.maxHp;s.v12.minHp=s.player.hp;
+  if(mode==='endless'&&!daily){initEndless(s,starter);recalculate(s);s.player.hp=s.player.maxHp;}
   loadChapter(s); return s;
 }
 function loadChapter(s) {
@@ -52,6 +55,7 @@ function loadChapter(s) {
   s.player.dash = 0; s.player.dashCd = 0; s.player.pulseCd = 0;
   s.enemies = []; s.projectiles = []; s.effects = []; s.embers = [];
   s.exit = { x: 1750, y: 690, r: 58, open: false };
+  if(isEndless(s)){configureEndlessRoom(s);recalculate(s);event(s,'chapter',{chapter:s.chapter});return;}
   const layouts = [
     [{x:570,y:420},{x:980,y:995},{x:1410,y:400}],
     [{x:500,y:995},{x:990,y:385},{x:1460,y:945}],
@@ -84,7 +88,7 @@ function loadChapter(s) {
   event(s,'chapter',{chapter:s.chapter});
 }
 function mapRandom(s){return modern(s)?randomStream(s,'mapRng'):random(s);}
-function addEmber(s,x,y) {const id=s.nextId++;s.embers.push({id,x,y,wobble:(modern(s)?seedMix(s.seed,id)/4294967296:random(s))*Math.PI*2});}
+function addEmber(s,x,y) {const id=s.nextId++;s.embers.push({id,x,y,wobble:(modern(s)?seedMix(s.seed,id)/4294967296:random(s))*Math.PI*2});return s.embers.at(-1);}
 export function collides(s,x,y,r=15) {
   if(x<65+r || y<65+r || x>WORLD.width-65-r || y>WORLD.height-65-r) return true;
   return s.obstacles.some(o=>x+r>o.x && x-r<o.x+o.w && y+r>o.y && y-r<o.y+o.h);
@@ -113,7 +117,7 @@ export function pulse(s) {
   for(const e of s.enemies) if(e.hp>0&&distance(p,e)<p.pulseRadius+e.r) {
     hits++;e.hp-=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1); e.stun=1;
     if(modern(s)){
-      if(e.cast>0&&e.castType==='beam'){e.cast=0;e.beamReady=s.totalTime+6;s.v12.interrupts++;event(s,'interrupt');}
+      if(e.cast>0&&(e.castType==='beam'||isEndless(s))){e.cast=0;e.beamReady=s.totalTime+6;if(isEndless(s))e.patternCd=5;s.v12.interrupts++;event(s,'interrupt');}
       if(Object.values(s.gear.slots).filter(id=>['prism-lamp','dawn-cape','echo-bag'].includes(id)).length===3)e.markUntil=s.totalTime+4;
     }
     const d=Math.max(1,distance(p,e));
@@ -124,11 +128,12 @@ export function pulse(s) {
     if(has(s,'return')&&hits>=2)p.pulseCd=Math.max(0,p.pulseCd-.6);
     if(['hearth-lamp','sentry-cape','herb-bag'].every(id=>Object.values(s.gear.slots).includes(id))){s.v12.barrier=1;s.v12.barrierSource='warden';s.v12.barrierUntil=s.totalTime+3;}
   }
-  s.metrics.pulses++;event(s,'pulse'); return true;
+  if(isEndless(s))onEndlessPulse(s,hits);s.metrics.pulses++;event(s,'pulse'); return true;
 }
 function spawnEnemy(s,kind) {
-  if(modern(s)&&kind!=='boss'&&s.v12.patrolLeft<=0)return;
-  const stats = kind==='boss' ? {hp:500,r:44,speed:70,damage:22} : kind==='caster'?{hp:48,r:18,speed:52,damage:12}:kind==='warder'?{hp:92,r:23,speed:44,damage:12}:kind==='runner' ? {hp:34,r:14,speed:116,damage:12} : kind==='brute' ? {hp:105,r:25,speed:52,damage:18} : {hp:45,r:18,speed:76,damage:13};
+  if(modern(s)&&!isEndless(s)&&kind!=='boss'&&s.v12.patrolLeft<=0)return false;
+  let stats = kind==='boss' ? {hp:500,r:44,speed:70,damage:22} : kind==='caster'?{hp:48,r:18,speed:52,damage:12}:kind==='warder'?{hp:92,r:23,speed:44,damage:12}:kind==='runner' ? {hp:34,r:14,speed:116,damage:12} : kind==='brute' ? {hp:105,r:25,speed:52,damage:18} : {hp:45,r:18,speed:76,damage:13};
+  if(isEndless(s))stats=endlessEnemy(s,kind,stats);
   const margin=65+stats.r+10;
   const p=s.player, a=random(s)*Math.PI*2, d=450+random(s)*180;
   let x=clamp(p.x+Math.cos(a)*d,margin,WORLD.width-margin);
@@ -136,15 +141,15 @@ function spawnEnemy(s,kind) {
   for(let n=0;n<30&&(collides(s,x,y,stats.r+4)||distance(p,{x,y})<240||s.beacons.some(b=>b.lit&&distance(b,{x,y})<170));n++) {
     x=margin+random(s)*(WORLD.width-margin*2);y=margin+random(s)*(WORLD.height-margin*2);
   }
-  if(collides(s,x,y,stats.r+4)||distance(p,{x,y})<220) return;
+  if(collides(s,x,y,stats.r+4)||distance(p,{x,y})<220) return false;
   const enemy={id:s.nextId++,x,y,kind,...stats,maxHp:stats.hp,stun:0,warning:1,attack:0,shotCd:2.5,angle:random(s)*6.28};
-  if(modern(s)&&kind!=='boss'){
+  if(modern(s)&&!isEndless(s)&&kind!=='boss'){
     const spawned=12+s.chapter*2-s.v12.patrolLeft;
     if(condition(s,'elite-patrol')&&[2,8].includes(spawned)){enemy.hp*=1.5;enemy.maxHp=enemy.hp;enemy.damage*=1.2;enemy.patrolElite=true;enemy.warning=1.5;}
     assignPatrolReward(s,enemy);
   }
   s.enemies.push(enemy);
-  event(s,'spawn',{kind});
+  event(s,'spawn',{kind});return true;
 }
 function hurt(s,amount,source='影兽接触') {
   const p=s.player;if(p.invincible>0) return;
@@ -164,6 +169,7 @@ function offerUpgrades(s) {
   s.offered=s.offered.slice(0,3).map(x=>x.id);
 }
 export function chooseUpgrade(s,id) {
+  if(isEndless(s)){const result=pickEndless(s,id);if(!result)return false;recalculate(s);checkEvolutions(s);if(result.advance)loadChapter(s);else advanceEndlessChoices(s);return true;}
   if(s.phase!=='upgrade'||!s.offered.includes(id)) return false;
   const p=s.player;
   s.upgrades.push(id);recalculate(s);heal(s,p.maxHp);s.offered=[];
@@ -184,17 +190,18 @@ export function tick(s,input={},dt=1/60) {
   const mag=Math.hypot(mx,my);if(mag>1){mx/=mag;my/=mag;}
   if(mag>.12) { const n=Math.hypot(mx,my);p.aimX=mx/n;p.aimY=my/n;if(Math.abs(mx)>.05)p.facing=mx>0?1:-1; }
   if(p.dash>0) moveEntity(s,p,p.aimX*720,p.aimY*720,dt);
-  else {const speed=p.speed*(modern(s)&&s.v12.tailwindUntil>s.totalTime?1.25:1);moveEntity(s,p,mx*speed,my*speed,dt);}
-  const sanctuary=s.beacons.find(b=>b.lit&&distance(p,b)<150),safe=!!sanctuary;
+  else {const speed=p.speed*(modern(s)&&s.v12.tailwindUntil>s.totalTime?1.25:1)*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1);moveEntity(s,p,mx*speed,my*speed,dt);}
+  const sanctuary=!isEndless(s)&&s.beacons.find(b=>b.lit&&distance(p,b)<150),safe=!!sanctuary;
   if(modern(s))updateExpedition(s,dt,safe);
   if(safe)heal(s,sanctuaryRate(s,sanctuary)*dt);
-  else p.hp=clamp(p.hp-cfg.drain*dt*(modern(s)&&has(s,'afterglow')&&s.totalTime<s.v12.graceUntil?.5:1),0,p.maxHp);
+  else if(!isEndless(s))p.hp=clamp(p.hp-cfg.drain*dt*(modern(s)&&has(s,'afterglow')&&s.totalTime<s.v12.graceUntil?.5:1),0,p.maxHp);
   // Magnet attraction and contact collection.
   for(const e of s.embers) {
     const d=distance(p,e);
     if(d<p.pickup && d>1) {const speed=220+(1-d/p.pickup)*240;e.x+=(p.x-e.x)/d*speed*dt;e.y+=(p.y-e.y)/d*speed*dt;}
     if(d<23&&(!condition(s,'small-bag')||p.embers<8)) {
       e.taken=true;p.embers++;heal(s,p.heal);s.collected++;s.score+=12;event(s,'collect',{x:e.x,y:e.y});
+      if(isEndless(s))gainEndlessXP(s,e.xp||0);
       if(modern(s)&&p.dash>0&&s.totalTime>=s.v12.tailwindReady&&['brass-lamp','wind-cape','post-bag'].every(id=>Object.values(s.gear.slots).includes(id))){s.v12.tailwindUntil=s.totalTime+3;s.v12.tailwindReady=s.totalTime+5;s.v12.tailwinds++;event(s,'tailwind');}
     }
   }
@@ -203,9 +210,9 @@ export function tick(s,input={},dt=1/60) {
     if(b.lit) continue;
     const near=distance(p,b)<78;
     if(near&&p.embers>=b.cost) {
-      b.progress+=dt/1.25;
+      b.progress+=dt/(isEndless(s)?.65:1.25);
       if(b.progress>=1) {
-        b.progress=1;b.lit=true;p.embers-=b.cost;heal(s,p.maxHp);s.litTotal++;s.score+=250;
+        b.progress=1;b.lit=true;p.embers-=b.cost;heal(s,isEndless(s)?p.maxHp*.2:p.maxHp);s.litTotal++;s.score+=250;
         p.invincible=Math.max(p.invincible,1.5);
         for(const e of s.enemies) if(distance(e,b)<250) {e.hp-=150;e.stun=1;}
         s.effects.push({type:'beacon',x:b.x,y:b.y,r:300,life:1.2,maxLife:1.2});
@@ -215,7 +222,7 @@ export function tick(s,input={},dt=1/60) {
     } else b.progress=Math.max(0,b.progress-dt*.6);
   }
   const allLit=s.beacons.every(b=>b.lit);
-  if(allLit && s.chapter===2 && !s.bossSpawned) {
+  if(!isEndless(s)&&allLit && s.chapter===2 && !s.bossSpawned) {
     s.bossSpawned=true;spawnEnemy(s,'boss');
     if(!s.enemies.some(e=>e.kind==='boss')) {
       const point=safePoint(s,{x:1450,y:1030},48)||{x:1750,y:1000};
@@ -223,11 +230,12 @@ export function tick(s,input={},dt=1/60) {
     }
     event(s,'boss');
   }
-  s.exit.open=allLit&&(s.chapter<2||s.bossDefeated);
+  s.exit.open=!isEndless(s)&&allLit&&(s.chapter<2||s.bossDefeated);
   if(s.exit.open&&distance(p,s.exit)<65) {
     if(s.chapter<2) {s.phase='upgrade';if(modern(s))s.v12.choiceKind='chapter';s.score+=400;offerUpgrades(s);event(s,'upgrade');}
     else {s.phase='won';s.score+=1000+Math.round(Math.max(0,700-s.totalTime));event(s,'won');}
   }
+  if(isEndless(s))updateEndlessCombat(s,dt,{spawn:spawnEnemy,hurt});
   // Auto-bolt gives the player room to focus on positioning.
   if(p.attackCd<=0) {
     const eligible=s.enemies.filter(e=>e.hp>0&&e.warning<=0&&distance(p,e)<380),targets=eligible.sort((a,b)=>distance(p,a)-distance(p,b)).slice(0,p.attackTargets);
@@ -236,12 +244,12 @@ export function tick(s,input={},dt=1/60) {
         const d=Math.max(1,distance(p,e));
         const critical=p.crit>0&&random(s)<p.crit;
         const bonus=modern(s)?(has(s,'focus')&&eligible.length===1?1.25:1)*(s.v12.dashChargeUntil>s.totalTime?1.25:1):1;
-        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?1.75:1)*bonus,r:critical?7:5,critical});
+        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?(isEndless(s)?2.1:1.75):1)*bonus*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1),r:critical?7:5,critical});
       }
       if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate;event(s,'shoot');
     }
   }
-  if(!s.exit.open && !(s.chapter===2&&allLit)) {
+  if(!isEndless(s)&&!s.exit.open && !(s.chapter===2&&allLit)) {
     s.spawnCd-=dt;
     const cap=14+s.chapter*4;
     if(s.spawnCd<=0&&s.enemies.length<cap) {
@@ -252,7 +260,7 @@ export function tick(s,input={},dt=1/60) {
   for(const e of s.enemies) {
     e.warning=Math.max(0,e.warning-dt);e.stun=Math.max(0,e.stun-dt);e.attack=Math.max(0,e.attack-dt);
     if(e.warning>0||e.stun>0||e.hp<=0) continue;
-    if(modern(s)&&tickCast(s,e,dt,hurt))continue;
+    if(isEndless(s)&&e.kind==='boss'?endlessBossCast(s,e,dt,hurt,moveEntity):modern(s)&&tickCast(s,e,dt,hurt))continue;
     const d=Math.max(1,distance(p,e));
     const target=modern(s)?pursuit(s,e,p):p,td=Math.max(1,distance(e,target));
     let vx=(target.x-e.x)/td,vy=(target.y-e.y)/td;
@@ -262,13 +270,13 @@ export function tick(s,input={},dt=1/60) {
       if(!collides(s,e.x-vy*cross*40,e.y+vx*cross*40,e.r)) [vx,vy]=[-vy*cross,vx*cross];
       else [vx,vy]=[vy*cross,-vx*cross];
     }
-    const repelling=e.kind==='boss'?null:s.beacons.find(b=>b.lit&&distance(e,b)<145);
+    const repelling=isEndless(s)||e.kind==='boss'?null:s.beacons.find(b=>b.lit&&distance(e,b)<145);
     if(repelling) {
       const rd=Math.max(1,distance(e,repelling));vx=(e.x-repelling.x)/rd;vy=(e.y-repelling.y)/rd;e.hp-=16*dt;
     }
-    moveEntity(s,e,vx*e.speed,vy*e.speed,dt);
+    const slow=isEndless(s)&&(e.slowUntil||0)>s.totalTime?.55:1;moveEntity(s,e,vx*e.speed*slow,vy*e.speed*slow,dt);
     if(d<e.r+p.r+4 && e.attack<=0) {hurt(s,e.damage,e.kind==='boss'?'守夜者·接触':e.kind==='warder'?'结界者·接触':'影兽接触');e.attack=1;}
-    if(e.kind==='boss') {
+    if(e.kind==='boss'&&!isEndless(s)) {
       e.shotCd-=dt;
       if(e.shotCd<=0) {
         e.shotCd=3.6;e.angle+=.45;
@@ -289,13 +297,14 @@ export function tick(s,input={},dt=1/60) {
     b.x+=b.vx*dt;b.y+=b.vy*dt;
     if(b.enemy) {
       if(!modern(s)&&distance(b,p)<p.r+b.r){hurt(s,b.damage);b.life=0;}
-      if(s.beacons.some(l=>l.lit&&distance(b,l)<145)) b.life=0;
+      if(!isEndless(s)&&s.beacons.some(l=>l.lit&&distance(b,l)<145)) b.life=0;
       else if(modern(s)&&distance(b,p)<p.r+b.r){hurt(s,b.damage,'守夜者·光球');b.life=0;}
     } else {
       const hit=s.enemies.find(e=>e.warning<=0&&e.hp>0&&distance(b,e)<e.r+b.r);
       if(hit){
         const protectedBy=modern(s)&&s.enemies.some(e=>e.kind==='warder'&&e.hp>0&&e.id!==hit.id&&distance(e,hit)<130);
         hit.hp-=b.damage*(protectedBy?.6:1);hit.stun=Math.max(hit.stun,.1);b.life=0;event(s,'hit',{x:hit.x,y:hit.y});
+        if(isEndless(s))onEndlessBolt(s,hit,b);
         if(modern(s)&&hit.markUntil>s.totalTime&&s.totalTime>=s.v12.echoReady){hit.markUntil=0;s.v12.echoReady=s.totalTime+1;s.v12.echoes++;for(const e of s.enemies)if(e.hp>0&&distance(e,hit)<100)e.hp-=p.damage*.6;s.effects.push({type:'echo',x:hit.x,y:hit.y,r:100,life:.5,maxLife:.5});event(s,'echo');}
       }
     }
@@ -304,16 +313,18 @@ export function tick(s,input={},dt=1/60) {
   for(const e of s.enemies) if(e.hp<=0) {
     s.kills++;s.score+=e.kind==='boss'?1000:35;
     onKill(s,e);
-    addEmber(s,e.x,e.y);if(e.kind==='brute')addEmber(s,e.x+16,e.y-10);
-    if(e.kind==='boss'){s.bossDefeated=true;for(let i=0;i<10;i++)addEmber(s,e.x+(random(s)-.5)*90,e.y+(random(s)-.5)*90);event(s,'boss-defeated');}
+    const drop=addEmber(s,e.x,e.y);if(isEndless(s)){drop.xp=e.rewardXP||6;onEndlessKill(s,e);}
+    if(!isEndless(s)&&e.kind==='brute')addEmber(s,e.x+16,e.y-10);
+    if(e.kind==='boss'){s.bossDefeated=true;for(let i=0;i<(isEndless(s)?0:10);i++)addEmber(s,e.x+(random(s)-.5)*90,e.y+(random(s)-.5)*90);event(s,'boss-defeated');}
     event(s,'death',{x:e.x,y:e.y,boss:e.kind==='boss'});
   }
   s.enemies=s.enemies.filter(e=>e.hp>0);
   updateSystems(s,dt);
-  if(s.phase==='won')s.story.ending=endingFor(s);
-  if(modern(s)&&s.phase==='playing'&&s.chapter===0&&!s.v12.buildTaken&&s.beacons.filter(b=>b.lit).length>=2){s.v12.buildTaken=true;s.v12.choiceKind='field';s.phase='upgrade';offerUpgrades(s);event(s,'upgrade');}
+  if(s.phase==='won'&&!isEndless(s))s.story.ending=endingFor(s);
+  if(!isEndless(s)&&modern(s)&&s.phase==='playing'&&s.chapter===0&&!s.v12.buildTaken&&s.beacons.filter(b=>b.lit).length>=2){s.v12.buildTaken=true;s.v12.choiceKind='field';s.phase='upgrade';offerUpgrades(s);event(s,'upgrade');}
   for(const fx of s.effects) fx.life-=dt;
   s.effects=s.effects.filter(fx=>fx.life>0);
+  if(isEndless(s)){reviveEndless(s);if(s.phase==='playing')advanceEndlessChoices(s);s.effects=s.effects.slice(-120);s.projectiles=s.projectiles.slice(-250);}
   if(p.hp<=0&&s.phase==='playing'){p.hp=0;s.phase='lost';event(s,'lost');}
   return s.events;
 }
@@ -336,13 +347,14 @@ export function restore(raw) {
       if(!obj||typeof obj!=='object'||Object.values(obj).some(v=>typeof v==='number'&&!Number.isFinite(v))||!Number.isFinite(obj.x)||!Number.isFinite(obj.y)) return null;
     }
     const numericKeys=['seed','rng','totalTime','time','chapterTime','score','kills','collected','litTotal','damageTaken','spawnCd','nextId'];
-    if(numericKeys.some(k=>!Number.isFinite(s[k]))||s.totalTime<0||s.litTotal<0||s.litTotal>9||!Number.isInteger(s.rng)) return null;
+    if(numericKeys.some(k=>!Number.isFinite(s[k]))||s.totalTime<0||s.litTotal<0||(!isEndless(s)&&s.litTotal>9)||!Number.isInteger(s.rng)) return null;
     if(!s.exit||!Number.isFinite(s.exit.x)||!Number.isFinite(s.exit.y)||!Number.isFinite(s.exit.r)||typeof s.exit.open!=='boolean') return null;
     if(s.obstacles.some(o=>!Number.isFinite(o.w)||!Number.isFinite(o.h)||o.w<=0||o.h<=0)) return null;
     if(s.embers.some(e=>!Number.isFinite(e.id)||!Number.isFinite(e.wobble))) return null;
     if(s.enemies.some(e=>!['shade','runner','brute','boss','caster','warder'].includes(e.kind)||['id','r','hp','maxHp','speed','damage','warning','stun','attack','shotCd','angle'].some(k=>!Number.isFinite(e[k]))||e.r<=0||e.maxHp<=0||e.path&&(!Array.isArray(e.path)||e.path.length>600||e.path.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y))))) return null;
     if(s.projectiles.some(b=>['vx','vy','r','life','damage'].some(k=>!Number.isFinite(b[k]))||typeof b.enemy!=='boolean')) return null;
-    if(s.upgrades.some(id=>!UPGRADES.some(u=>u.id===id))||s.offered.some(id=>!UPGRADES.some(u=>u.id===id))) return null;
+    if(!isEndless(s)&&(s.upgrades.some(id=>!UPGRADES.some(u=>u.id===id))||s.offered.some(id=>!UPGRADES.some(u=>u.id===id)))) return null;
+    if(s.endless&&!validateEndless(s))return null;
     if(s.version<3){s.rulesVersion=111;delete s.v12;}
     if(s.version===1){s.events=[];initSystems(s);}
     else if(!validateSystems(s))return null;

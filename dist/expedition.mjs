@@ -55,7 +55,7 @@ export function validateExpedition(s){
  for(const key of ['mapRng','lootRng','layout','patrolLeft','goldLeft','xpLeft','goldClaimed','xpClaimed','pathBudget','combatUntil','tailwindUntil','tailwindReady','dashChargeUntil','barrierUntil','barrier','wardenBlocks','shield','shieldUntil','graceUntil','pulseBoost','echoReady','healed','minHp','lowTime','barriers','echoes','tailwinds','interrupts','riskVisits','riskCleared','courierDeliveries','bossCasts'])if(!Number.isFinite(v[key])||v[key]<0)return false;
  if(!['','warden','paper'].includes(v.barrierSource))return false;
  if(!Number.isInteger(v.mapRng)||!Number.isInteger(v.lootRng)||v.layout>2||v.patrolLeft>16||v.barrier>1||v.shield>20||typeof v.buildTaken!=='boolean'||typeof v.firstJourney!=='boolean'||typeof v.wasSafe!=='boolean'||!['','field','chapter'].includes(v.choiceKind))return false;
- if(s.phase==='upgrade'&&!['field','chapter'].includes(v.choiceKind))return false;
+ if(s.phase==='upgrade'&&!s.endless&&!['field','chapter'].includes(v.choiceKind))return false;
  if(!v.damageSources||Object.entries(v.damageSources).some(([key,n])=>key.length>40||!Number.isFinite(n)||n<0))return false;
  return true;
 }
