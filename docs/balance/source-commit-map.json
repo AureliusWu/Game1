@@ -1,0 +1,25 @@
+{
+  "note": "Local analysis/source commits and their published equivalents have the same complete Git trees. Runtime file digests in the balance reports identify the exact working-tree inputs executed before the release commit.",
+  "commits": [
+    {
+      "local": "3d1a51dfc78b8f5841dddfb46c24542a32fdb5db",
+      "published": "45bbfb2ef94d60191a6bb39b035d8408fc056183",
+      "tree": "679903e6e9420d18733ed16e485126a7d0cc1c91"
+    },
+    {
+      "local": "d8f1a07bf2f4e779920412e7c2458189674966bf",
+      "published": "3130e9668c7ac68f8ec411598bdd81b6c1b6137b",
+      "tree": "2a5143ccabf470e1e283436124e9abc4644d655f"
+    },
+    {
+      "local": "b120765bd5f4f100d4328ce008efa954b2ab7eff",
+      "published": "1a30825a453a20cc278ee84afdaea7c3264132bd",
+      "tree": "9c9f5a3602bd0277817da85076d6f3f7fb04d55d"
+    },
+    {
+      "local": "d4cf621ade9a38a403354040cfa2b4b7cc0629f1",
+      "published": "a1ac6d92804dbacceb938418586ca1d4e337ee51",
+      "tree": "07cc6c2064ed1a054457298e76e6650f5316bfe8"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "version": "1.2.0",
+  "source_commit": "a1ac6d92804dbacceb938418586ca1d4e337ee51",
+  "apk_bytes": 1061013,
+  "apk_sha256": "a8131e2c72e8182cc4ccbf420c92f59c191e01638114407b97532b0ddce948ed",
+  "certificate_sha256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7",
+  "identical_runtime_files": 17,
+  "public_redownloads_verified": [
+    "SHA256SUMS.txt",
+    "Ember-Courier-web-v1.2.0.zip"
+  ],
+  "all_published_release_digests_matched": true,
+  "browser_download_limit": "APK download canceled; provenance download did not synchronize. Both were verified from the CI artifact against the digests visible on the public Release.",
+  "workflow_run": 42237954922,
+  "workflow_conclusion": "success",
+  "android_integration_tests": 2,
+  "android_integration_failures": 0,
+  "web_deployment_id": "appgdep_6aedeb3f302881918d3e264b941cfe73",
+  "web_deployment_status": "succeeded",
+  "web_url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site/",
+  "web_source_commit": "0c55ceeec344ecef491e781f786020306b649d1e"
+}
