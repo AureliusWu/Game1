@@ -1,6 +1,8 @@
 /** Deterministic game simulation. No DOM, canvas, network, or storage dependencies. */
-export const VERSION = '1.0.0';
-export const SAVE_VERSION = 1;
+import {initSystems,setupDistrict,recalculate,onKill,onBeacon,updateSystems,endingFor,validateSystems} from './systems.mjs';
+export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
+export const VERSION = '1.1.0';
+export const SAVE_VERSION = 2;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
   wander: { label: '漫游', damage: .65, drain: .36, spawn: 1.45, score: .8 },
@@ -27,7 +29,7 @@ function random(s) {
   return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 function event(s, type, data = {}) { s.events.push({ type, ...data }); }
-export function createGame({ seed = Date.now(), difficulty = 'normal' } = {}) {
+export function createGame({ seed = Date.now(), difficulty = 'normal',profile={},contract='lamps',daily='',id } = {}) {
   const s = {
     version: SAVE_VERSION, seed: seed >>> 0, rng: seed >>> 0,
     difficulty: DIFFICULTIES[difficulty] ? difficulty : 'normal',
@@ -42,6 +44,7 @@ export function createGame({ seed = Date.now(), difficulty = 'normal' } = {}) {
     upgrades: [], offered: [], spawnCd: 6, nextId: 1, events: [], bossSpawned: false,
     bossDefeated: false, interacted: false
   };
+  initSystems(s,profile,{contract,daily,id});s.player.hp=s.player.maxHp;
   loadChapter(s); return s;
 }
 function loadChapter(s) {
@@ -77,6 +80,7 @@ function loadChapter(s) {
   }
   // Later districts already have patrols; the opening district gives room to learn.
   for(let i=0;i<s.chapter+1;i++) spawnEnemy(s,i===2?'brute':'shade');
+  setupDistrict(s);
   event(s,'chapter',{chapter:s.chapter});
 }
 function addEmber(s,x,y) { s.embers.push({id:s.nextId++, x,y, wobble:random(s)*Math.PI*2}); }
@@ -96,7 +100,7 @@ export function dash(s) {
   const p=s.player;
   if(s.phase!=='playing'||p.dashCd>0) return false;
   p.dash=.2; p.dashCd=p.dashMax; p.invincible=Math.max(p.invincible,.42);
-  event(s,'dash'); return true;
+  s.metrics.dashes++;event(s,'dash'); return true;
 }
 export function pulse(s) {
   const p=s.player;
@@ -108,7 +112,7 @@ export function pulse(s) {
     const d=Math.max(1,distance(p,e));
     moveEntity(s,e,(e.x-p.x)/d*260,(e.y-p.y)/d*260,.18);
   }
-  event(s,'pulse'); return true;
+  s.metrics.pulses++;event(s,'pulse'); return true;
 }
 function spawnEnemy(s,kind) {
   const stats = kind==='boss' ? {hp:500,r:44,speed:70,damage:22} : kind==='runner' ? {hp:34,r:14,speed:116,damage:12} : kind==='brute' ? {hp:105,r:25,speed:52,damage:18} : {hp:45,r:18,speed:76,damage:13};
@@ -125,7 +129,7 @@ function spawnEnemy(s,kind) {
 }
 function hurt(s,amount) {
   const p=s.player;if(p.invincible>0) return;
-  const dmg=amount*DIFFICULTIES[s.difficulty].damage;
+  const dmg=amount*DIFFICULTIES[s.difficulty].damage*(1-p.armor);
   p.hp-=dmg;s.damageTaken+=dmg;p.invincible=1.2;
   event(s,'hurt',{damage:dmg});
 }
@@ -138,12 +142,7 @@ function offerUpgrades(s) {
 export function chooseUpgrade(s,id) {
   if(s.phase!=='upgrade'||!s.offered.includes(id)) return false;
   const p=s.player;
-  if(id==='wing') {p.speed*=1.18;p.dashMax=Math.max(1.1,p.dashMax-.45);}
-  if(id==='lantern') p.maxHp+=25;
-  if(id==='ring') {p.pulseRadius*=1.25;p.pulseDamage+=15;}
-  if(id==='spark') {p.attackTargets+=1;p.attackRate=Math.max(.55,p.attackRate-.1);}
-  if(id==='magnet') {p.pickup*=1.65;p.heal+=3;}
-  s.upgrades.push(id);p.hp=p.maxHp;s.offered=[];s.chapter++;s.phase='playing';
+  s.upgrades.push(id);recalculate(s);p.hp=p.maxHp;s.offered=[];s.chapter++;s.phase='playing';
   loadChapter(s);return true;
 }
 export function tick(s,input={},dt=1/60) {
@@ -178,7 +177,7 @@ export function tick(s,input={},dt=1/60) {
         p.invincible=Math.max(p.invincible,1.5);
         for(const e of s.enemies) if(distance(e,b)<250) {e.hp-=150;e.stun=1;}
         s.effects.push({type:'beacon',x:b.x,y:b.y,r:300,life:1.2,maxLife:1.2});
-        event(s,'beacon',{id:b.id,lit:s.beacons.filter(b=>b.lit).length});
+        onBeacon(s);event(s,'beacon',{id:b.id,lit:s.beacons.filter(b=>b.lit).length});
       }
     } else b.progress=Math.max(0,b.progress-dt*.6);
   }
@@ -201,7 +200,8 @@ export function tick(s,input={},dt=1/60) {
     if(targets.length) {
       for(const e of targets) {
         const d=Math.max(1,distance(p,e));
-        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:24,r:5});
+        const critical=p.crit>0&&random(s)<p.crit;
+        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?1.75:1),r:critical?7:5,critical});
       }
       p.attackCd=p.attackRate;event(s,'shoot');
     }
@@ -261,11 +261,14 @@ export function tick(s,input={},dt=1/60) {
   s.projectiles=s.projectiles.filter(b=>b.life>0);
   for(const e of s.enemies) if(e.hp<=0) {
     s.kills++;s.score+=e.kind==='boss'?1000:35;
+    onKill(s,e);
     addEmber(s,e.x,e.y);if(e.kind==='brute')addEmber(s,e.x+16,e.y-10);
     if(e.kind==='boss'){s.bossDefeated=true;for(let i=0;i<10;i++)addEmber(s,e.x+(random(s)-.5)*90,e.y+(random(s)-.5)*90);event(s,'boss-defeated');}
     event(s,'death',{x:e.x,y:e.y,boss:e.kind==='boss'});
   }
   s.enemies=s.enemies.filter(e=>e.hp>0);
+  updateSystems(s,dt);
+  if(s.phase==='won')s.story.ending=endingFor(s);
   for(const fx of s.effects) fx.life-=dt;
   s.effects=s.effects.filter(fx=>fx.life>0);
   if(p.hp<=0&&s.phase==='playing'){p.hp=0;s.phase='lost';event(s,'lost');}
@@ -280,7 +283,7 @@ export function restore(raw) {
   try {
     if(typeof raw!=='string'||raw.length>1000000) return null;
     const s=JSON.parse(raw);
-    if(!s||s.version!==SAVE_VERSION||!DIFFICULTIES[s.difficulty]||!Number.isInteger(s.chapter)||s.chapter<0||s.chapter>2||!['playing','upgrade'].includes(s.phase)) return null;
+    if(!s||![1,SAVE_VERSION].includes(s.version)||!DIFFICULTIES[s.difficulty]||!Number.isInteger(s.chapter)||s.chapter<0||s.chapter>2||!['playing','upgrade'].includes(s.phase)) return null;
     const p=s.player;
     const playerKeys=['x','y','r','hp','maxHp','embers','speed','pickup','heal','facing','aimX','aimY','dash','dashCd','dashMax','pulseCd','pulseMax','pulseRadius','pulseDamage','attackCd','attackRate','attackTargets','invincible','trail'];
     if(!p||playerKeys.some(k=>!Number.isFinite(p[k]))||Object.values(p).some(v=>typeof v!=='number'||!Number.isFinite(v))||p.hp<=0||p.hp>p.maxHp||p.maxHp>500||p.maxHp<1||p.x<0||p.y<0||p.x>WORLD.width||p.y>WORLD.height||p.embers<0||p.speed<=0||p.r<=0) return null;
@@ -297,6 +300,9 @@ export function restore(raw) {
     if(s.enemies.some(e=>!['shade','runner','brute','boss'].includes(e.kind)||['id','r','hp','maxHp','speed','damage','warning','stun','attack','shotCd','angle'].some(k=>!Number.isFinite(e[k]))||e.r<=0||e.maxHp<=0)) return null;
     if(s.projectiles.some(b=>['vx','vy','r','life','damage'].some(k=>!Number.isFinite(b[k]))||typeof b.enemy!=='boolean')) return null;
     if(s.upgrades.some(id=>!UPGRADES.some(u=>u.id===id))||s.offered.some(id=>!UPGRADES.some(u=>u.id===id))) return null;
+    if(s.version===1){s.events=[];initSystems(s);s.version=SAVE_VERSION;}
+    else if(!validateSystems(s))return null;
+    if(['damage','armor','crit','potionHeal'].some(k=>!Number.isFinite(p[k])))return null;
     s.events=[];s.effects=[];s.player.invincible=Math.max(2,s.player.invincible);return s;
   } catch {return null;}
 }

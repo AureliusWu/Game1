@@ -26,6 +26,9 @@ export class AudioEngine {
     if(type==='death')this.tone(220,.2,'triangle',.05,0,110);
     if(type==='boss')this.tone(65,.9,'triangle',.16,0,55);
     if(type==='lost'){this.tone(196,1,'sine',.15);this.tone(146.8,1.4,'sine',.1,.25);}
+    if(['level','delivery','gear'].includes(type)){this.tone(659,.5,'sine',.13);this.tone(880,.7,'sine',.1,.1);}
+    if(type==='forge'){this.tone(440,.14,'triangle',.13);this.tone(990,.3,'sine',.1,.08);}
+    if(type==='purchase'||type==='potion')this.tone(520,.3,'sine',.12,0,780);
     if(type==='click')this.tone(520,.07,'sine',.08);
   }
   update(active,chapter=0){
