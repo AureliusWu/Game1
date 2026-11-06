@@ -6,6 +6,8 @@
 
 **[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA.md) · [部署说明](docs/DEPLOYMENT.md)
 
+下一版：[v1.2.0「夜路有选择」更新方案](docs/UPDATE_PLAN_v1.2.0.md) · [可玩性与平衡基线](docs/balance/README.md)。当前正式版本仍为 v1.1.1。
+
 网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
 ## 玩什么

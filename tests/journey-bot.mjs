@@ -22,7 +22,9 @@ function route(s,goal){
   result.reverse();result.shift();return result;
 }
 export function playJourney(seed,difficulty='normal',options={}){
-  let s=createGame({seed,difficulty,contract:options.systems?'letters':'lamps',id:`bot-${seed}-${difficulty}-${options.share?'share':'promise'}`});let path=[],targetId='',repath=0;const milestones=[],shops=new Set();
+  // Optional development policies and read-only observers support balance studies.
+  // Defaults preserve the complete-journey QA policy; no policy edits simulation state.
+  let s=createGame({seed,difficulty,profile:options.profile||{},contract:options.systems?'letters':'lamps',id:`bot-${seed}-${difficulty}-${options.share?'share':'promise'}`});let path=[],targetId='',repath=0;const milestones=[],shops=new Set();
   for(let frame=0;frame<24000&&s.phase!=='won'&&s.phase!=='lost';frame++){
     if(s.phase==='upgrade'){milestones.push({chapter:s.chapter+1,time:s.totalTime});const id=s.offered.includes('spark')?'spark':s.offered.includes('lantern')?'lantern':s.offered[0];chooseUpgrade(s,id);path=[];targetId='';}
     const p=s.player,unlit=s.beacons.filter(b=>!b.lit);let target,id;
@@ -38,6 +40,8 @@ export function playJourney(seed,difficulty='normal',options={}){
       if(p.hp<p.maxHp*.45)usePotion(s);
       for(const item of s.gear.inventory)if(item.level<3&&forgeCost(item)<=s.journal.coins&&s.gear.slots.lamp===item.id)forge(s,item.id);
     }
+    if(options.camp&&s.litTotal>0){target=s.beacons.find(b=>b.lit);id='camp';}
+    if(options.campBoss&&s.bossSpawned&&!s.bossDefeated){target=s.beacons.filter(b=>b.lit).reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='boss-camp'+target.id;}
     if(!target&&unlit.length&&p.embers>=4){target=unlit.reduce((a,b)=>distance(p,a)<distance(p,b)?a:b);id=`lamp${s.chapter}:${target.id}`;}
     else if(!target&&unlit.length){
       target=s.embers.reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='ember'+target?.id;
@@ -49,8 +53,11 @@ export function playJourney(seed,difficulty='normal',options={}){
     while(path.length>1&&distance(p,path[0])<18)path.shift();
     const aim=path[0]||target,d=distance(p,aim);let x=0,y=0;
     if(d>8){x=(aim.x-p.x)/d;y=(aim.y-p.y)/d;}
-    if(s.enemies.some(e=>e.warning<=0&&distance(e,p)<p.pulseRadius-10))pulse(s);
+    if(!options.noPulse&&s.enemies.some(e=>e.warning<=0&&distance(e,p)<p.pulseRadius-10))pulse(s);
     tick(s,{x,y},.05);
+    options.observe?.(s);
+    // Camp probes may intentionally stop before the ending and are labeled as such.
+    if(options.stopWhen?.(s))break;
     if(options.resume&&frame%280===279&&['playing','upgrade'].includes(s.phase)){const saved=restore(serialize(s));if(!saved)throw new Error('Full journey produced an invalid save');s=saved;}
   }
   return {seed,difficulty,phase:s.phase,chapter:s.chapter+1,beacons:s.litTotal,time:Math.round(s.totalTime),score:finalScore(s),hp:Math.round(s.player.hp),kills:s.kills,milestones,state:s};
