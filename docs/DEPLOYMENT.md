@@ -3,7 +3,7 @@
 ## 已准备的在线版
 
 - 地址：https://ember-courier-game1.dazzlingmodel.chatgpt.site
-- 访问范围：作者私有；使用创建该预览的 ChatGPT 账户。
+- 访问范围：按作者 2026-11-06 的网页发布要求，现已公开访问。
 - 身份保存在 `.openai/hosting.json`。后续更新应复用同一 project_id 与访问范围。
 - 在线预览的源仓库由托管服务管理；GitHub 的 `AureliusWu/Game1` 是完整源码镜像。两处修改不会凭空互相同步，发布时需同步同一份已验证源码。
 
@@ -15,9 +15,9 @@
 
 ## GitHub Actions
 
-`ci.yml` 在 main 推送、PR 与手动触发时运行所有测试和静态检查，上传 `Ember-Courier-web-v1.1.0` 成品。下载并解压后，仍需通过 HTTP 服务器打开。
+`ci.yml` 在 main 推送、PR 与手动触发时运行所有测试和静态检查，上传 `Ember-Courier-web-v1.1.1` 成品。下载并解压后，仍需通过 HTTP 服务器打开。
 
-`pages.yml` 是独立的可选镜像：仓库 Settings → Pages → Source 选择 GitHub Actions 后，在 Actions 手动运行 Publish GitHub Pages。它不会修改当前私有预览的访问范围。本次交付不将尚未启用的 Pages 当作已发布地址。
+`pages.yml` 是独立的可选镜像：仓库 Settings → Pages → Source 选择 GitHub Actions 后，在 Actions 手动运行 Publish GitHub Pages。它不会修改当前公开站点的访问范围。本次交付不将尚未启用的 Pages 当作已发布地址。
 
 ## 版本与存档
 
@@ -33,3 +33,7 @@ node scripts/check.mjs
 ```
 
 部署的是 `dist/`，不是源码目录。不要把调试页面、测试工具、凭证或临时截图放进 `dist/`。
+
+## Android 与 GitHub Release
+
+发行流程见 [ANDROID.md](ANDROID.md)，双端发行说明见 [v1.1.1](releases/v1.1.1.md)。网页 ZIP 和签名 APK 一起出现在 GitHub Releases。

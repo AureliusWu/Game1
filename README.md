@@ -6,7 +6,7 @@
 
 **[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA.md) · [部署说明](docs/DEPLOYMENT.md)
 
-当前在线版为作者私有预览；使用创建它的 ChatGPT 账户访问。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
+网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
 ## 玩什么
 
@@ -19,7 +19,11 @@
 - 原创 Canvas 矢量风格画面、猫头鹰角色、合成氛围音乐与音效。
 - 支持键鼠、触屏、横竖屏；自动存档、最高分与旅途统计；PWA 离线缓存。
 
-## v1.1.0「暮色百事」
+## v1.1.1 · 网页与 Android 发布
+
+保留 v1.1.0「暮色百事」全部系统，新增离线 Android 安装包、原生全屏/返回键/后台保存与暂停。网页和 APK 各自保存进度，不自动跨端同步；同包名同签名的 Android 覆盖安装保留进度。
+
+## 「暮色百事」系统
 
 一份让战斗、送信与长期成长互相影响的扩展，原有三章与最终结局完整保留。
 
@@ -94,4 +98,4 @@ GitHub Actions 在每次 main 推送和 PR 时执行测试、检查资源完整�
 
 ## 版本与授权
 
-v1.1.0「暮色百事」 · 2026-11-06。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。
+v1.1.1 · 2026-11-06。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。

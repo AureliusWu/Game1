@@ -1,0 +1,60 @@
+import groovy.json.JsonSlurper
+
+plugins { id 'com.android.application' }
+
+def game = new JsonSlurper().parse(file('../../package.json'))
+def pieces = game.version.tokenize('.').collect { it.toInteger() }
+def signingJson = System.getenv('EMBER_ANDROID_SIGNING_JSON')
+def releaseKey = signingJson ? new JsonSlurper().parseText(signingJson) : null
+def preparedKey = file("${layout.buildDirectory.get()}/private-signing/release.p12")
+if (releaseKey) {
+    preparedKey.parentFile.mkdirs()
+    preparedKey.bytes = releaseKey.keystore.decodeBase64()
+}
+
+android {
+    namespace 'io.github.aureliuswu.embercourier'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'io.github.aureliuswu.embercourier'
+        minSdk 26
+        targetSdk 35
+        versionCode pieces[0] * 10000 + pieces[1] * 100 + pieces[2]
+        versionName game.version
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+    signingConfigs {
+        if (releaseKey) {
+            release {
+                storeFile preparedKey
+                storePassword releaseKey.storePassword
+                keyAlias releaseKey.keyAlias
+                keyPassword releaseKey.keyPassword
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (releaseKey) signingConfig signingConfigs.release
+        }
+    }
+    sourceSets.main.assets.srcDir '../../dist'
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    lint { abortOnError true }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}
+
+tasks.register('requireReleaseSigning') {
+    doLast { if (!releaseKey) throw new GradleException('Set EMBER_ANDROID_SIGNING_JSON to build the signed release APK.') }
+}
+tasks.matching { it.name == 'assembleRelease' }.configureEach { dependsOn 'requireReleaseSigning' }

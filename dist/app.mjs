@@ -231,4 +231,15 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 updateSettings();updateMenu();setScreen('menu');requestAnimationFrame(frame);
-if('serviceWorker' in navigator&&location.protocol!=='file:')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+// The Android host calls these hooks without exposing a native JavaScript bridge.
+window.emberCourierNative=Object.freeze({
+  pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
+  back(){
+    const modal=[...document.querySelectorAll('dialog[open]')].at(-1);
+    if(modal){const cancel=new Event('cancel',{cancelable:true});if(modal.dispatchEvent(cancel))modal.close();checkpoint();return true;}
+    if(screen==='game'){pauseGame();return true;}
+    return false;
+  }
+});
+// APK assets are updated atomically with the package and do not need a web cache.
+if('serviceWorker' in navigator&&location.protocol!=='file:'&&location.hostname!=='appassets.androidplatform.net')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
