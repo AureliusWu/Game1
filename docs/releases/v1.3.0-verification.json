@@ -1,0 +1,58 @@
+{
+  "version": "1.3.0",
+  "verifiedAt": "2026-11-06T15:56:22.359827+00:00",
+  "sourceCommit": "447e963bc18a35e63ba71a6cfec388f7691241a3",
+  "sourceTree": "cbaaaea2dcbfc516e12cce781e56b16fae2a06b2",
+  "localEquivalentCommit": "3180273da45cb7af18eba26a7ccb93f34f16e6d0",
+  "releaseURL": "https://github.com/AureliusWu/Game1/releases/tag/v1.3.0",
+  "workflowRun": 42246274103,
+  "workflowJob": 127989196597,
+  "workflowConclusion": "success",
+  "qualityRun": 42246274122,
+  "unitTests": 125,
+  "androidIntegrationTests": 3,
+  "androidIntegrationSkipped": 0,
+  "androidIntegrationFailed": 0,
+  "actionOnlyBalanceProbes": 144,
+  "apk": {
+    "applicationId": "io.github.aureliuswu.embercourier",
+    "versionCode": 10300,
+    "versionName": "1.3.0",
+    "debuggable": false,
+    "internetPermission": false,
+    "signingCertificateSHA256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7"
+  },
+  "files": {
+    "SHA256SUMS.txt": {
+      "bytes": 289,
+      "sha256": "7e232149f6af056f5480664024da4964c7e67a078c68e1eb47a38703f37bda29"
+    },
+    "Ember-Courier-v1.3.0.apk": {
+      "bytes": 1077045,
+      "sha256": "e7e29db29595afe3d9da07787322c23cdf4acaba36bb21c819172e875ced785f"
+    },
+    "Ember-Courier-v1.3.0-provenance.json": {
+      "bytes": 1845,
+      "sha256": "37b22e22bbd48f4797884764fdb998d8450c7e0cb76504f4213a62bb28b19ae5"
+    },
+    "Ember-Courier-web-v1.3.0.zip": {
+      "bytes": 139219,
+      "sha256": "7ec4fe40daa61746ddb61472c860e7fe8f927cf32d35f41285cc678539ab09ba"
+    }
+  },
+  "runtimeResourceCount": 18,
+  "runtimeIdentity": "APK assets, web ZIP, Sites dist, source and provenance hashes all identical",
+  "verificationScope": "Release workflow artifact downloaded and reverified; all public Release file checksums match the downloaded copies. Public APK was not downloaded again. Public website observed after old tab closure.",
+  "web": {
+    "url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site/",
+    "projectId": "appgprj_6aeda9efaf088191ae1711329f052d72",
+    "audience": "public",
+    "sourceCommit": "cb6066ca9c3262da7173b70ca13f3f96ddb7dc94",
+    "savedVersion": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_f50c326b36f88191912215da9426620a",
+    "deploymentId": "appgdep_6aedf7d326e48191a6e1c3b147b7aa02",
+    "status": "succeeded",
+    "deployedAt": "2026-11-06T15:53:04.000661+00:00",
+    "archiveSHA256": "76b10683d35a2cbc13ba18fc04aa47843c3a737224962881c457119d3db86490",
+    "savedArchiveContentHash": "sha256:c664d7fe68d80ca3ca592c81ebfe1356aad461688af0ea7d5e369ee11f51bb74"
+  }
+}
