@@ -77,17 +77,21 @@ public final class OfflineGameTest {
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
             await("innerHeight > innerWidth");
             assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
+            // Emulator pointer capabilities differ; exercise the actual touch setting explicitly.
+            js("document.getElementById('settings-open').click(); if(!document.getElementById('touch-setting').checked)document.getElementById('touch-setting').click(); document.querySelector('#settings [data-close]').click()");
             js("if(!document.getElementById('daily-setting').checked)document.getElementById('daily-setting').click(); document.getElementById('start').click()");
             await("!document.getElementById('game').hidden");
+            await("document.getElementById('joystick').getBoundingClientRect().width > 70 && document.getElementById('run-time').textContent !== '00:00'");
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).v12.mode === 'challenge'"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).rulesVersion === 120"));
             double beforeX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
-            JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,devicePixelRatio]})()"));
+            JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,innerWidth,devicePixelRatio]})()"));
             final int[] origin = new int[2];
-            getInstrumentation().runOnMainSync(() -> activity.findViewById(R.id.game_webview).getLocationOnScreen(origin));
+            final int[] viewWidth = new int[1];
+            getInstrumentation().runOnMainSync(() -> { activity.findViewById(R.id.game_webview).getLocationOnScreen(origin); viewWidth[0] = activity.findViewById(R.id.game_webview).getWidth(); });
             MotionEvent.PointerProperties[] props = new MotionEvent.PointerProperties[2];
             MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[2];
-            float density = (float) points.getDouble(4);
+            float density = viewWidth[0] / (float) points.getDouble(4);
             for (int i = 0; i < 2; i++) {
                 props[i] = new MotionEvent.PointerProperties(); props[i].id = i; props[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
                 coords[i] = new MotionEvent.PointerCoords(); coords[i].pressure = 1; coords[i].size = 1;
@@ -99,12 +103,14 @@ public final class OfflineGameTest {
             touch(start, MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
             coords[0].x += 30 * density;
             touch(start, MotionEvent.ACTION_MOVE, 2, props, coords);
-            Thread.sleep(400);
+            Thread.sleep(800);
+            String held = js("JSON.stringify({thumb:document.getElementById('joystick-thumb').style.transform,time:document.getElementById('run-time').textContent,paused:document.getElementById('pause-dialog').open,pulse:document.getElementById('pulse-cd').textContent})");
             touch(start, MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
             touch(start, MotionEvent.ACTION_UP, 1, props, coords);
             js("window.emberCourierNative.pause()");
             assertEquals("true", js("document.getElementById('pause-dialog').open"));
-            assertTrue("Joystick must move while a second finger activates the pulse", Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x")) > beforeX + 10);
+            double afterX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
+            assertTrue("Joystick + pulse: before=" + beforeX + ", after=" + afterX + ", css=" + points + ", scale=" + density + ", held=" + held, afterX > beforeX + 10);
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).metrics.pulses >= 1"));
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
