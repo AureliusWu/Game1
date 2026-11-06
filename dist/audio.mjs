@@ -1,0 +1,40 @@
+/** Original oscillator-only soundtrack: no samples, streaming, or third-party assets. */
+export class AudioEngine {
+  constructor(){this.enabled=true;this.ctx=null;this.master=null;this.nextNote=0;this.step=0;this.music=false;}
+  async unlock(){
+    if(!this.enabled)return;
+    try{
+      if(!this.ctx){const A=window.AudioContext||window.webkitAudioContext;if(!A)return;this.ctx=new A();this.master=this.ctx.createGain();this.master.gain.value=.36;this.master.connect(this.ctx.destination);}
+      if(this.ctx.state==='suspended')await this.ctx.resume();
+    }catch{/* Audio is optional; a browser policy must never prevent gameplay. */}
+  }
+  setEnabled(on){this.enabled=on;if(this.master&&this.ctx)this.master.gain.setTargetAtTime(on?.36:0,this.ctx.currentTime,.12);if(on)this.unlock();}
+  tone(freq,dur=.15,type='sine',vol=.2,delay=0,to=0){
+    if(!this.enabled||!this.ctx||this.ctx.state!=='running')return;
+    const at=this.ctx.currentTime+delay,o=this.ctx.createOscillator(),g=this.ctx.createGain();
+    o.type=type;o.frequency.setValueAtTime(freq,at);if(to)o.frequency.exponentialRampToValueAtTime(to,at+dur);
+    g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.012);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
+    o.connect(g);g.connect(this.master);o.start(at);o.stop(at+dur+.03);o.onended=()=>{o.disconnect();g.disconnect();};
+  }
+  play(type){
+    if(type==='collect'){this.tone(880,.22,'sine',.17);this.tone(1320,.18,'sine',.07,.045);}
+    if(type==='dash')this.tone(180,.16,'triangle',.15,0,600);
+    if(type==='pulse'){this.tone(150,.45,'sine',.3,0,500);this.tone(600,.5,'triangle',.08,.05,1200);}
+    if(type==='hurt')this.tone(120,.25,'triangle',.22,0,55);
+    if(type==='beacon'||type==='won'||type==='boss-defeated') [261.63,329.63,392,523.25,659.25].forEach((n,i)=>this.tone(n,1.7,'sine',.16,i*.13));
+    if(type==='shoot')this.tone(540,.09,'sine',.035,0,880);
+    if(type==='death')this.tone(220,.2,'triangle',.05,0,110);
+    if(type==='boss')this.tone(65,.9,'triangle',.16,0,55);
+    if(type==='lost'){this.tone(196,1,'sine',.15);this.tone(146.8,1.4,'sine',.1,.25);}
+    if(type==='click')this.tone(520,.07,'sine',.08);
+  }
+  update(active,chapter=0){
+    this.music=active;
+    if(!active||!this.enabled||!this.ctx||this.ctx.state!=='running')return;
+    const now=this.ctx.currentTime;if(this.nextNote>now+.1)return;this.nextNote=now+1.8;
+    const notes=[261.63,293.66,329.63,392,440,523.25,440,392,329.63,293.66,261.63,196];
+    const note=notes[(this.step+chapter*3)%notes.length];
+    this.tone(note,.95,'sine',.065);this.tone(note/2,1.6,'sine',.045);if(this.step%4===0)this.tone(65.4,3,'sine',.055);this.step++;
+  }
+  suspend(){if(this.ctx?.state==='running')this.ctx.suspend().catch(()=>{});}
+}

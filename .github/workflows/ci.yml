@@ -1,0 +1,26 @@
+name: Game quality and playable build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rules, persistence and complete three-chapter playthroughs
+        run: node --test tests/*.test.mjs
+      - name: Verify static release, UI references and offline assets
+        run: node scripts/check.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Ember-Courier-web-v1.0.0
+          path: dist/
+          if-no-files-found: error
+          retention-days: 30
