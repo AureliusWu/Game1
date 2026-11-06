@@ -37,6 +37,7 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon --console=plain :app:assembleDebug :app:assembleDebugAndroidTest
       - name: Start Android 35 emulator
+        timeout-minutes: 8
         run: |
           sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
           if [ ! -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager" ]; then
@@ -52,13 +53,27 @@ jobs:
           echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
           echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libpulse0 libx11-6 libx11-xcb1 libxcb1 libxcb-cursor0 libgl1 libegl1 libnss3 libxkbcommon0 >/dev/null
           sudo chmod 666 /dev/kvm
+          export ANDROID_AVD_HOME="$RUNNER_TEMP/ember-avd"
+          export ANDROID_USER_HOME="$RUNNER_TEMP/ember-android"
+          mkdir -p "$ANDROID_AVD_HOME" "$ANDROID_USER_HOME"
+          trap 'tail -100 /tmp/ember-emulator.log 2>/dev/null || true' ERR
           yes | sdkmanager --licenses >/dev/null
           sdkmanager 'emulator' 'system-images;android-35;google_apis;x86_64' >/dev/null
           echo no | avdmanager create avd --name ember --package 'system-images;android-35;google_apis;x86_64' --force
-          "$ANDROID_HOME/emulator/emulator" -avd ember -no-window -no-audio -no-boot-anim -no-snapshot -gpu swiftshader_indirect -camera-back none -camera-front none -memory 2048 > /tmp/ember-emulator.log 2>&1 &
-          adb wait-for-device
-          timeout 240 bash -c 'until [ "$(adb shell getprop sys.boot_completed | tr -d "\r")" = "1" ]; do sleep 2; done'
+          "$ANDROID_HOME/emulator/emulator" -accel-check
+          "$ANDROID_HOME/emulator/emulator" -avd ember -no-window -no-audio -no-boot-anim -no-snapshot -gpu software -feature -Vulkan -camera-back none -camera-front none -memory 2048 > /tmp/ember-emulator.log 2>&1 &
+          emulator_pid=$!
+          adb start-server
+          booted=false
+          for attempt in $(seq 1 120); do
+            kill -0 "$emulator_pid" || { cat /tmp/ember-emulator.log; exit 1; }
+            if [ "$(adb -e shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; then booted=true; break; fi
+            sleep 2
+          done
+          if [ "$booted" != true ]; then cat /tmp/ember-emulator.log; exit 1; fi
           adb shell input keyevent 82
           adb shell settings put global window_animation_scale 0
           adb shell settings put global transition_animation_scale 0
