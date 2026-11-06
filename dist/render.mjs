@@ -57,6 +57,7 @@ function drawPOI(c,p,t){
     for(let i=0;i<4;i++)round(c,-35+i*20,-52,9,34,2,'#668d79');line(c,[[-37,-18],[-37,35]],'#7e9172',3);line(c,[[37,-18],[37,35]],'#7e9172',3);
     circle(c,-15,3,7,'#d0b377');round(c,-4,-1,12,17,3,'#a1b493');round(c,16,3,11,14,2,'#d4c298');
   }
+  if(p.kind==='risk'){c.translate(p.x,p.y);line(c,[[0,25],[0,-65]],'#c2a16f',4);c.fillStyle='#bd8395';c.beginPath();c.moveTo(0,-65);c.lineTo(39,-52);c.lineTo(0,-35);c.fill();circle(c,0,30,20,null,'#bd839577',2);}
   if(p.kind==='event'){
     c.translate(p.x,p.y);const type=EVENTS[p.event].id;
     if(type==='well'){c.fillStyle='#687c6c';c.beginPath();c.ellipse(0,0,31,20,0,0,TAU);c.fill();c.fillStyle='#193a3f';c.beginPath();c.ellipse(0,-5,22,12,0,0,TAU);c.fill();circle(c,0,-8,5,'#c6b88c');}
@@ -64,11 +65,11 @@ function drawPOI(c,p,t){
     else{round(c,-16,-39,32,42,6,'#789a87','#c3bf8c');round(c,-20,-43,40,9,4,'#a9b58c');round(c,-10,-31,20,5,2,'#233f42');line(c,[[0,3],[0,24]],'#668571',8);}
   }
   c.restore();c.save();c.textAlign='center';c.font='10px sans-serif';
-  const label=p.kind==='npc'?NPCS[p.npc].name+(p.used?' · 已托付':''):p.kind==='shop'?'夜路杂货铺':p.kind==='chest'?(p.used?'空的失物箱':'失物箱'):EVENTS[p.event].name;
+  const label=p.kind==='npc'?NPCS[p.npc].name+(p.used?' · 已托付':''):p.kind==='shop'?'夜路杂货铺':p.kind==='chest'?(p.used?'空的失物箱':'失物箱'):p.kind==='risk'?(p.used?'侧巷 · 已进入':'风险支路 · 精英与行装'):EVENTS[p.event].name;
   c.fillStyle=p.used?'#89a18c':'#c4d0ac';c.fillText(label,p.x,p.y+46);c.restore();
 }
-export function drawBeacon(c,b,t=0){
-  const lit=b.lit, a=lit?1:.3;
+export function drawBeacon(c,b,t=0,clock=t){
+  const lit=b.lit, a=lit?1:.3,suppressed=(b.suppressedUntil||0)>clock;
   c.save();c.translate(b.x,b.y);
   c.fillStyle='#071c2188';c.beginPath();c.ellipse(0,23,53,22,0,0,TAU);c.fill();
   c.fillStyle=lit?'#466664':'#2b4547';c.beginPath();c.ellipse(0,11,43,18,0,0,TAU);c.fill();
@@ -77,7 +78,8 @@ export function drawBeacon(c,b,t=0){
   for(let i=0;i<8;i++){const ang=i*TAU/8;line(c,[[Math.cos(ang)*28,Math.sin(ang)*15],[Math.cos(ang)*35,Math.sin(ang)*19]],lit?'#d0b87e':'#4a6665',1.5);}
   round(c,-12,-62,24,62,4,lit?'#57746a':'#3a5453');round(c,-20,-68,40,8,3,'#708b77');
   round(c,-17,-104,34,36,5,lit?'#dbb775':'#233b40','#879077');
-  if(lit){glow(c,0,-88,70,'#ffc36d66');round(c,-11,-100,22,28,2,'#ffda87');circle(c,0,-87,8,'#fff0b9');}
+  if(suppressed){circle(c,0,0,146,null,'#d99eb8',3);c.fillStyle='#efc6d6';c.font='12px sans-serif';c.textAlign='center';c.fillText('回复受压制',0,58);}
+  if(lit){glow(c,0,-88,70,suppressed?'#b69cdd55':'#ffc36d66');round(c,-11,-100,22,28,2,'#ffda87');circle(c,0,-87,8,'#fff0b9');}
   for(const xx of [-14,14])line(c,[[xx,-103],[xx,-70]],'#89a08b',2);
   c.fillStyle='#7e8b6d';c.beginPath();c.moveTo(-25,-106);c.lineTo(0,-125);c.lineTo(25,-106);c.closePath();c.fill();
   circle(c,0,-124,3,lit?gold:'#9a9c7c');
@@ -112,9 +114,12 @@ function drawEnemy(c,e,t){
     c.beginPath();c.moveTo(-20,-10);c.quadraticCurveTo(-70,-60,-86,4);c.lineTo(-27,27);c.fill();
     c.beginPath();c.moveTo(20,-10);c.quadraticCurveTo(70,-60,86,4);c.lineTo(27,27);c.fill();
   }
-  c.fillStyle=e.stun>0?'#8b7c82':boss?'#54445a':e.kind==='brute'?'#4e4a61':'#2d354b';
+  c.fillStyle=e.stun>0?'#8b7c82':boss?'#54445a':e.kind==='brute'?'#4e4a61':e.kind==='caster'?'#76577d':e.kind==='warder'?'#4c6d76':'#2d354b';
   c.beginPath();c.moveTo(-r,-r*.5);c.lineTo(-r*.8,-r*1.35);c.lineTo(-r*.2,-r*.9);c.quadraticCurveTo(0,-r*1.1,r*.3,-r*.9);c.lineTo(r*.9,-r*1.35);c.lineTo(r,-r*.4);c.quadraticCurveTo(r*1.3,r*.7,r*.5,r);c.lineTo(0,r*.7);c.lineTo(-r*.5,r);c.quadraticCurveTo(-r*1.3,r*.7,-r,-r*.5);c.fill();
   for(const ex of [-r*.36,r*.36]){circle(c,ex,-r*.18,boss?6:3,'#dc9fbc');circle(c,ex,-r*.18,boss?2.5:1.2,'#3c2545');}
+  if(e.kind==='caster')line(c,[[r,12],[r,-35],[r+10,-28],[r,-21]],'#dfc1a4',3);
+  if(e.kind==='warder')circle(c,0,0,r+5,null,'#94c4d9',3);
+  if(e.patrolElite)circle(c,0,0,r+10,null,'#dca17f',2);
   if(e.kind==='runner')line(c,[[-r*.7,r*.2],[0,r*.4],[r*.7,r*.2]],'#7c687d',1.5);
   if(e.hp<e.maxHp){round(c,-r,-r-17,r*2,3,2,'#192e34');round(c,-r,-r-17,r*2*Math.max(0,e.hp/e.maxHp),3,2,'#d0a0a8');}
   c.restore();
@@ -168,7 +173,7 @@ export class Renderer{
     c.save();if(this.shake>0){c.translate((Math.random()-.5)*this.shake,(Math.random()-.5)*this.shake);this.shake=Math.max(0,this.shake-dt*30);}
     c.scale(z,z);c.translate(-this.camera.x,-this.camera.y);c.drawImage(this.map,0,0);
     if(this.destination){circle(c,this.destination.x,this.destination.y,11,null,'#b8cfaa77',1);circle(c,this.destination.x,this.destination.y,2,'#d8c795');}
-    for(const b of s.beacons)if(b.lit){glow(c,b.x,b.y,180,'#dfc88825');circle(c,b.x,b.y,148,null,'#e1c88d44',1);}
+    for(const b of s.beacons)if(b.lit){glow(c,b.x,b.y,180,(b.suppressedUntil||0)>s.totalTime?'#b28bbf33':'#dfc88825');circle(c,b.x,b.y,148,null,'#e1c88d44',1);}
     // Wind on the paving.
     if(!this.lowMotion){for(let i=0;i<20;i++){
       const x=(i*137+s.time*8)%WORLD.width,y=(i*239+s.time*3)%WORLD.height;
@@ -185,7 +190,7 @@ export class Renderer{
       c.save();c.translate(e.x,e.y+bob);c.rotate(Math.PI/4);round(c,-4,-4,8,8,2,'#ffdc92');c.restore();circle(c,e.x-1,e.y+bob-2,1.5,'#fff1c6');}
     const actors=s.obstacles.map(o=>({y:o.y+o.h,draw:()=>drawBuilding(c,o,s.chapter)}));
     for(const poi of s.pois||[])actors.push({y:poi.y,draw:()=>drawPOI(c,poi,t)});
-    for(const b of s.beacons)actors.push({y:b.y,draw:()=>drawBeacon(c,b,t)});
+    for(const b of s.beacons)actors.push({y:b.y,draw:()=>drawBeacon(c,b,t,s.totalTime)});
     for(const e of s.enemies)actors.push({y:e.y,draw:()=>drawEnemy(c,e,t)});
     actors.push({y:p.y,draw:()=>{
       glow(c,p.x,p.y-8,105,'#f8ca7a28');
@@ -196,16 +201,24 @@ export class Renderer{
       if(outfit==='warden')circle(c,p.x,p.y+1,33,null,'#a2c8b755',1.5);
       if(outfit==='dawn')for(let i=0;i<3;i++){const a=t*.9+i*TAU/3;circle(c,p.x+Math.cos(a)*32,p.y-4+Math.sin(a)*18,2.1,'#e1c392');}
       if(outfit==='courier')line(c,[[p.x-14*p.facing,p.y+3],[p.x-35*p.facing,p.y+8],[p.x-47*p.facing,p.y+4]],'#c6c19177',2);
+      if(s.v12?.barrier)circle(c,p.x,p.y,39,null,'#c6ecc7',3);
+      if(s.v12?.shield)circle(c,p.x,p.y,43,null,'#a5c8ea',2);
       if(p.invincible>0)circle(c,p.x,p.y,29,null,'#f3dca444',1);
     }});
     actors.sort((a,b)=>a.y-b.y).forEach(a=>a.draw());
     for(const b of s.projectiles){glow(c,b.x,b.y,b.enemy?22:17,b.enemy?'#ca84ae44':'#fbd38455');circle(c,b.x,b.y,b.r,b.enemy?'#c78ea8':'#ffe3a0');if(!b.enemy)line(c,[[b.x-b.vx*.02,b.y-b.vy*.02],[b.x,b.y]],'#f6ce8f77',3);}
-    for(const f of s.effects){const k=1-f.life/f.maxLife;circle(c,f.x,f.y,f.r*k,null,`rgba(250,215,147,${(1-k)*.7})`,4*(1-k)+1);if(k<.5)glow(c,f.x,f.y,Math.max(1,f.r*k),'#ffe3a033');}
+    for(const f of s.effects){if(f.type==='beam'){line(c,[[f.x,f.y],[f.toX,f.toY]],'#edbbce99',35);continue;}const k=1-f.life/f.maxLife;circle(c,f.x,f.y,f.r*k,null,`rgba(250,215,147,${(1-k)*.7})`,4*(1-k)+1);if(k<.5)glow(c,f.x,f.y,Math.max(1,f.r*k),'#ffe3a033');}
     for(const a of this.particles){a.life-=dt;a.x+=a.vx*dt;a.y+=a.vy*dt;c.globalAlpha=Math.max(0,a.life/a.max);circle(c,a.x,a.y,2,a.color);}c.globalAlpha=1;this.particles=this.particles.filter(a=>a.life>0);
     // Labels appear only nearby, leaving most of the city quiet.
     for(const b of s.beacons)if(!b.lit&&distance(p,b)<165){
       c.textAlign='center';c.font='12px sans-serif';const text=p.embers>=4?(b.progress>0?'正在点灯…':'靠近自动点亮'):`需要 4 枚火种 · 已有 ${p.embers}`;
       const tw=c.measureText(text).width+22;round(c,b.x-tw/2,b.y+51,tw,27,8,'#0d272ddd','#7e8c6877');c.fillStyle=cream;c.fillText(text,b.x,b.y+69);
+    }
+    if(s.v12?.conditions.includes('fog')){const fog=c.createRadialGradient(p.x,p.y,150,p.x,p.y,350);fog.addColorStop(0,'#10283500');fog.addColorStop(1,'#102835f2');c.fillStyle=fog;c.fillRect(this.camera.x,this.camera.y,vw,vh);}
+    for(const e of s.enemies){
+      if(e.kind==='warder'&&e.hp>0)circle(c,e.x,e.y,130,null,'#94c4d955',2);
+      if((e.markUntil||0)>s.totalTime)circle(c,e.x,e.y,e.r+9,null,'#f7d58c',2);
+      if(e.cast>0){c.save();c.setLineDash([12,9]);if(e.castType==='beam'){line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',5);c.globalAlpha=.13;line(c,[[e.x,e.y],[e.castX,e.castY]],'#f1b9d4',100);}else{const b=s.beacons.find(b=>b.id===e.castBeacon);if(b){circle(c,b.x,b.y,150,null,'#f1b9d4',4);c.fillStyle='#f6d7e5';c.font='bold 15px sans-serif';c.textAlign='center';c.fillText('即将压灯 · 换位',b.x,b.y-145);}}c.restore();}
     }
     c.restore();
     // A soft vignette creates depth without obscuring the character.

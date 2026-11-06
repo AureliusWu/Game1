@@ -1,6 +1,8 @@
-import {createGame,tick,pulse,chooseUpgrade,collides,distance,finalScore,WORLD,serialize,restore} from '../dist/core.mjs';
+import {createGame,tick,pulse,dash,chooseUpgrade,collides,distance,finalScore,WORLD,serialize,restore} from '../dist/core.mjs';
 import {openPOI,chooseStory,equip,forge,forgeCost,buy,chooseEvent,usePotion} from '../dist/systems.mjs';
-import {EVENTS,NPCS} from '../dist/content.mjs';
+import {EVENTS,NPCS,GEAR_BY_ID} from '../dist/content.mjs';
+import {pointSegmentDistance} from '../dist/expedition.mjs';
+import {safePoint} from '../dist/routes.mjs';
 const CELL=40,COLS=Math.ceil(WORLD.width/CELL),ROWS=Math.ceil(WORLD.height/CELL);
 function route(s,goal){
   const start=[Math.floor(s.player.x/CELL),Math.floor(s.player.y/CELL)];
@@ -23,22 +25,24 @@ function route(s,goal){
 }
 export function playJourney(seed,difficulty='normal',options={}){
   // Optional development policies and read-only observers support balance studies.
-  // Defaults preserve the complete-journey QA policy; no policy edits simulation state.
-  let s=createGame({seed,difficulty,profile:options.profile||{},contract:options.systems?'letters':'lamps',id:`bot-${seed}-${difficulty}-${options.share?'share':'promise'}`});let path=[],targetId='',repath=0;const milestones=[],shops=new Set();
+  // New-rule policies respond to visible cues; no policy edits simulation state.
+  let s=createGame({seed,difficulty,profile:options.profile||{},mode:options.mode,daily:options.daily,conditions:options.conditions,contract:options.contract||(options.systems?'letters':'lamps'),id:`bot-${seed}-${difficulty}-${options.share?'share':'promise'}`});let path=[],targetId='',repath=0;const milestones=[],shops=new Set();
+  const wear=id=>{const g=GEAR_BY_ID[id],current=GEAR_BY_ID[s.gear.slots[g.slot]];if(!options.build||g.set===options.build||current.set!==options.build)equip(s,id);};
   for(let frame=0;frame<24000&&s.phase!=='won'&&s.phase!=='lost';frame++){
-    if(s.phase==='upgrade'){milestones.push({chapter:s.chapter+1,time:s.totalTime});const id=s.offered.includes('spark')?'spark':s.offered.includes('lantern')?'lantern':s.offered[0];chooseUpgrade(s,id);path=[];targetId='';}
+    if(s.phase==='upgrade'){if(s.v12?.choiceKind!=='field')milestones.push({chapter:s.chapter+1,time:s.totalTime});const id=s.offered.includes('spark')?'spark':s.offered.includes('lantern')?'lantern':s.offered[0];chooseUpgrade(s,id);path=[];targetId='';}
     const p=s.player,unlit=s.beacons.filter(b=>!b.lit);let target,id;
     if(options.systems){
       const npc=s.pois.find(p=>p.kind==='npc'),chest=s.pois.find(p=>p.kind==='chest'),shop=s.pois.find(p=>p.kind==='shop'),event=s.pois.find(p=>p.kind==='event');
       if(!npc.used){
         if(options.share&&p.embers<2){target=s.embers.reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='story-ember'+target?.id;}
         else {target=npc;id=npc.id;if(distance(p,npc)<100){chooseStory(s,npc.id,options.share?'share':'promise');target=null;}}
-      }else if(!chest.used){target=chest;id=chest.id;if(distance(p,chest)<100){const loot=openPOI(s,chest.id);if(loot?.gear){equip(s,loot.gear);forge(s,loot.gear);}target=null;}}
-      else if(!shops.has(shop.id)){target=shop;id=shop.id;if(distance(p,shop)<100){const offer=shop.stock.find(i=>!['tea','potion'].includes(i.id)&&i.left&&i.price<=s.journal.coins&&!s.gear.inventory.some(g=>g.id===i.id));if(offer){buy(s,shop.id,offer.id);equip(s,offer.id);}else buy(s,shop.id,'potion');shops.add(shop.id);target=null;}}
+      }else if(!chest.used){target=chest;id=chest.id;if(distance(p,chest)<100){const loot=openPOI(s,chest.id);if(loot?.gear){wear(loot.gear);if(s.journal.coins>=34)forge(s,loot.gear);}target=null;}}
+      else if(!shops.has(shop.id)){target=shop;id=shop.id;if(distance(p,shop)<100){const offers=shop.stock.filter(i=>!['tea','potion'].includes(i.id)&&i.left&&i.price<=s.journal.coins&&!s.gear.inventory.some(g=>g.id===i.id)),offer=offers.find(i=>GEAR_BY_ID[i.id].set===options.build)||offers[0];if(offer){buy(s,shop.id,offer.id);wear(offer.id);}else buy(s,shop.id,'potion');shops.add(shop.id);target=null;}}
       else if(!event.used){target=event;id=event.id;if(distance(p,event)<100){const e=EVENTS[event.event];const choice=e.id==='bell'&&options.challenge?e.choices[0]:e.choices[1];if(!chooseEvent(s,event.id,choice.id)&&e.choices[0])chooseEvent(s,event.id,e.choices[0].id);target=null;}}
       else if(s.story.tasks.some(t=>!t.complete)&&s.beacons.some(b=>b.lit)){target=s.beacons.filter(b=>b.lit).reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='delivery-'+target.id;}
-      if(p.hp<p.maxHp*.45)usePotion(s);
-      for(const item of s.gear.inventory)if(item.level<3&&forgeCost(item)<=s.journal.coins&&s.gear.slots.lamp===item.id)forge(s,item.id);
+      if(!target&&options.risk&&s.pois.some(p=>p.kind==='risk'&&!p.used)){target=s.pois.find(p=>p.kind==='risk'&&!p.used);id=target.id;if(distance(p,target)<100){openPOI(s,target.id);target=null;}}
+      for(const item of s.gear.inventory)if(item.level<3&&forgeCost(item,s)<=s.journal.coins-(shops.has(shop.id)?0:22)&&s.gear.slots.lamp===item.id)forge(s,item.id);
+      if(options.build)for(const item of s.gear.inventory)if(GEAR_BY_ID[item.id].set===options.build)wear(item.id);
     }
     if(options.camp&&s.litTotal>0){target=s.beacons.find(b=>b.lit);id='camp';}
     if(options.campBoss&&s.bossSpawned&&!s.bossDefeated){target=s.beacons.filter(b=>b.lit).reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='boss-camp'+target.id;}
@@ -48,6 +52,13 @@ export function playJourney(seed,difficulty='normal',options={}){
     }else if(!target&&!s.exit.open&&s.bossSpawned){
       const boss=s.enemies.find(e=>e.kind==='boss');target=s.beacons.reduce((a,b)=>distance(b,boss||p)<distance(a,boss||p)?b:a);id='boss-safe'+target.id;
     }else if(!target){target=s.exit;id='exit';}
+    if(s.v12&&options.respond!==false&&!options.camp&&!options.campBoss){
+      if(p.hp<p.maxHp*.45)usePotion(s);
+      const boss=s.enemies.find(e=>e.kind==='boss'&&e.hp>0);
+      if(boss&&!s.exit.open&&distance(p,boss)>340){const d=distance(p,boss),point=safePoint(s,{x:boss.x+(p.x-boss.x)/d*260,y:boss.y+(p.y-boss.y)/d*260},20);if(point){target=point;id='approach-boss';}}
+      const cast=s.enemies.find(e=>e.cast>0&&e.castType==='beam'&&pointSegmentDistance(p,e,{x:e.castX,y:e.castY})<100);
+      if(cast){const dx=cast.castX-cast.x,dy=cast.castY-cast.y,d=Math.hypot(dx,dy),points=[1,-1].map(sign=>({x:p.x-dy/d*180*sign,y:p.y+dx/d*180*sign})),point=points.find(q=>!collides(s,q.x,q.y,22));if(point){target=point;id='evade-'+cast.id;}if(cast.cast<.5)dash(s);}
+    }
     if(!target)break;
     repath-=.05;if(id!==targetId||repath<=0){path=route(s,target);targetId=id;repath=1.5;}
     while(path.length>1&&distance(p,path[0])<18)path.shift();

@@ -25,6 +25,9 @@ export class AudioEngine {
     if(type==='shoot')this.tone(540,.09,'sine',.035,0,880);
     if(type==='death')this.tone(220,.2,'triangle',.05,0,110);
     if(type==='boss')this.tone(65,.9,'triangle',.16,0,55);
+    if(type==='boss-warning'){this.tone(220,.25,'triangle',.12);this.tone(330,.35,'triangle',.12,.2);}
+    if(type==='shield'||type==='interrupt'){this.tone(740,.2,'sine',.13);this.tone(990,.35,'sine',.08,.06);}
+    if(type==='echo'||type==='tailwind')this.tone(660,.35,'sine',.08,0,880);
     if(type==='lost'){this.tone(196,1,'sine',.15);this.tone(146.8,1.4,'sine',.1,.25);}
     if(['level','delivery','gear'].includes(type)){this.tone(659,.5,'sine',.13);this.tone(880,.7,'sine',.1,.1);}
     if(type==='forge'){this.tone(440,.14,'triangle',.13);this.tone(990,.3,'sine',.1,.08);}

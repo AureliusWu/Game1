@@ -4,9 +4,11 @@ import {equippedSets} from './systems.mjs';
 const numeric=['kills','collected','beacons','deliveries','chests','purchases','forges','events','coinsEarned','runs','wins','contracts'];
 const finite=n=>Number.isFinite(n)&&n>=0?n:0;
 const known=(values,allowed)=>[...new Set(Array.isArray(values)?values.filter(v=>allowed.includes(v)):[])];
+const newFlags=['courier-route','warden-block','dawn-echo','mixed-route','side-route','fair-route','small-route','express-route'];
+export function challengeKey(s){return `1.2.0:${s.daily||s.seed}:${[...(s.v12?.conditions||[])].sort().join('+')||'plain'}`;}
 export function createProfile(legacy={}){
   const totals=Object.fromEntries(numeric.map(k=>[k,0]));for(const k of ['beacons','runs','wins'])totals[k]=finite(legacy[k]);
-  return {version:1,stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false},bestCombo:0,bestLevel:1,ledger:{},dailies:[],lastRewards:null};
+  return {version:1,stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false,...Object.fromEntries(newFlags.map(id=>[id,false]))},bestCombo:0,bestLevel:1,ledger:{},dailies:[],challengeClaims:[],challengeBests:{},lastRewards:null};
 }
 export function readProfile(raw,legacy={}){
   try{
@@ -22,6 +24,8 @@ export function readProfile(raw,legacy={}){
     if(p.collection.includes(data.heirloom)&&GEAR_BY_ID[data.heirloom]?.tier>0)p.heirloom=data.heirloom;
     for(const k of Object.keys(p.flags))p.flags[k]=data.flags?.[k]===true;
     p.dailies=Array.isArray(data.dailies)?data.dailies.filter(x=>typeof x==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(x)).slice(-100):[];
+    p.challengeClaims=Array.isArray(data.challengeClaims)?[...new Set(data.challengeClaims.filter(x=>typeof x==='string'&&/^1\.2\.0:[\d-]+:[a-z+-]+$/.test(x)&&x.length<120))]:[];
+    if(data.challengeBests&&typeof data.challengeBests==='object')for(const [key,value]of Object.entries(data.challengeBests))if(p.challengeClaims.includes(key)&&Number.isFinite(value)&&value>0)p.challengeBests[key]=value;
     if(data.ledger&&typeof data.ledger==='object'&&!Array.isArray(data.ledger))for(const [id,record]of Object.entries(data.ledger).slice(-80)){
       if(id.length>120||!record||typeof record!=='object'||['__proto__','constructor','prototype'].includes(id))continue;
       const entry={final:record.final===true};for(const k of numeric)entry[k]=finite(record[k]);p.ledger[id]=entry;
@@ -36,7 +40,8 @@ const hasAchievement={
  'shopper':p=>p.totals.purchases>=1,'smith':p=>p.totals.forges>=1,'wardrobe':p=>p.collection.length>=9,
  'set':p=>p.flags.fullSet,'combo':p=>p.bestCombo>=5,'letters':p=>p.letters.length===3,'courier':p=>p.totals.deliveries>=3,
  'dawn':p=>p.totals.wins>=1,'swift':p=>p.flags.swift,'night':p=>p.flags.night,'hearth':p=>p.endings.includes('hearth'),
- 'veteran':p=>p.totals.wins>=5,'flawless':p=>p.flags.flawless,'level':p=>p.bestLevel>=6,'contract':p=>p.totals.contracts>=3
+ 'veteran':p=>p.totals.wins>=5,'flawless':p=>p.flags.flawless,'level':p=>p.bestLevel>=6,'contract':p=>p.totals.contracts>=3,
+ ...Object.fromEntries(newFlags.map(id=>[id,p=>p.flags[id]]))
 };
 export function recordProgress(p,s,{final=false}={}){
   const unlocked=[];if(!s?.systemsVersion)return unlocked;
@@ -51,13 +56,23 @@ export function recordProgress(p,s,{final=false}={}){
   for(const c of s.story.choices){const key=c.npc+':'+c.choice;if(!p.choices.includes(key))p.choices.push(key);}
   p.bestCombo=Math.max(p.bestCombo,s.journal.bestCombo);p.bestLevel=Math.max(p.bestLevel,s.journal.level);
   if(Object.values(equippedSets(s)).some(n=>n>=3))p.flags.fullSet=true;
+  if(s.rulesVersion===120){const v=s.v12;
+    if(v.courierDeliveries>0)p.flags['courier-route']=true;if(v.wardenBlocks>0)p.flags['warden-block']=true;if(v.echoes>0)p.flags['dawn-echo']=true;if(v.riskCleared>0)p.flags['side-route']=true;
+    if(s.phase==='won'){if(Object.keys(equippedSets(s)).length>=2)p.flags['mixed-route']=true;if(v.mode==='challenge')p.flags['fair-route']=true;if(v.conditions.includes('small-bag'))p.flags['small-route']=true;if(v.conditions.includes('express')&&s.totalTime<=180)p.flags['express-route']=true;}
+  }
   if(final&&['won','lost'].includes(s.phase)&&!previous.final){
     previous.final=true;p.totals.runs++;
-    const won=s.phase==='won';let base=(won?2:0)+Math.floor(s.litTotal/3),contract=0,daily=0;
+    const won=s.phase==='won',fair=s.v12?.mode==='challenge',key=fair?challengeKey(s):'';let base=(won?2:0)+Math.floor(s.litTotal/3),contract=0,daily=0,conditionBonus=0;
     if(won){p.totals.wins++;if(!p.endings.includes(s.story.ending))p.endings.push(s.story.ending);if(s.difficulty==='night')p.flags.night=true;if(s.damageTaken===0)p.flags.flawless=true;if(s.totalTime<=180)p.flags.swift=true;}
     if(s.contract.complete){contract=CONTRACTS.find(c=>c.id===s.contract.id).reward;p.totals.contracts++;}
     if(won&&s.daily&&!p.dailies.includes(s.daily)){daily=3;p.dailies.push(s.daily);if(p.dailies.length>100)p.dailies.shift();}
-    reward(p,base+contract+daily);p.lastRewards={journey:id,base,contract,daily,total:base+contract+daily};
+    if(s.v12?.conditions.includes('express')&&won&&s.totalTime<=180)conditionBonus=1;
+    if(fair){
+      if(won)p.challengeBests[key]=Math.min(p.challengeBests[key]||Infinity,s.totalTime);
+      if(!won||p.challengeClaims.includes(key)){base=0;contract=0;daily=0;conditionBonus=0;}
+      else {p.challengeClaims.push(key);daily=3;}
+    }
+    reward(p,base+contract+daily+conditionBonus);p.lastRewards={journey:id,base,contract,daily,conditionBonus,challenge:key,total:base+contract+daily+conditionBonus};
   }
   p.ledger[id]=previous;
   if(Object.keys(p.ledger).length>80){const oldest=Object.keys(p.ledger).find(k=>k!==id);delete p.ledger[oldest];}

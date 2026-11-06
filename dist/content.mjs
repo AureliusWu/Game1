@@ -1,11 +1,32 @@
 /** Original authored content for 暮色百事. Data only; shared by simulation and UI. */
-export const EXPANSION='暮色百事';
+export const EXPANSION='夜路有选择';
+export const UPGRADES=[
+ {id:'wing',name:'顺风之羽',desc:'移动速度 +18%，冲刺冷却 -0.45 秒',symbol:'wind',category:'move',max:2},
+ {id:'lantern',name:'长明灯芯',desc:'生命上限 +25',symbol:'flame',category:'survive',max:2},
+ {id:'ring',name:'日轮回响',desc:'光环范围 +25%，伤害 +15',symbol:'sun',category:'attack',max:2},
+ {id:'spark',name:'双星邮戳',desc:'自动光弹额外攻击一名目标',symbol:'star',category:'attack',max:2},
+ {id:'magnet',name:'拾光口袋',desc:'拾取范围 +65%，火种回复 +3',symbol:'bag',category:'survive',max:2},
+ {id:'express',name:'急递印记',desc:'冲刺后 2 秒内下一轮光弹伤害 +25%',symbol:'wind',category:'move',max:1},
+ {id:'return',name:'余烬返航',desc:'光环命中至少两名敌人，返还 0.6 秒冷却，每次施放一次',symbol:'sun',category:'attack',max:1},
+ {id:'paper-shield',name:'护信纸盾',desc:'点灯后获得一次抵挡，持续 6 秒，无敌期间不消耗',symbol:'shield',category:'survive',max:1},
+ {id:'focus',name:'聚焦灯芯',desc:'一轮光弹只有一名合法目标时，伤害 +25%',symbol:'star',category:'attack',max:1},
+ {id:'waymark',name:'余光路标',desc:'每封信投递后，接下来两次光环伤害 +20%',symbol:'letter',category:'attack',max:1},
+ {id:'seal',name:'补给封签',desc:'补给溢出治疗转为最多 20 点护盾，持续 8 秒，缺血时可用',symbol:'tea',category:'survive',max:1},
+ {id:'afterglow',name:'留灯一刻',desc:'离灯后 3 秒内环境生命流失降低 50%，不减免攻击',symbol:'flame',category:'move',max:1}
+];
+export const CONDITIONS=[
+ {id:'fog',name:'浓雾',desc:'远处景物隐入雾中，近身预警与灯塔方向仍清楚'},
+ {id:'small-bag',name:'小包裹',desc:'最多携带 8 枚火种，规划点灯、分享与奇遇顺序'},
+ {id:'express',name:'加急投递',desc:'180 秒内送达额外获 1 枚邮票；超时可继续，菜单和剧情暂停计时'},
+ {id:'elite-patrol',name:'精英巡夜',desc:'每章两只巡逻强化为精英，共用有限巡逻奖励预算'}
+];
+export const LEGACY_SETS={courier:'每次击败影兽额外获得 2 星砂',warden:'生命上限 +20，火种额外回复 3 生命',dawn:'光环冷却 -1.2 秒'};
 export const SLOTS={lamp:'提灯',cape:'披羽',bag:'邮包'};
 export const SETS={
   plain:{name:'旧日行装',two:'熟悉的旅伴',three:'不提供套装加成'},
-  courier:{name:'远行邮差',two:'移动速度 +12',three:'每次击败影兽额外获得 2 星砂'},
-  warden:{name:'守灯人',two:'伤害减免 +8%',three:'生命上限 +20，火种额外回复 3 生命'},
-  dawn:{name:'曙光回声',two:'暴击率 +12%',three:'光环冷却 -1.2 秒'}
+  courier:{name:'远行邮差',two:'移动速度 +12',three:'冲刺拾取火种触发 3 秒顺风（移速 +25%，间隔 5 秒）'},
+  warden:{name:'守灯人',two:'伤害减免 +8%',three:'光环展开一次抵挡，持续 3 秒'},
+  dawn:{name:'曙光回声',two:'暴击率 +12%',three:'光环标记 4 秒；光弹引发 100 范围回响（间隔 1 秒）'}
 };
 export const GEAR=[
   {id:'paper-lamp',name:'纸罩提灯',slot:'lamp',set:'plain',tier:0,icon:'flame',price:0,desc:'旧邮局发给新人的第一盏灯。',stats:{}},
@@ -23,7 +44,7 @@ export const GEAR=[
 ];
 export const GEAR_BY_ID=Object.fromEntries(GEAR.map(g=>[g.id,g]));
 export const STAT_NAMES={maxHp:'生命上限',speed:'移动速度',damage:'光弹伤害',armor:'伤害减免',crit:'暴击率',pickup:'拾取范围',heal:'火种回复',pulseDamage:'光环伤害',pulseRadius:'光环范围',pulseMax:'光环冷却',dashMax:'冲刺冷却',attackRate:'光弹间隔',potionHeal:'补给回复'};
-export function gearDescription(item){const g=GEAR_BY_ID[item.id];if(!g)return '';const mult=1+(item.level-1)*.4;return Object.entries(g.stats).map(([key,value])=>{const n=value*mult;return `${STAT_NAMES[key]} ${n>0?'+':''}${['armor','crit'].includes(key)?Math.round(n*100)+'%':Math.abs(n)<1?n.toFixed(2)+'s':Number(n.toFixed(1))}`;}).join(' · ')||'基础行装 · 陪你开始这段旅途';}
+export function gearDescription(item,rules=120){const g=GEAR_BY_ID[item.id];if(!g)return '';const mult=1+((item.level||1)-1)*(rules===111?.4:.25);return Object.entries(g.stats).map(([key,value])=>{const n=value*mult;return `${STAT_NAMES[key]} ${n>0?'+':''}${['armor','crit'].includes(key)?Math.round(n*100)+'%':Math.abs(n)<1?n.toFixed(2)+'s':Number(n.toFixed(1))}`;}).join(' · ')||'基础行装 · 陪你开始这段旅途';}
 export const TALENTS=[
   {id:'lamp',name:'长明课程',icon:'flame',desc:'每级生命上限 +6',max:3},
   {id:'wing',name:'夜航训练',icon:'wind',desc:'每级移动速度 +5',max:3},
@@ -93,11 +114,21 @@ export const ACHIEVEMENTS=[
  {id:'veteran',name:'暮色老员工',desc:'累计五次把黎明送达',icon:'bag',reward:3},
  {id:'flawless',name:'不落的一羽',desc:'避开攻击与奇遇伤害并通关',icon:'shield',reward:3},
  {id:'level',name:'逐渐熟练',desc:'一段旅途达到 6 级',icon:'star',reward:2},
- {id:'contract',name:'件件有交代',desc:'累计完成三份邮局委托',icon:'check',reward:2}
+ {id:'contract',name:'件件有交代',desc:'累计完成三份邮局委托',icon:'check',reward:2},
+ {id:'courier-route',name:'风替我签收',desc:'穿远行邮差三件套完成一次投递',icon:'wind',reward:0,story:'邮袋上的羽毛轻轻转动。收信的人说，今天的风很温柔。'},
+ {id:'warden-block',name:'留一盏灯',desc:'用守灯人三件套抵挡一次攻击',icon:'shield',reward:0,story:'烛羽把灯举高了一点。身后的人，终于有时间把围巾系好。'},
+ {id:'dawn-echo',name:'光有回声',desc:'用曙光回声三件套触发一次回响',icon:'sun',reward:0,story:'光照出去的时候，你听见城市轻轻答了一声。'},
+ {id:'mixed-route',name:'自己的行装',desc:'混搭至少两个非基础套装并通关',icon:'bag',reward:0,story:'没有统一的制服，也有能把信送到的人。'},
+ {id:'side-route',name:'绕一点远路',desc:'完成一次风险支路，击败守卫取回装备',icon:'star',reward:0,story:'那条没有路牌的巷子，原来也通向一个等信的人。'},
+ {id:'fair-route',name:'同一束起点',desc:'首次完成统一预设的公平挑战航线',icon:'check',reward:0,story:'同一盏灯、同一个清晨。你走出了属于自己的路线。'},
+ {id:'small-route',name:'小小邮包',desc:'携带小包裹条件通关',icon:'bag',reward:0,story:'能装下的东西有限，愿意带走的心意没有变少。'},
+ {id:'express-route',name:'晨风之前',desc:'带加急投递条件，在 180 秒内通关',icon:'wind',reward:0,story:'窗户打开的那一刻，信已经在门口了。'}
 ];
 export const BESTIARY=[
  {id:'shade',name:'迷途影',desc:'普通影兽。追随最近的光，也会被已经亮起的灯塔驱散。'},
  {id:'runner',name:'迅影',desc:'速度很快，生命较低。留一段冲刺，不要被它贴住。'},
  {id:'brute',name:'重影',desc:'行动迟缓，生命与攻击都更高。光环可以为你争取空间。'},
- {id:'boss',name:'守夜者',desc:'曾经的点灯人。能够进入灯塔范围，周期释放十向光球。也许，比战斗更早的东西仍在等他。'}
+ {id:'boss',name:'守夜者',desc:'曾经的点灯人。七成生命时预告压灯，低于三成半时蓄力定向回声。侧移、冲刺或近身光环能回应他的招式。'},
+ {id:'caster',name:'投影者',desc:'先标出方向，再释放穿越屋檐的投影。金紫色虚线出现时侧移；灯塔会挡光球，但不能挡投影。'},
+ {id:'warder',name:'结界者',desc:'周围 130 范围的其他影兽受到的光弹伤害降低 40%。先处理结界者，或绕到另一条路。'}
 ];

@@ -1,0 +1,6587 @@
+{
+  "version": "1.2.0",
+  "sourceCommit": "d8f1a07bf2f4e779920412e7c2458189674966bf",
+  "sourceCommitNote": "Repository HEAD at start; file hashes identify the runtime and working-tree analysis actually executed.",
+  "runtimeHashes": {
+    "app.mjs": "e818fb73983f9b57c692a31303205279d96b0ce2316206f527a15bb27d8c3f20",
+    "audio.mjs": "81670d92ebc657d87a8e644858d39540e99eee75b871dd30a711ce6c8a2c54ff",
+    "content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+    "core.mjs": "3dfb7a7bc16de46e5b61cb3bb46cdb7096aa4ca235f28e9f1f7c09786b08ace9",
+    "expedition.mjs": "77d4ff7284ff88412323d1a92201c7e7fd59e10dddd641f46bfbc97de5ae51ec",
+    "hub.mjs": "a27542040a06931007c03295cbb46534f7af9d2a53c74cabe1ee153b5ab70d0e",
+    "icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+    "icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+    "icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+    "index.html": "9660ec84b84e7b86795c54eaeb0df1543f3b49a4203c9a2b7da8b1664daf72f3",
+    "manifest.webmanifest": "8c88419661786cb0e8f48f8d79090208c212b611b996db4bc41a087062057757",
+    "progress.mjs": "daf66baee617f602840dd392d9b84b040fc3b3df5bf7bbaad74a6c6395c4a415",
+    "render.mjs": "34a146139bc808c019324ffea3c28833a897d2cb4dd8100d7489558a295193da",
+    "routes.mjs": "7720aa505aecc3493cf42fff435eb54116cc820cf6b69f2d379166c5f8423576",
+    "style.css": "497560eb5c076fa5f2740fca804b8d334126c1b9ee8d3fb757eb0e8f9e143d53",
+    "sw.js": "406d9e3d3ba4e413b3d9157c1c6d31618320767f2d4dbbb9d88dcbbb7b21283d",
+    "systems.mjs": "c8ca1da55cf2ef05b7d3faa701c49de6a20837551120c68f210078816e82fca8"
+  },
+  "analysisHashes": {
+    "tests/journey-bot.mjs": "9f4b1475b3b373a88e320f152631b7b0e6560f2721a577330d7e596145ad83bf",
+    "scripts/balance-audit.mjs": "961ccaa6010f615ffdd60c50025afdf0e23fa844bd302af902385db41958dc44"
+  },
+  "command": "node scripts/balance-audit.mjs",
+  "seeds": {
+    "journeys": [
+      1001,
+      1020
+    ],
+    "probes": [
+      1001,
+      1010
+    ]
+  },
+  "date": "2026-11-06",
+  "timezone": "Asia/Shanghai",
+  "quantiles": "Linear interpolation at (n-1)*q; the median averages the two central values for even sample sizes.",
+  "method": "Deterministic navigation bot from tests/journey-bot.mjs with optional profile input, no-pulse, actual beacon-directed stationary policies and read-only observers. Uses real movement, collections, lamp costs, enemies and exits; no teleporting, health edits or boss bypasses.",
+  "limits": [
+    "Bots know world positions and use pathfinding; they are not human players.",
+    "Simulation times exclude UI reading, shopping decisions and render costs.",
+    "Bot success rates do not estimate human win rates.",
+    "time includes right-censored 1200-second policy timeouts; winTime includes successful journeys only.",
+    "Final HP includes recovery effects and is not a stand-alone measure of combat pressure.",
+    "firstRunStamps is estimated only for fresh-profile terminal runs; maximal-profile and incomplete probes leave it blank.",
+    "camp_120s is an incomplete one-beacon farming probe; it is not counted as a completed journey.",
+    "Maximal is a configured all-talents-level-3 profile with a discovered prism-lamp heirloom; no live player data is used."
+  ],
+  "journeys": 360,
+  "campProbes": 30,
+  "bossCampJourneys": 30,
+  "startStats": {
+    "fresh": {
+      "hp": 100,
+      "speed": 195,
+      "boltDamage": 24,
+      "boltInterval": 1.2,
+      "crit": 0,
+      "expectedBoltDPS": 20,
+      "potions": 1,
+      "coins": 12
+    },
+    "maximal": {
+      "hp": 118,
+      "speed": 210,
+      "boltDamage": 40,
+      "boltInterval": 1.2,
+      "crit": 0.06,
+      "expectedBoltDPS": 34.83,
+      "potions": 4,
+      "coins": 27
+    }
+  },
+  "groups": [
+    {
+      "key": "journey|fresh|wander|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 58.85,
+        "median": 65.35,
+        "p90": 70.48,
+        "max": 75.05
+      },
+      "hpPercent": {
+        "min": 99.65,
+        "median": 99.88,
+        "p90": 99.96,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 14.3,
+        "median": 42.9,
+        "p90": 58.63,
+        "max": 73.45
+      },
+      "kills": {
+        "min": 8,
+        "median": 11,
+        "p90": 13,
+        "max": 13
+      },
+      "score": {
+        "min": 5242,
+        "median": 5381,
+        "p90": 5430.5,
+        "max": 5450
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 183,
+        "median": 198.5,
+        "p90": 206,
+        "max": 206
+      },
+      "coinsEarned": {
+        "min": 171,
+        "median": 186.5,
+        "p90": 194,
+        "max": 194
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3.2,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 5,
+        "p90": 7,
+        "max": 8
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 17,
+        "median": 17,
+        "p90": 19,
+        "max": 19
+      },
+      "minHp": {
+        "min": 71.6,
+        "median": 98.97,
+        "p90": 99.55,
+        "max": 99.62
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 55.61,
+        "median": 100.74,
+        "p90": 138.85,
+        "max": 166.3
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 58.85,
+        "median": 65.35,
+        "p90": 70.48,
+        "max": 75.05
+      }
+    },
+    {
+      "key": "journey|fresh|wander|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 77.7,
+        "median": 86.1,
+        "p90": 94.77,
+        "max": 96.3
+      },
+      "hpPercent": {
+        "min": 99.2,
+        "median": 99.9,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.95,
+        "p90": 69.94,
+        "max": 78.4
+      },
+      "kills": {
+        "min": 14,
+        "median": 16,
+        "p90": 18,
+        "max": 19
+      },
+      "score": {
+        "min": 5528,
+        "median": 5639,
+        "p90": 5784,
+        "max": 5808
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 168,
+        "median": 219,
+        "p90": 262.8,
+        "max": 296
+      },
+      "coinsEarned": {
+        "min": 328,
+        "median": 353,
+        "p90": 359.3,
+        "max": 363
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 4
+      },
+      "pulses": {
+        "min": 3,
+        "median": 7,
+        "p90": 9,
+        "max": 9
+      },
+      "forges": {
+        "min": 2,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 29,
+        "median": 31,
+        "p90": 33,
+        "max": 33
+      },
+      "minHp": {
+        "min": 81.06,
+        "median": 98.81,
+        "p90": 99.24,
+        "max": 99.5
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 93.04,
+        "median": 131.68,
+        "p90": 159.19,
+        "max": 178.88
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 77.7,
+        "median": 86.1,
+        "p90": 94.77,
+        "max": 96.3
+      }
+    },
+    {
+      "key": "journey|fresh|wander|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 77.05,
+        "median": 86.75,
+        "p90": 95.42,
+        "max": 99.7
+      },
+      "hpPercent": {
+        "min": 99.28,
+        "median": 99.91,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 43.16,
+        "p90": 62.5,
+        "max": 72.6
+      },
+      "kills": {
+        "min": 14,
+        "median": 16,
+        "p90": 18.1,
+        "max": 19
+      },
+      "score": {
+        "min": 5522,
+        "median": 5685.5,
+        "p90": 5761.2,
+        "max": 5794
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 142,
+        "median": 197,
+        "p90": 247.5,
+        "max": 283
+      },
+      "coinsEarned": {
+        "min": 319,
+        "median": 336,
+        "p90": 345,
+        "max": 347
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1.5,
+        "p90": 4,
+        "max": 6
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 9,
+        "max": 9
+      },
+      "forges": {
+        "min": 2,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 32,
+        "median": 34,
+        "p90": 34,
+        "max": 36
+      },
+      "minHp": {
+        "min": 89.06,
+        "median": 99.88,
+        "p90": 99.93,
+        "max": 99.95
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 105.4,
+        "median": 152.59,
+        "p90": 191.36,
+        "max": 205.44
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 77.05,
+        "median": 86.75,
+        "p90": 95.42,
+        "max": 99.7
+      }
+    },
+    {
+      "key": "journey|fresh|normal|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 58.2,
+        "median": 63.88,
+        "p90": 72.72,
+        "max": 74.15
+      },
+      "hpPercent": {
+        "min": 79.12,
+        "median": 99.02,
+        "p90": 99.92,
+        "max": 99.95
+      },
+      "damageTaken": {
+        "min": 44,
+        "median": 83,
+        "p90": 131.9,
+        "max": 172
+      },
+      "kills": {
+        "min": 9,
+        "median": 13,
+        "p90": 14.2,
+        "max": 17
+      },
+      "score": {
+        "min": 6636,
+        "median": 6805,
+        "p90": 6949.8,
+        "max": 7010
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 187,
+        "median": 203,
+        "p90": 216.2,
+        "max": 222
+      },
+      "coinsEarned": {
+        "min": 175,
+        "median": 191,
+        "p90": 204.2,
+        "max": 210
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 7
+      },
+      "pulses": {
+        "min": 3,
+        "median": 5.5,
+        "p90": 7,
+        "max": 7
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 17,
+        "median": 17,
+        "p90": 19,
+        "max": 19
+      },
+      "minHp": {
+        "min": 42.75,
+        "median": 67.6,
+        "p90": 98.05,
+        "max": 99.22
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 93.3,
+        "median": 133.57,
+        "p90": 220.54,
+        "max": 233.42
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 58.2,
+        "median": 63.88,
+        "p90": 72.72,
+        "max": 74.15
+      }
+    },
+    {
+      "key": "journey|fresh|normal|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 73.9,
+        "median": 85.97,
+        "p90": 94.21,
+        "max": 102.35
+      },
+      "hpPercent": {
+        "min": 99.59,
+        "median": 99.85,
+        "p90": 99.98,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 55.24,
+        "p90": 99.14,
+        "max": 131
+      },
+      "kills": {
+        "min": 16,
+        "median": 20,
+        "p90": 22,
+        "max": 23
+      },
+      "score": {
+        "min": 6991,
+        "median": 7267,
+        "p90": 7401.7,
+        "max": 7453
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 181,
+        "median": 229.5,
+        "p90": 279.3,
+        "max": 319
+      },
+      "coinsEarned": {
+        "min": 343,
+        "median": 367.5,
+        "p90": 381.1,
+        "max": 384
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 7.5,
+        "p90": 9.1,
+        "max": 11
+      },
+      "forges": {
+        "min": 2,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 31,
+        "median": 33,
+        "p90": 33,
+        "max": 33
+      },
+      "minHp": {
+        "min": 73.2,
+        "median": 96.75,
+        "p90": 98.7,
+        "max": 99.13
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 94.38,
+        "median": 145.84,
+        "p90": 212.38,
+        "max": 217.27
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 73.9,
+        "median": 85.97,
+        "p90": 94.21,
+        "max": 102.35
+      }
+    },
+    {
+      "key": "journey|fresh|normal|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.55,
+        "median": 87.95,
+        "p90": 95.16,
+        "max": 106.5
+      },
+      "hpPercent": {
+        "min": 94.75,
+        "median": 99.85,
+        "p90": 99.97,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 65.5,
+        "p90": 102.68,
+        "max": 168
+      },
+      "kills": {
+        "min": 17,
+        "median": 20,
+        "p90": 22.1,
+        "max": 23
+      },
+      "score": {
+        "min": 7028,
+        "median": 7282.5,
+        "p90": 7397.4,
+        "max": 7491
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 175,
+        "median": 213.5,
+        "p90": 262.2,
+        "max": 308
+      },
+      "coinsEarned": {
+        "min": 325,
+        "median": 351.5,
+        "p90": 364.2,
+        "max": 370
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 6
+      },
+      "pulses": {
+        "min": 5,
+        "median": 6.5,
+        "p90": 11,
+        "max": 11
+      },
+      "forges": {
+        "min": 2,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 32,
+        "median": 36,
+        "p90": 36,
+        "max": 38
+      },
+      "minHp": {
+        "min": 88.39,
+        "median": 99.8,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 127.33,
+        "median": 187.48,
+        "p90": 257.67,
+        "max": 280.35
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.55,
+        "median": 87.95,
+        "p90": 95.16,
+        "max": 106.5
+      }
+    },
+    {
+      "key": "journey|fresh|night|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 56.85,
+        "median": 65.78,
+        "p90": 73.67,
+        "max": 74.4
+      },
+      "hpPercent": {
+        "min": 45.02,
+        "median": 90.23,
+        "p90": 99.89,
+        "max": 99.94
+      },
+      "damageTaken": {
+        "min": 51.2,
+        "median": 112.64,
+        "p90": 147.58,
+        "max": 197.12
+      },
+      "kills": {
+        "min": 11,
+        "median": 14,
+        "p90": 15.1,
+        "max": 16
+      },
+      "score": {
+        "min": 8607,
+        "median": 8890,
+        "p90": 9026.8,
+        "max": 9218
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 198,
+        "median": 208.5,
+        "p90": 214.1,
+        "max": 215
+      },
+      "coinsEarned": {
+        "min": 186,
+        "median": 196.5,
+        "p90": 202.1,
+        "max": 203
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 1,
+        "p90": 1,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1.5,
+        "p90": 3.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 3,
+        "median": 6,
+        "p90": 8,
+        "max": 9
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 20,
+        "median": 21,
+        "p90": 22,
+        "max": 22
+      },
+      "minHp": {
+        "min": 5.18,
+        "median": 57.06,
+        "p90": 89.65,
+        "max": 98.98
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 3.45
+      },
+      "healed": {
+        "min": 110.04,
+        "median": 181.37,
+        "p90": 217.55,
+        "max": 248.36
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 56.85,
+        "median": 65.78,
+        "p90": 73.67,
+        "max": 74.4
+      }
+    },
+    {
+      "key": "journey|fresh|night|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 76.4,
+        "median": 87.47,
+        "p90": 96.5,
+        "max": 101.05
+      },
+      "hpPercent": {
+        "min": 80.05,
+        "median": 99.68,
+        "p90": 99.88,
+        "max": 99.93
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 69.2,
+        "p90": 143.76,
+        "max": 160.28
+      },
+      "kills": {
+        "min": 15,
+        "median": 22,
+        "p90": 24.1,
+        "max": 26
+      },
+      "score": {
+        "min": 9056,
+        "median": 9498.5,
+        "p90": 9805.1,
+        "max": 9963
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 201,
+        "median": 230.5,
+        "p90": 283.3,
+        "max": 287
+      },
+      "coinsEarned": {
+        "min": 347,
+        "median": 376.5,
+        "p90": 388.1,
+        "max": 395
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "dashes": {
+        "min": 1,
+        "median": 3,
+        "p90": 6,
+        "max": 7
+      },
+      "pulses": {
+        "min": 3,
+        "median": 7,
+        "p90": 9.1,
+        "max": 10
+      },
+      "forges": {
+        "min": 3,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 34,
+        "median": 36,
+        "p90": 38,
+        "max": 38
+      },
+      "minHp": {
+        "min": 52.67,
+        "median": 93.45,
+        "p90": 98.02,
+        "max": 98.85
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 103.59,
+        "median": 179.82,
+        "p90": 228.98,
+        "max": 297.92
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 76.4,
+        "median": 87.47,
+        "p90": 96.5,
+        "max": 101.05
+      }
+    },
+    {
+      "key": "journey|fresh|night|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.25,
+        "median": 89.05,
+        "p90": 93.83,
+        "max": 95.55
+      },
+      "hpPercent": {
+        "min": 89.87,
+        "median": 99.8,
+        "p90": 99.9,
+        "max": 99.93
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 68.3,
+        "p90": 140.26,
+        "max": 185.68
+      },
+      "kills": {
+        "min": 15,
+        "median": 22,
+        "p90": 24.1,
+        "max": 25
+      },
+      "score": {
+        "min": 9079,
+        "median": 9572.5,
+        "p90": 9731.9,
+        "max": 10005
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 164,
+        "median": 218.5,
+        "p90": 271.5,
+        "max": 290
+      },
+      "coinsEarned": {
+        "min": 322,
+        "median": 357.5,
+        "p90": 370.1,
+        "max": 381
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 8,
+        "p90": 9,
+        "max": 10
+      },
+      "forges": {
+        "min": 2,
+        "median": 5,
+        "p90": 6,
+        "max": 7
+      },
+      "firstRunStamps": {
+        "min": 37,
+        "median": 39,
+        "p90": 39.2,
+        "max": 41
+      },
+      "minHp": {
+        "min": 55.86,
+        "median": 99.71,
+        "p90": 99.8,
+        "max": 99.84
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 124.44,
+        "median": 204.42,
+        "p90": 264.94,
+        "max": 309.15
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.25,
+        "median": 89.05,
+        "p90": 93.83,
+        "max": 95.55
+      }
+    },
+    {
+      "key": "journey|maximal|wander|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 51,
+        "median": 56.13,
+        "p90": 61.36,
+        "max": 63.4
+      },
+      "hpPercent": {
+        "min": 99.73,
+        "median": 99.91,
+        "p90": 99.98,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 14.3,
+        "p90": 28.6,
+        "max": 42.9
+      },
+      "kills": {
+        "min": 7,
+        "median": 11,
+        "p90": 13,
+        "max": 13
+      },
+      "score": {
+        "min": 5206,
+        "median": 5357,
+        "p90": 5435.3,
+        "max": 5471
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 191,
+        "median": 210,
+        "p90": 218.3,
+        "max": 221
+      },
+      "coinsEarned": {
+        "min": 164,
+        "median": 183,
+        "p90": 191.3,
+        "max": 194
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "pulses": {
+        "min": 2,
+        "median": 3,
+        "p90": 5,
+        "max": 6
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 113.4,
+        "median": 117.26,
+        "p90": 117.55,
+        "max": 117.6
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 41.92,
+        "median": 74.34,
+        "p90": 96.41,
+        "max": 122.39
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 51,
+        "median": 56.13,
+        "p90": 61.36,
+        "max": 63.4
+      }
+    },
+    {
+      "key": "journey|maximal|wander|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 71.6,
+        "median": 81.47,
+        "p90": 86.73,
+        "max": 87.5
+      },
+      "hpPercent": {
+        "min": 99.47,
+        "median": 99.92,
+        "p90": 99.97,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 36.52,
+        "p90": 52.99,
+        "max": 84.3
+      },
+      "kills": {
+        "min": 14,
+        "median": 15.5,
+        "p90": 17.1,
+        "max": 18
+      },
+      "score": {
+        "min": 5442,
+        "median": 5586,
+        "p90": 5661.5,
+        "max": 5772
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 192,
+        "median": 215,
+        "p90": 250,
+        "max": 260
+      },
+      "coinsEarned": {
+        "min": 327,
+        "median": 347.5,
+        "p90": 355.4,
+        "max": 362
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 3,
+        "max": 4
+      },
+      "pulses": {
+        "min": 3,
+        "median": 5,
+        "p90": 7.2,
+        "max": 9
+      },
+      "forges": {
+        "min": 5,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 98.3,
+        "median": 116.72,
+        "p90": 117.33,
+        "max": 117.53
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 94.35,
+        "median": 123.87,
+        "p90": 158.14,
+        "max": 184.25
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 71.6,
+        "median": 81.47,
+        "p90": 86.73,
+        "max": 87.5
+      }
+    },
+    {
+      "key": "journey|maximal|wander|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.1,
+        "median": 82.75,
+        "p90": 89.69,
+        "max": 90.5
+      },
+      "hpPercent": {
+        "min": 99.74,
+        "median": 99.94,
+        "p90": 99.98,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 38.15,
+        "p90": 69.41,
+        "max": 72.92
+      },
+      "kills": {
+        "min": 14,
+        "median": 16,
+        "p90": 18,
+        "max": 19
+      },
+      "score": {
+        "min": 5506,
+        "median": 5661,
+        "p90": 5738.6,
+        "max": 5772
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 174,
+        "median": 205.5,
+        "p90": 236.3,
+        "max": 242
+      },
+      "coinsEarned": {
+        "min": 309,
+        "median": 333,
+        "p90": 341,
+        "max": 345
+      },
+      "purchases": {
+        "min": 2,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 4
+      },
+      "pulses": {
+        "min": 1,
+        "median": 5,
+        "p90": 7.2,
+        "max": 9
+      },
+      "forges": {
+        "min": 5,
+        "median": 5.5,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 107.12,
+        "median": 117.89,
+        "p90": 117.93,
+        "max": 117.95
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 105.3,
+        "median": 156.08,
+        "p90": 184.02,
+        "max": 191.15
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.1,
+        "median": 82.75,
+        "p90": 89.69,
+        "max": 90.5
+      }
+    },
+    {
+      "key": "journey|maximal|normal|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 50.95,
+        "median": 57.6,
+        "p90": 61.4,
+        "max": 65.55
+      },
+      "hpPercent": {
+        "min": 74.03,
+        "median": 99.8,
+        "p90": 99.95,
+        "max": 99.96
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 22,
+        "p90": 46.2,
+        "max": 123
+      },
+      "kills": {
+        "min": 8,
+        "median": 12,
+        "p90": 14,
+        "max": 14
+      },
+      "score": {
+        "min": 6421,
+        "median": 6730.5,
+        "p90": 6900.2,
+        "max": 6972
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 195,
+        "median": 215.5,
+        "p90": 222,
+        "max": 228
+      },
+      "coinsEarned": {
+        "min": 168,
+        "median": 188.5,
+        "p90": 195,
+        "max": 201
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 2,
+        "max": 3
+      },
+      "pulses": {
+        "min": 2,
+        "median": 4,
+        "p90": 5,
+        "max": 5
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 63.15,
+        "median": 116.53,
+        "p90": 117.22,
+        "max": 117.32
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 57.3,
+        "median": 80.16,
+        "p90": 146.94,
+        "max": 197.76
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 50.95,
+        "median": 57.6,
+        "p90": 61.4,
+        "max": 65.55
+      }
+    },
+    {
+      "key": "journey|maximal|normal|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.95,
+        "median": 82.28,
+        "p90": 86.54,
+        "max": 90.25
+      },
+      "hpPercent": {
+        "min": 96.53,
+        "median": 99.86,
+        "p90": 99.95,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.49,
+        "p90": 79.48,
+        "max": 106
+      },
+      "kills": {
+        "min": 16,
+        "median": 19,
+        "p90": 20,
+        "max": 21
+      },
+      "score": {
+        "min": 7022,
+        "median": 7167,
+        "p90": 7303.5,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 209,
+        "median": 225,
+        "p90": 262.1,
+        "max": 275
+      },
+      "coinsEarned": {
+        "min": 331,
+        "median": 363.5,
+        "p90": 367.7,
+        "max": 376
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 2.1,
+        "max": 6
+      },
+      "pulses": {
+        "min": 2,
+        "median": 6,
+        "p90": 7,
+        "max": 9
+      },
+      "forges": {
+        "min": 5,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 97.89,
+        "median": 115.86,
+        "p90": 116.82,
+        "max": 117.19
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 95.62,
+        "median": 151.34,
+        "p90": 191.25,
+        "max": 209.32
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.95,
+        "median": 82.28,
+        "p90": 86.54,
+        "max": 90.25
+      }
+    },
+    {
+      "key": "journey|maximal|normal|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.8,
+        "median": 82.4,
+        "p90": 88.28,
+        "max": 90.35
+      },
+      "hpPercent": {
+        "min": 90.72,
+        "median": 99.87,
+        "p90": 99.94,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 30,
+        "median": 56.74,
+        "p90": 84.58,
+        "max": 98.96
+      },
+      "kills": {
+        "min": 15,
+        "median": 18,
+        "p90": 20,
+        "max": 21
+      },
+      "score": {
+        "min": 6908,
+        "median": 7195,
+        "p90": 7319.1,
+        "max": 7381
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 189,
+        "median": 215.5,
+        "p90": 242.2,
+        "max": 249
+      },
+      "coinsEarned": {
+        "min": 313,
+        "median": 341.5,
+        "p90": 349,
+        "max": 356
+      },
+      "purchases": {
+        "min": 2,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4,
+        "max": 4
+      },
+      "pulses": {
+        "min": 2,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "forges": {
+        "min": 5,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 106.48,
+        "median": 117.81,
+        "p90": 117.88,
+        "max": 117.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 127.77,
+        "median": 172.5,
+        "p90": 213.04,
+        "max": 238.28
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.8,
+        "median": 82.4,
+        "p90": 88.28,
+        "max": 90.35
+      }
+    },
+    {
+      "key": "journey|maximal|night|direct",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 49.85,
+        "median": 57.33,
+        "p90": 61.97,
+        "max": 63.55
+      },
+      "hpPercent": {
+        "min": 74.73,
+        "median": 99.59,
+        "p90": 99.93,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 47.36,
+        "p90": 57.86,
+        "max": 88.32
+      },
+      "kills": {
+        "min": 6,
+        "median": 13,
+        "p90": 16,
+        "max": 16
+      },
+      "score": {
+        "min": 8268,
+        "median": 8870,
+        "p90": 9007.9,
+        "max": 9065
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 187,
+        "median": 221,
+        "p90": 227.3,
+        "max": 233
+      },
+      "coinsEarned": {
+        "min": 160,
+        "median": 194,
+        "p90": 200.3,
+        "max": 206
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 3,
+        "max": 4
+      },
+      "pulses": {
+        "min": 2,
+        "median": 4,
+        "p90": 5.1,
+        "max": 6
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 85.68,
+        "median": 114.41,
+        "p90": 116.98,
+        "max": 117.1
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 57.49,
+        "median": 116.39,
+        "p90": 147.55,
+        "max": 167.07
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 49.85,
+        "median": 57.33,
+        "p90": 61.97,
+        "max": 63.55
+      }
+    },
+    {
+      "key": "journey|maximal|night|letters",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 69.2,
+        "median": 80.85,
+        "p90": 89.77,
+        "max": 91.4
+      },
+      "hpPercent": {
+        "min": 78.57,
+        "median": 99.8,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 54.45,
+        "p90": 103.34,
+        "max": 114
+      },
+      "kills": {
+        "min": 18,
+        "median": 21.5,
+        "p90": 24,
+        "max": 25
+      },
+      "score": {
+        "min": 9157,
+        "median": 9477,
+        "p90": 9648.4,
+        "max": 9968
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 210,
+        "median": 242,
+        "p90": 271.3,
+        "max": 290
+      },
+      "coinsEarned": {
+        "min": 339,
+        "median": 374.5,
+        "p90": 389.3,
+        "max": 396
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 6
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6,
+        "p90": 8.1,
+        "max": 9
+      },
+      "forges": {
+        "min": 5,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 87.52,
+        "median": 114.74,
+        "p90": 116.19,
+        "max": 116.93
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 121.52,
+        "median": 160.59,
+        "p90": 210.73,
+        "max": 222.38
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 69.2,
+        "median": 80.85,
+        "p90": 89.77,
+        "max": 91.4
+      }
+    },
+    {
+      "key": "journey|maximal|night|hearth",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.05,
+        "median": 83.47,
+        "p90": 86.7,
+        "max": 90.35
+      },
+      "hpPercent": {
+        "min": 81.19,
+        "median": 99.84,
+        "p90": 99.93,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 78.16,
+        "p90": 109.72,
+        "max": 153.68
+      },
+      "kills": {
+        "min": 18,
+        "median": 21,
+        "p90": 22.1,
+        "max": 23
+      },
+      "score": {
+        "min": 9355,
+        "median": 9518,
+        "p90": 9670,
+        "max": 9763
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 196,
+        "median": 230.5,
+        "p90": 256.2,
+        "max": 269
+      },
+      "coinsEarned": {
+        "min": 327,
+        "median": 354.5,
+        "p90": 364,
+        "max": 366
+      },
+      "purchases": {
+        "min": 2,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 6
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6,
+        "p90": 8.1,
+        "max": 9
+      },
+      "forges": {
+        "min": 5,
+        "median": 5.5,
+        "p90": 7,
+        "max": 7
+      },
+      "minHp": {
+        "min": 83.36,
+        "median": 117.71,
+        "p90": 117.84,
+        "max": 117.88
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 151.34,
+        "median": 210.45,
+        "p90": 265.83,
+        "max": 284.74
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.05,
+        "median": 83.47,
+        "p90": 86.7,
+        "max": 90.35
+      }
+    },
+    {
+      "key": "camp_120s|fresh|wander|auto_attack_only",
+      "n": 10,
+      "wins": 0,
+      "lost": 0,
+      "unfinished": 10,
+      "time": {
+        "min": 123.25,
+        "median": 123.4,
+        "p90": 123.84,
+        "max": 124.65
+      },
+      "hpPercent": {
+        "min": 100,
+        "median": 100,
+        "p90": 100,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "kills": {
+        "min": 12,
+        "median": 12,
+        "p90": 12,
+        "max": 12
+      },
+      "score": {
+        "min": 610,
+        "median": 627,
+        "p90": 634.3,
+        "max": 637
+      },
+      "level": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "coins": {
+        "min": 62,
+        "median": 62,
+        "p90": 62,
+        "max": 62
+      },
+      "coinsEarned": {
+        "min": 50,
+        "median": 50,
+        "p90": 50,
+        "max": 50
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "campElapsed": {
+        "min": 120.05,
+        "median": 120.05,
+        "p90": 120.05,
+        "max": 120.05
+      },
+      "campGoldGain": {
+        "min": 36,
+        "median": 40,
+        "p90": 40,
+        "max": 40
+      },
+      "campXpGain": {
+        "min": 66,
+        "median": 72,
+        "p90": 72,
+        "max": 72
+      },
+      "campDamage": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 98.85,
+        "median": 99.55,
+        "p90": 99.63,
+        "max": 99.71
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 13.15,
+        "median": 13.21,
+        "p90": 13.36,
+        "max": 13.66
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    {
+      "key": "camp_120s|fresh|normal|auto_attack_only",
+      "n": 10,
+      "wins": 0,
+      "lost": 0,
+      "unfinished": 10,
+      "time": {
+        "min": 123.25,
+        "median": 123.4,
+        "p90": 123.84,
+        "max": 124.65
+      },
+      "hpPercent": {
+        "min": 100,
+        "median": 100,
+        "p90": 100,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "kills": {
+        "min": 12,
+        "median": 12,
+        "p90": 12,
+        "max": 12
+      },
+      "score": {
+        "min": 790,
+        "median": 817,
+        "p90": 823.9,
+        "max": 832
+      },
+      "level": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "coins": {
+        "min": 62,
+        "median": 62,
+        "p90": 62,
+        "max": 62
+      },
+      "coinsEarned": {
+        "min": 50,
+        "median": 50,
+        "p90": 50,
+        "max": 50
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "campElapsed": {
+        "min": 120.05,
+        "median": 120.05,
+        "p90": 120.05,
+        "max": 120.05
+      },
+      "campGoldGain": {
+        "min": 36,
+        "median": 40,
+        "p90": 40,
+        "max": 40
+      },
+      "campXpGain": {
+        "min": 66,
+        "median": 72,
+        "p90": 72,
+        "max": 72
+      },
+      "campDamage": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 98.02,
+        "median": 99.22,
+        "p90": 99.36,
+        "max": 99.5
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 13.98,
+        "median": 14.08,
+        "p90": 14.35,
+        "max": 14.85
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    {
+      "key": "camp_120s|fresh|night|auto_attack_only",
+      "n": 10,
+      "wins": 0,
+      "lost": 0,
+      "unfinished": 10,
+      "time": {
+        "min": 123.25,
+        "median": 123.4,
+        "p90": 123.84,
+        "max": 124.65
+      },
+      "hpPercent": {
+        "min": 100,
+        "median": 100,
+        "p90": 100,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "kills": {
+        "min": 12,
+        "median": 12,
+        "p90": 12,
+        "max": 12
+      },
+      "score": {
+        "min": 1054,
+        "median": 1091.5,
+        "p90": 1127.3,
+        "max": 1148
+      },
+      "level": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "coins": {
+        "min": 62,
+        "median": 62,
+        "p90": 62,
+        "max": 62
+      },
+      "coinsEarned": {
+        "min": 50,
+        "median": 50,
+        "p90": 50,
+        "max": 50
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "campElapsed": {
+        "min": 120.05,
+        "median": 120.05,
+        "p90": 120.05,
+        "max": 120.05
+      },
+      "campGoldGain": {
+        "min": 36,
+        "median": 40,
+        "p90": 40,
+        "max": 40
+      },
+      "campXpGain": {
+        "min": 66,
+        "median": 72,
+        "p90": 72,
+        "max": 72
+      },
+      "campDamage": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "minHp": {
+        "min": 97.38,
+        "median": 98.98,
+        "p90": 99.16,
+        "max": 99.34
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 14.62,
+        "median": 14.75,
+        "p90": 15.1,
+        "max": 15.77
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      }
+    },
+    {
+      "key": "boss_camp|fresh|wander|auto_attack_only",
+      "n": 10,
+      "wins": 10,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 59.55,
+        "median": 66.92,
+        "p90": 73.41,
+        "max": 77.55
+      },
+      "hpPercent": {
+        "min": 99.78,
+        "median": 99.9,
+        "p90": 99.94,
+        "max": 99.96
+      },
+      "damageTaken": {
+        "min": 60.45,
+        "median": 96.2,
+        "p90": 123.05,
+        "max": 142.35
+      },
+      "kills": {
+        "min": 9,
+        "median": 11,
+        "p90": 12,
+        "max": 12
+      },
+      "score": {
+        "min": 5285,
+        "median": 5384.5,
+        "p90": 5410.7,
+        "max": 5426
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 187,
+        "median": 196.5,
+        "p90": 201.1,
+        "max": 202
+      },
+      "coinsEarned": {
+        "min": 175,
+        "median": 184.5,
+        "p90": 189.1,
+        "max": 190
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 17,
+        "median": 17,
+        "p90": 19,
+        "max": 19
+      },
+      "bossTime": {
+        "min": 13.4,
+        "median": 18.35,
+        "p90": 24.81,
+        "max": 24.9
+      },
+      "bossDamage": {
+        "min": 52,
+        "median": 89.05,
+        "p90": 121.03,
+        "max": 122.2
+      },
+      "minHp": {
+        "min": 59.4,
+        "median": 84.05,
+        "p90": 99.27,
+        "max": 99.55
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 101.42,
+        "median": 169.25,
+        "p90": 193.03,
+        "max": 212.27
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 59.55,
+        "median": 66.92,
+        "p90": 73.41,
+        "max": 77.55
+      }
+    },
+    {
+      "key": "boss_camp|fresh|normal|auto_attack_only",
+      "n": 10,
+      "wins": 10,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 57.9,
+        "median": 62.15,
+        "p90": 72.18,
+        "max": 79.7
+      },
+      "hpPercent": {
+        "min": 43.74,
+        "median": 73.92,
+        "p90": 97.13,
+        "max": 99.9
+      },
+      "damageTaken": {
+        "min": 104,
+        "median": 122.5,
+        "p90": 196.9,
+        "max": 205
+      },
+      "kills": {
+        "min": 8,
+        "median": 12.5,
+        "p90": 14.3,
+        "max": 17
+      },
+      "score": {
+        "min": 6565,
+        "median": 6820,
+        "p90": 6943.7,
+        "max": 7013
+      },
+      "level": {
+        "min": 6,
+        "median": 6,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 183,
+        "median": 202.5,
+        "p90": 213.9,
+        "max": 222
+      },
+      "coinsEarned": {
+        "min": 171,
+        "median": 190.5,
+        "p90": 201.9,
+        "max": 210
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 17,
+        "median": 19,
+        "p90": 19,
+        "max": 19
+      },
+      "bossTime": {
+        "min": 10.85,
+        "median": 14.35,
+        "p90": 21.63,
+        "max": 29.15
+      },
+      "bossDamage": {
+        "min": 66,
+        "median": 104,
+        "p90": 184.8,
+        "max": 192
+      },
+      "minHp": {
+        "min": 5.1,
+        "median": 41.65,
+        "p90": 61.29,
+        "max": 95
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0.15,
+        "p90": 3.67,
+        "max": 4.8
+      },
+      "healed": {
+        "min": 130.38,
+        "median": 167.64,
+        "p90": 199.65,
+        "max": 209.42
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 57.9,
+        "median": 62.15,
+        "p90": 72.18,
+        "max": 79.7
+      }
+    },
+    {
+      "key": "boss_camp|fresh|night|auto_attack_only",
+      "n": 10,
+      "wins": 3,
+      "lost": 7,
+      "unfinished": 0,
+      "time": {
+        "min": 58.1,
+        "median": 62.53,
+        "p90": 66.16,
+        "max": 68
+      },
+      "hpPercent": {
+        "min": 0,
+        "median": 0,
+        "p90": 74.53,
+        "max": 90.94
+      },
+      "damageTaken": {
+        "min": 84.48,
+        "median": 166.4,
+        "p90": 202.75,
+        "max": 230.4
+      },
+      "kills": {
+        "min": 9,
+        "median": 12,
+        "p90": 14.1,
+        "max": 15
+      },
+      "score": {
+        "min": 5105,
+        "median": 5319,
+        "p90": 8952.3,
+        "max": 8991
+      },
+      "level": {
+        "min": 5,
+        "median": 5.5,
+        "p90": 6,
+        "max": 6
+      },
+      "coins": {
+        "min": 163,
+        "median": 172,
+        "p90": 210.1,
+        "max": 211
+      },
+      "coinsEarned": {
+        "min": 151,
+        "median": 160,
+        "p90": 198.1,
+        "max": 199
+      },
+      "purchases": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "pulses": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "forges": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "firstRunStamps": {
+        "min": 8,
+        "median": 10,
+        "p90": 22,
+        "max": 22
+      },
+      "bossTime": {
+        "min": 11.75,
+        "median": 15.6,
+        "p90": 17.45,
+        "max": 19.7
+      },
+      "bossDamage": {
+        "min": 84.48,
+        "median": 149.76,
+        "p90": 171.78,
+        "max": 197.12
+      },
+      "minHp": {
+        "min": 0,
+        "median": 0,
+        "p90": 44.42,
+        "max": 98.98
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 2,
+        "p90": 3.28,
+        "max": 4
+      },
+      "healed": {
+        "min": 67.74,
+        "median": 101.4,
+        "p90": 166.92,
+        "max": 181.18
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "winTime": {
+        "min": 60,
+        "median": 62.35,
+        "p90": 62.63,
+        "max": 62.7
+      }
+    },
+    {
+      "key": "build|fresh|wander|courier",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.25,
+        "median": 82.85,
+        "p90": 89.64,
+        "max": 96.45
+      },
+      "hpPercent": {
+        "min": 99.23,
+        "median": 99.92,
+        "p90": 99.95,
+        "max": 99.96
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.95,
+        "p90": 75.98,
+        "max": 85.6
+      },
+      "kills": {
+        "min": 16,
+        "median": 18,
+        "p90": 19.1,
+        "max": 21
+      },
+      "score": {
+        "min": 5621,
+        "median": 5787.5,
+        "p90": 5911.9,
+        "max": 5938
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 224,
+        "median": 299,
+        "p90": 323.5,
+        "max": 330
+      },
+      "coinsEarned": {
+        "min": 354,
+        "median": 400.5,
+        "p90": 431.5,
+        "max": 438
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 2.1,
+        "max": 4
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6,
+        "p90": 8,
+        "max": 11
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 31,
+        "median": 33,
+        "p90": 33.2,
+        "max": 35
+      },
+      "minHp": {
+        "min": 80.76,
+        "median": 97.69,
+        "p90": 99.24,
+        "max": 99.32
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 69.34,
+        "median": 113.47,
+        "p90": 143.16,
+        "max": 165.55
+      },
+      "riskCleared": {
+        "min": 1,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.25,
+        "median": 82.85,
+        "p90": 89.64,
+        "max": 96.45
+      }
+    },
+    {
+      "key": "build|fresh|normal|courier",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 73.6,
+        "median": 84.78,
+        "p90": 90.42,
+        "max": 92.75
+      },
+      "hpPercent": {
+        "min": 85.61,
+        "median": 99.88,
+        "p90": 99.93,
+        "max": 99.95
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 64.5,
+        "p90": 102.4,
+        "max": 109
+      },
+      "kills": {
+        "min": 19,
+        "median": 21,
+        "p90": 23.1,
+        "max": 24
+      },
+      "score": {
+        "min": 7126,
+        "median": 7404.5,
+        "p90": 7527.5,
+        "max": 7613
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7.1,
+        "max": 8
+      },
+      "coins": {
+        "min": 253,
+        "median": 309.5,
+        "p90": 341,
+        "max": 342
+      },
+      "coinsEarned": {
+        "min": 363,
+        "median": 413,
+        "p90": 440.2,
+        "max": 452
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 3,
+        "median": 7,
+        "p90": 9,
+        "max": 10
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 31,
+        "median": 35,
+        "p90": 35,
+        "max": 35
+      },
+      "minHp": {
+        "min": 48.75,
+        "median": 92,
+        "p90": 98.68,
+        "max": 98.82
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 89.01,
+        "median": 144.63,
+        "p90": 176.03,
+        "max": 214.66
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 73.6,
+        "median": 84.78,
+        "p90": 90.42,
+        "max": 92.75
+      }
+    },
+    {
+      "key": "build|fresh|night|courier",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 74.35,
+        "median": 83.03,
+        "p90": 87.14,
+        "max": 95.3
+      },
+      "hpPercent": {
+        "min": 59.76,
+        "median": 99.75,
+        "p90": 99.91,
+        "max": 99.95
+      },
+      "damageTaken": {
+        "min": 46.16,
+        "median": 79.44,
+        "p90": 159.31,
+        "max": 197.2
+      },
+      "kills": {
+        "min": 18,
+        "median": 23,
+        "p90": 25.1,
+        "max": 27
+      },
+      "score": {
+        "min": 9367,
+        "median": 9764,
+        "p90": 10020.5,
+        "max": 10069
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 8,
+        "max": 8
+      },
+      "coins": {
+        "min": 260,
+        "median": 306.5,
+        "p90": 359.1,
+        "max": 364
+      },
+      "coinsEarned": {
+        "min": 365,
+        "median": 416.5,
+        "p90": 462.2,
+        "max": 469
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.2,
+        "max": 7
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 9.1,
+        "max": 10
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 36,
+        "median": 38,
+        "p90": 38,
+        "max": 38
+      },
+      "minHp": {
+        "min": 40.58,
+        "median": 79.92,
+        "p90": 97.63,
+        "max": 98.44
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 124.47,
+        "median": 185.18,
+        "p90": 229.38,
+        "max": 291.97
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 74.35,
+        "median": 83.03,
+        "p90": 87.14,
+        "max": 95.3
+      }
+    },
+    {
+      "key": "build|fresh|wander|warden",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 79.9,
+        "median": 88.67,
+        "p90": 93.48,
+        "max": 95.3
+      },
+      "hpPercent": {
+        "min": 99.07,
+        "median": 99.91,
+        "p90": 99.98,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 30.08,
+        "median": 43.03,
+        "p90": 64.25,
+        "max": 80.22
+      },
+      "kills": {
+        "min": 15,
+        "median": 19,
+        "p90": 20.1,
+        "max": 21
+      },
+      "score": {
+        "min": 5462,
+        "median": 5728.5,
+        "p90": 5779.8,
+        "max": 5822
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 237,
+        "median": 288.5,
+        "p90": 323.2,
+        "max": 337
+      },
+      "coinsEarned": {
+        "min": 347,
+        "median": 394.5,
+        "p90": 427.4,
+        "max": 435
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 4
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 9,
+        "max": 10
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 29,
+        "median": 33,
+        "p90": 35,
+        "max": 35
+      },
+      "minHp": {
+        "min": 92.69,
+        "median": 110.73,
+        "p90": 111.24,
+        "max": 111.3
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 89.91,
+        "median": 124.73,
+        "p90": 153.74,
+        "max": 159.61
+      },
+      "riskCleared": {
+        "min": 1,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 1,
+        "p90": 2,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 79.9,
+        "median": 88.67,
+        "p90": 93.48,
+        "max": 95.3
+      }
+    },
+    {
+      "key": "build|fresh|normal|warden",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.8,
+        "median": 89.75,
+        "p90": 94.89,
+        "max": 98.15
+      },
+      "hpPercent": {
+        "min": 76.31,
+        "median": 99.83,
+        "p90": 99.9,
+        "max": 99.92
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 71.88,
+        "p90": 78.49,
+        "max": 91.32
+      },
+      "kills": {
+        "min": 15,
+        "median": 22,
+        "p90": 24,
+        "max": 24
+      },
+      "score": {
+        "min": 6830,
+        "median": 7308.5,
+        "p90": 7442.9,
+        "max": 7468
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 8,
+        "max": 8
+      },
+      "coins": {
+        "min": 214,
+        "median": 314.5,
+        "p90": 336.1,
+        "max": 359
+      },
+      "coinsEarned": {
+        "min": 324,
+        "median": 415,
+        "p90": 446.1,
+        "max": 449
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 6,
+        "median": 8,
+        "p90": 10,
+        "max": 11
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 31,
+        "median": 35,
+        "p90": 35,
+        "max": 35
+      },
+      "minHp": {
+        "min": 91.74,
+        "median": 109.39,
+        "p90": 110.68,
+        "max": 110.79
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 104.07,
+        "median": 154.39,
+        "p90": 181.09,
+        "max": 223.72
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 1,
+        "p90": 2.1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.8,
+        "median": 89.75,
+        "p90": 94.89,
+        "max": 98.15
+      }
+    },
+    {
+      "key": "build|fresh|night|warden",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 79.2,
+        "median": 90.63,
+        "p90": 96.1,
+        "max": 98.7
+      },
+      "hpPercent": {
+        "min": 88.4,
+        "median": 99.81,
+        "p90": 99.93,
+        "max": 99.99
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 75.19,
+        "p90": 119.52,
+        "max": 152.84
+      },
+      "kills": {
+        "min": 17,
+        "median": 22.5,
+        "p90": 28,
+        "max": 29
+      },
+      "score": {
+        "min": 9031,
+        "median": 9554,
+        "p90": 9965.1,
+        "max": 10173
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 8,
+        "max": 8
+      },
+      "coins": {
+        "min": 248,
+        "median": 315.5,
+        "p90": 350.5,
+        "max": 375
+      },
+      "coinsEarned": {
+        "min": 358,
+        "median": 418.5,
+        "p90": 453.3,
+        "max": 465
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "dashes": {
+        "min": 0,
+        "median": 3,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 6,
+        "median": 8,
+        "p90": 10.1,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 32,
+        "median": 38,
+        "p90": 38,
+        "max": 38
+      },
+      "minHp": {
+        "min": 63.82,
+        "median": 102.02,
+        "p90": 110.24,
+        "max": 110.4
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 114.9,
+        "median": 192.25,
+        "p90": 233.1,
+        "max": 282.53
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 1,
+        "p90": 2,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 79.2,
+        "median": 90.63,
+        "p90": 96.1,
+        "max": 98.7
+      }
+    },
+    {
+      "key": "build|fresh|wander|dawn",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 73.4,
+        "median": 82.13,
+        "p90": 87.13,
+        "max": 90.15
+      },
+      "hpPercent": {
+        "min": 99.7,
+        "median": 99.93,
+        "p90": 100,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 29.7,
+        "p90": 47.38,
+        "max": 58.3
+      },
+      "kills": {
+        "min": 14,
+        "median": 18.5,
+        "p90": 20.1,
+        "max": 21
+      },
+      "score": {
+        "min": 5433,
+        "median": 5650,
+        "p90": 5733.2,
+        "max": 5812
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 238,
+        "median": 296,
+        "p90": 327,
+        "max": 338
+      },
+      "coinsEarned": {
+        "min": 360,
+        "median": 406.5,
+        "p90": 432.4,
+        "max": 439
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 3.1,
+        "max": 4
+      },
+      "pulses": {
+        "min": 3,
+        "median": 5,
+        "p90": 6,
+        "max": 6
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 31,
+        "median": 33,
+        "p90": 35,
+        "max": 35
+      },
+      "minHp": {
+        "min": 80.76,
+        "median": 96.01,
+        "p90": 99.23,
+        "max": 99.3
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 72.84,
+        "median": 89.62,
+        "p90": 124.67,
+        "max": 144.12
+      },
+      "riskCleared": {
+        "min": 1,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 73.4,
+        "median": 82.13,
+        "p90": 87.13,
+        "max": 90.15
+      }
+    },
+    {
+      "key": "build|fresh|normal|dawn",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.95,
+        "median": 85.3,
+        "p90": 89.63,
+        "max": 89.95
+      },
+      "hpPercent": {
+        "min": 99.1,
+        "median": 99.84,
+        "p90": 99.96,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 24,
+        "p90": 58.2,
+        "max": 78
+      },
+      "kills": {
+        "min": 19,
+        "median": 21.5,
+        "p90": 24,
+        "max": 25
+      },
+      "score": {
+        "min": 7058,
+        "median": 7236,
+        "p90": 7458,
+        "max": 7544
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 8,
+        "max": 8
+      },
+      "coins": {
+        "min": 263,
+        "median": 316.5,
+        "p90": 347.6,
+        "max": 360
+      },
+      "coinsEarned": {
+        "min": 383,
+        "median": 423.5,
+        "p90": 450.1,
+        "max": 453
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4.1,
+        "max": 6
+      },
+      "pulses": {
+        "min": 3,
+        "median": 5.5,
+        "p90": 7,
+        "max": 8
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 33,
+        "median": 35,
+        "p90": 35,
+        "max": 35
+      },
+      "minHp": {
+        "min": 79.86,
+        "median": 97.44,
+        "p90": 98.68,
+        "max": 98.79
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 84.19,
+        "median": 118.56,
+        "p90": 151.87,
+        "max": 163.6
+      },
+      "riskCleared": {
+        "min": 1,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 1,
+        "p90": 3,
+        "max": 4
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 2
+      },
+      "winTime": {
+        "min": 72.95,
+        "median": 85.3,
+        "p90": 89.63,
+        "max": 89.95
+      }
+    },
+    {
+      "key": "build|fresh|night|dawn",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.8,
+        "median": 82.9,
+        "p90": 91.24,
+        "max": 94.25
+      },
+      "hpPercent": {
+        "min": 86.71,
+        "median": 99.78,
+        "p90": 99.92,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 46.16,
+        "p90": 90.28,
+        "max": 97.36
+      },
+      "kills": {
+        "min": 18,
+        "median": 24,
+        "p90": 27,
+        "max": 27
+      },
+      "score": {
+        "min": 9250,
+        "median": 9579.5,
+        "p90": 9828.4,
+        "max": 9919
+      },
+      "level": {
+        "min": 7,
+        "median": 7.5,
+        "p90": 8,
+        "max": 8
+      },
+      "coins": {
+        "min": 236,
+        "median": 321.5,
+        "p90": 345.8,
+        "max": 356
+      },
+      "coinsEarned": {
+        "min": 356,
+        "median": 430.5,
+        "p90": 450.7,
+        "max": 463
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 3,
+        "max": 4
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6,
+        "p90": 7,
+        "max": 7
+      },
+      "forges": {
+        "min": 4,
+        "median": 4,
+        "p90": 4,
+        "max": 4
+      },
+      "firstRunStamps": {
+        "min": 36,
+        "median": 38,
+        "p90": 38,
+        "max": 38
+      },
+      "minHp": {
+        "min": 76.88,
+        "median": 94.75,
+        "p90": 98.25,
+        "max": 98.4
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 95.35,
+        "median": 147.44,
+        "p90": 177.52,
+        "max": 216.13
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 3
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "echoes": {
+        "min": 0,
+        "median": 2,
+        "p90": 3,
+        "max": 4
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.8,
+        "median": 82.9,
+        "p90": 91.24,
+        "max": 94.25
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|plain",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 35,
+        "median": 37,
+        "p90": 41,
+        "max": 41
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|fog",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 35,
+        "median": 37,
+        "p90": 41,
+        "max": 41
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|small-bag",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 70.71,
+        "median": 93.72,
+        "p90": 99.87,
+        "max": 99.88
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6930,
+        "median": 7033.5,
+        "p90": 7092.3,
+        "max": 7131
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 35,
+        "median": 37,
+        "p90": 41,
+        "max": 41
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 108.04,
+        "median": 161.21,
+        "p90": 203.63,
+        "max": 215.43
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|express",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 36,
+        "median": 38,
+        "p90": 42,
+        "max": 42
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|elite-patrol",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 98.45
+      },
+      "hpPercent": {
+        "min": 92.53,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 46.63,
+        "p90": 101.16,
+        "max": 126.76
+      },
+      "kills": {
+        "min": 15,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6941,
+        "median": 7197.5,
+        "p90": 7328.9,
+        "max": 7347
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 211.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 313,
+        "median": 343.5,
+        "p90": 353.3,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 35,
+        "median": 37,
+        "p90": 41,
+        "max": 41
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.8,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 119.46,
+        "median": 177.86,
+        "p90": 216.66,
+        "max": 276.82
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1.1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 98.45
+      }
+    },
+    {
+      "key": "challenge|fresh|normal|fog+small-bag+express+elite-patrol",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 100.2
+      },
+      "hpPercent": {
+        "min": 68.51,
+        "median": 96.41,
+        "p90": 99.85,
+        "max": 99.92
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 46.63,
+        "p90": 99.77,
+        "max": 122
+      },
+      "kills": {
+        "min": 15,
+        "median": 19,
+        "p90": 21,
+        "max": 22
+      },
+      "score": {
+        "min": 6869,
+        "median": 7028,
+        "p90": 7131.3,
+        "max": 7149
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 211.5,
+        "p90": 240.4,
+        "max": 267
+      },
+      "coinsEarned": {
+        "min": 313,
+        "median": 343.5,
+        "p90": 356,
+        "max": 357
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 10,
+        "max": 11
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "firstRunStamps": {
+        "min": 36,
+        "median": 38,
+        "p90": 40.2,
+        "max": 42
+      },
+      "minHp": {
+        "min": 82.09,
+        "median": 99.8,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 108.04,
+        "median": 163.51,
+        "p90": 203.63,
+        "max": 228.58
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1.1,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 100.2
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|plain",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|fog",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|small-bag",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 70.71,
+        "median": 93.72,
+        "p90": 99.87,
+        "max": 99.88
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6930,
+        "median": 7033.5,
+        "p90": 7092.3,
+        "max": 7131
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 108.04,
+        "median": 161.21,
+        "p90": 203.63,
+        "max": 215.43
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|express",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      },
+      "hpPercent": {
+        "min": 87.82,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 45.52,
+        "p90": 100.09,
+        "max": 128
+      },
+      "kills": {
+        "min": 17,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6939,
+        "median": 7192,
+        "p90": 7257.6,
+        "max": 7350
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 212.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 314,
+        "median": 346.5,
+        "p90": 353.2,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 2,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 4,
+        "median": 6.5,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.81,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 118.89,
+        "median": 174.74,
+        "p90": 220.81,
+        "max": 262.51
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 2
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 1
+      },
+      "winTime": {
+        "min": 78.2,
+        "median": 85.2,
+        "p90": 93.32,
+        "max": 99.2
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|elite-patrol",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 98.45
+      },
+      "hpPercent": {
+        "min": 92.53,
+        "median": 99.86,
+        "p90": 99.97,
+        "max": 100
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 46.63,
+        "p90": 101.16,
+        "max": 126.76
+      },
+      "kills": {
+        "min": 15,
+        "median": 19,
+        "p90": 21,
+        "max": 21
+      },
+      "score": {
+        "min": 6941,
+        "median": 7197.5,
+        "p90": 7328.9,
+        "max": 7347
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 211.5,
+        "p90": 240.4,
+        "max": 263
+      },
+      "coinsEarned": {
+        "min": 313,
+        "median": 343.5,
+        "p90": 353.3,
+        "max": 356
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4.1,
+        "max": 5
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 10,
+        "max": 12
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 87.89,
+        "median": 99.8,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 119.46,
+        "median": 177.86,
+        "p90": 216.66,
+        "max": 276.82
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1.1,
+        "max": 3
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 98.45
+      }
+    },
+    {
+      "key": "challenge|maximal|normal|fog+small-bag+express+elite-patrol",
+      "n": 20,
+      "wins": 20,
+      "lost": 0,
+      "unfinished": 0,
+      "time": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 100.2
+      },
+      "hpPercent": {
+        "min": 68.51,
+        "median": 96.41,
+        "p90": 99.85,
+        "max": 99.92
+      },
+      "damageTaken": {
+        "min": 18,
+        "median": 46.63,
+        "p90": 99.77,
+        "max": 122
+      },
+      "kills": {
+        "min": 15,
+        "median": 19,
+        "p90": 21,
+        "max": 22
+      },
+      "score": {
+        "min": 6869,
+        "median": 7028,
+        "p90": 7131.3,
+        "max": 7149
+      },
+      "level": {
+        "min": 7,
+        "median": 7,
+        "p90": 7,
+        "max": 7
+      },
+      "coins": {
+        "min": 148,
+        "median": 211.5,
+        "p90": 240.4,
+        "max": 267
+      },
+      "coinsEarned": {
+        "min": 313,
+        "median": 343.5,
+        "p90": 356,
+        "max": 357
+      },
+      "purchases": {
+        "min": 3,
+        "median": 3,
+        "p90": 3,
+        "max": 3
+      },
+      "potionsUsed": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "dashes": {
+        "min": 0,
+        "median": 1,
+        "p90": 4,
+        "max": 5
+      },
+      "pulses": {
+        "min": 5,
+        "median": 7,
+        "p90": 10,
+        "max": 11
+      },
+      "forges": {
+        "min": 4,
+        "median": 5,
+        "p90": 6,
+        "max": 8
+      },
+      "minHp": {
+        "min": 82.09,
+        "median": 99.8,
+        "p90": 99.88,
+        "max": 99.91
+      },
+      "lowTime": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "healed": {
+        "min": 108.04,
+        "median": 163.51,
+        "p90": 203.63,
+        "max": 228.58
+      },
+      "riskCleared": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "barriers": {
+        "min": 0,
+        "median": 0,
+        "p90": 1.1,
+        "max": 2
+      },
+      "echoes": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.2,
+        "max": 3
+      },
+      "tailwinds": {
+        "min": 0,
+        "median": 0,
+        "p90": 0,
+        "max": 0
+      },
+      "interrupts": {
+        "min": 0,
+        "median": 0,
+        "p90": 0.1,
+        "max": 1
+      },
+      "winTime": {
+        "min": 72.6,
+        "median": 85.1,
+        "p90": 93.85,
+        "max": 100.2
+      }
+    }
+  ]
+}

@@ -10,6 +10,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import static org.junit.Assert.*;
 import android.webkit.WebView;
+import android.content.pm.ActivityInfo;
+import android.os.SystemClock;
+import android.view.InputDevice;
+import android.view.MotionEvent;
+import org.json.JSONArray;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -35,6 +40,11 @@ public final class OfflineGameTest {
         }
         fail("Game did not reach: " + condition);
     }
+    private void touch(long start, int action, int count, MotionEvent.PointerProperties[] props, MotionEvent.PointerCoords[] coords) {
+        MotionEvent event = MotionEvent.obtain(start, SystemClock.uptimeMillis(), action, count, props, coords, 0, 0, 1, 1, 0, 0, InputDevice.SOURCE_TOUCHSCREEN, 0);
+        getInstrumentation().sendPointerSync(event);
+        event.recycle();
+    }
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -55,6 +65,63 @@ public final class OfflineGameTest {
             assertEquals("false", js("window.emberCourierNative.back()"));
             assertEquals("true", js("document.getElementById('continue').click(); !document.getElementById('game').hidden"));
             js("window.emberCourierNative.pause()");
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
+    }
+    @Test public void testNightRoutesTouchAndRotation() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            assertEquals("4", js("document.querySelectorAll('#route-conditions input').length"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            await("innerHeight > innerWidth");
+            assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
+            js("if(!document.getElementById('daily-setting').checked)document.getElementById('daily-setting').click(); document.getElementById('start').click()");
+            await("!document.getElementById('game').hidden");
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).v12.mode === 'challenge'"));
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).rulesVersion === 120"));
+            double beforeX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
+            JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,devicePixelRatio]})()"));
+            final int[] origin = new int[2];
+            getInstrumentation().runOnMainSync(() -> activity.findViewById(R.id.game_webview).getLocationOnScreen(origin));
+            MotionEvent.PointerProperties[] props = new MotionEvent.PointerProperties[2];
+            MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[2];
+            float density = (float) points.getDouble(4);
+            for (int i = 0; i < 2; i++) {
+                props[i] = new MotionEvent.PointerProperties(); props[i].id = i; props[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+                coords[i] = new MotionEvent.PointerCoords(); coords[i].pressure = 1; coords[i].size = 1;
+                coords[i].x = origin[0] + (float) points.getDouble(i * 2) * density;
+                coords[i].y = origin[1] + (float) points.getDouble(i * 2 + 1) * density;
+            }
+            long start = SystemClock.uptimeMillis();
+            touch(start, MotionEvent.ACTION_DOWN, 1, props, coords);
+            touch(start, MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
+            coords[0].x += 30 * density;
+            touch(start, MotionEvent.ACTION_MOVE, 2, props, coords);
+            Thread.sleep(400);
+            touch(start, MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
+            touch(start, MotionEvent.ACTION_UP, 1, props, coords);
+            js("window.emberCourierNative.pause()");
+            assertEquals("true", js("document.getElementById('pause-dialog').open"));
+            assertTrue("Joystick must move while a second finger activates the pulse", Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x")) > beforeX + 10);
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).metrics.pulses >= 1"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight");
+            assertEquals("true", js("document.getElementById('pause-dialog').open"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            await("innerHeight > innerWidth");
+            js("window.emberCourierNative.back(); document.getElementById('game-hub').click()");
+            assertEquals("true", js("document.getElementById('hub-dialog').open && document.getElementById('hub-dialog').getBoundingClientRect().width <= innerWidth"));
+            js("window.emberCourierNative.back(); window.emberCourierNative.pause(); document.getElementById('save-exit').click()");
+            assertEquals("true", js("!document.getElementById('continue').hidden"));
+            String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
+            getInstrumentation().runOnMainSync(() -> activity.finish());
+            activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+            await("typeof window.emberCourierNative === 'object'");
+            assertEquals("true", js("!document.getElementById('continue').hidden"));
+            js("document.getElementById('continue').click(); window.emberCourierNative.pause()");
+            assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
     }
 }

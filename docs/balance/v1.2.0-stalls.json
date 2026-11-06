@@ -1,0 +1,4 @@
+{
+  "notice": "Development-policy timeouts; these do not prove a player soft lock. A player may reposition. Investigate enemy routing and policy targets before labeling them gameplay bugs.",
+  "details": []
+}

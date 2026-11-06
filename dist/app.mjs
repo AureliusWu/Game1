@@ -1,9 +1,9 @@
 import {createGame,tick,dash,pulse,chooseUpgrade,serialize,restore,finalScore,CHAPTERS,UPGRADES,DIFFICULTIES,usePotion,nearestPOI,poiLabel} from './core.mjs';
 import {Renderer,drawTitle} from './render.mjs';
 import {AudioEngine} from './audio.mjs';
-import {GEAR_BY_ID,CONTRACTS,ACHIEVEMENTS,ENDINGS} from './content.mjs';
+import {GEAR_BY_ID,CONTRACTS,ACHIEVEMENTS,ENDINGS,CONDITIONS,SETS} from './content.mjs';
 import {XP_THRESHOLDS} from './systems.mjs';
-import {readProfile,recordProgress,rank,dailySeed} from './progress.mjs';
+import {readProfile,recordProgress,rank,dailySeed,challengeKey} from './progress.mjs';
 import {Hub} from './hub.mjs';
 const $=id=>document.getElementById(id);
 const audio=new AudioEngine();
@@ -16,12 +16,13 @@ const storage={
 };
 function warnStorage(){if(storageWarned)return;storageWarned=true;$('storage-warning').hidden=false;setTimeout(()=>$('storage-warning').hidden=true,6500);}
 function readJSON(key,fallback){try{return JSON.parse(storage.get(key))??fallback;}catch{return fallback;}}
-const defaults={difficulty:'normal',sound:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false};
+const defaults={difficulty:'normal',sound:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false,conditions:[]};
 const storedSettings=readJSON(STORE.settings,{});
 const settings={...defaults};
 if(storedSettings&&typeof storedSettings==='object'){
   if(DIFFICULTIES[storedSettings.difficulty])settings.difficulty=storedSettings.difficulty;
   for(const k of ['sound','lowMotion','touch','daily'])if(typeof storedSettings[k]==='boolean')settings[k]=storedSettings[k];
+  if(Array.isArray(storedSettings.conditions))settings.conditions=storedSettings.conditions.filter(id=>CONDITIONS.some(c=>c.id===id));
   if(CONTRACTS.some(c=>c.id===storedSettings.contract))settings.contract=storedSettings.contract;
 }
 const statsDefaults={best:0,wins:0,beacons:0,runs:0,bestTime:0};
@@ -34,13 +35,14 @@ let bannerUntil=0,letterUntil=0,toastUntil=0,achievementUntil=0;
 const keys=new Set();let joystickId=null,joy={x:0,y:0},joyCenter={x:0,y:0},destination=null,stuckFor=0;
 const difficultyCopy={wander:'慢一点也没关系。影兽更温和，灯火更长明。',normal:'有一点危险，也有足够的光。',night:'影兽更凶，长夜更漫长。得分 ×1.3。'};
 for(const c of CONTRACTS){const option=document.createElement('option');option.value=c.id;option.textContent=c.name;$('contract-select').append(option);}
+for(const c of CONDITIONS){const label=document.createElement('label');label.className='route-condition';const input=document.createElement('input');input.type='checkbox';input.value=c.id;input.checked=settings.conditions.includes(c.id);input.addEventListener('change',()=>{settings.conditions=[...document.querySelectorAll('#route-conditions input:checked')].map(i=>i.value);saveSettings();updateSettings();});const text=document.createElement('span');text.textContent=c.name;const small=document.createElement('small');small.textContent=c.desc;label.append(input,text,small);$('route-conditions').append(label);}
 const hub=new Hub({getRun:()=>screen==='game'&&!ended?run:null,getProfile:()=>profile,commit:events=>{processEvents(events);syncProgress();checkpoint();updateHUD();},persist:()=>{persistProfile();refreshOfficeLabels();},onOpen:()=>{clearInput();audio.unlock();audio.play('click');checkpoint();},toast});
 function today(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t).value;return `${part('year')}-${part('month')}-${part('day')}`;}
 function refreshOfficeLabels(){$('menu-stamps').textContent=profile.stamps;$('office-rank').textContent=rank(profile);$('achievement-summary').textContent=`${profile.achievements.length} / ${ACHIEVEMENTS.length} 成就`;}
 function persistProfile(){storage.set(STORE.profile,JSON.stringify(profile));}
 function syncProgress(final=false){
   if(!run)return;const unlocked=recordProgress(profile,run,{final});
-  if(unlocked.length&&screen==='game'){$('achievement-toast-name').textContent=unlocked[0].name+(unlocked.length>1?` 等 ${unlocked.length} 项`:'');$('achievement-toast-reward').textContent=`+${unlocked.reduce((n,a)=>n+a.reward,0)} 邮票`;$('achievement-toast').hidden=false;achievementUntil=performance.now()+6000;audio.play('beacon');}
+  if(unlocked.length&&screen==='game'){$('achievement-toast-name').textContent=unlocked[0].name+(unlocked.length>1?` 等 ${unlocked.length} 项`:'');$('achievement-toast-reward').textContent=unlocked.some(a=>a.reward)?`+${unlocked.reduce((n,a)=>n+a.reward,0)} 邮票`:'纪念回信已收录';$('achievement-toast').hidden=false;achievementUntil=performance.now()+6000;audio.play('beacon');}
   if(unlocked.length||final)persistProfile();refreshOfficeLabels();
 }
 function saveSettings(){storage.set(STORE.settings,JSON.stringify(settings));}
@@ -56,11 +58,13 @@ function updateSettings(){
   for(const button of document.querySelectorAll('[data-difficulty]')){
     const selected=button.dataset.difficulty===(settings.daily?'normal':settings.difficulty);button.classList.toggle('selected',selected);button.setAttribute('aria-pressed',String(selected));button.disabled=settings.daily;
   }
-  $('difficulty-desc').textContent=settings.daily?'每日航线固定标准难度，同一天使用相同种子。':difficultyCopy[settings.difficulty];
+  $('difficulty-desc').textContent=settings.daily?'公平每日航线：标准难度、统一课程、黄铜行灯与 1 瓶补给。':difficultyCopy[settings.difficulty];
   $('contract-select').value=settings.daily?'swift':settings.contract;$('contract-select').disabled=settings.daily;$('daily-setting').checked=settings.daily;
-  $('prep-note').textContent=settings.daily?`${today()} · ${profile.dailies.includes(today())?'今日奖励已领取':'首次通关额外获得 3 邮票'}`:CONTRACTS.find(c=>c.id===settings.contract).desc+' · 奖励 '+CONTRACTS.find(c=>c.id===settings.contract).reward+' 邮票';
+  const routeKey=challengeKey({daily:today(),v12:{conditions:settings.conditions}});
+  $('prep-note').textContent=settings.daily?`${today()} · ${profile.challengeClaims.includes(routeKey)?'本航线奖励已领取，可重试纪录':'本条件组合首次通关额外获得 3 邮票'}${profile.challengeBests[routeKey]?' · 最快 '+formatTime(profile.challengeBests[routeKey]):''}`:CONTRACTS.find(c=>c.id===settings.contract).desc+' · 奖励 '+CONTRACTS.find(c=>c.id===settings.contract).reward+' 邮票';
 }
 function updateMenu(){
+  updateSettings();
   refreshOfficeLabels();
   const saved=restore(storage.get(STORE.save));
   $('continue').hidden=!saved;
@@ -82,7 +86,7 @@ function announceChapter(){
 }
 async function begin(resume=false){
   audio.unlock();closeDialogs();
-  const day=settings.daily?today():'',options={difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
+  const day=settings.daily?today():'',options={difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
   ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];
@@ -94,14 +98,15 @@ function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').clo
 function returnToMenu(){checkpoint();closeDialogs();paused=false;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
 function doDash(){if(screen==='game'&&!paused&&!document.querySelector('dialog[open]')&&dash(run))audio.play('dash');}
-function doPulse(){if(screen==='game'&&!paused&&!document.querySelector('dialog[open]')&&pulse(run))audio.play('pulse');}
+function doPulse(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(pulse(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function doPotion(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(usePotion(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function showUpgrade(){
-  checkpoint();clearInput();$('upgrade-copy').textContent=`${CHAPTERS[run.chapter].name}重新亮了起来。挑一件礼物，继续向前。`;
+  checkpoint();clearInput();$('upgrade-copy').textContent=run.v12?.choiceKind==='field'?'第二盏灯已经亮起。选一束新的光，留在街区继续送信。':`${CHAPTERS[run.chapter].name}重新亮了起来。挑一件礼物，继续向前。`;
+  $('upgrade-note').textContent=run.v12?.choiceKind==='field'?'选择一项强化，生命回满，继续本章。':'选择一项强化，生命回满，前往下一片街区。';
   const container=$('upgrade-options');container.replaceChildren();
   for(const id of run.offered){const u=UPGRADES.find(u=>u.id===id);const b=document.createElement('button');b.className='upgrade-card';
     b.innerHTML=`<svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><strong>${u.name}</strong><span>${u.desc}</span><small>带上这束光 →</small>`;
-    b.addEventListener('click',()=>{audio.unlock();audio.play('beacon');if(chooseUpgrade(run,u.id)){$('upgrade-dialog').close();paused=false;announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});}});container.append(b);
+    b.addEventListener('click',()=>{audio.unlock();audio.play('beacon');const previousChapter=run.chapter;if(chooseUpgrade(run,u.id)){$('upgrade-dialog').close();paused=false;if(run.chapter!==previousChapter)announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});}});container.append(b);
   }
   showDialog('upgrade-dialog');
 }
@@ -116,6 +121,8 @@ function finish(){
   $('result-title').textContent=won?ending.name+'。':'微光暂歇，旅途未完。';
   if(won)$('result-eyebrow').textContent=ending.subtitle;
   $('result-story').textContent=won?ending.text:'你留下的灯火没有熄灭。整理好邮包，再一次出发。总有一封信，等你送到天亮。';
+  $('result-review').replaceChildren();
+  if(run.v12){const v=run.v12,sets=Object.entries(run.gear.slots).map(([,id])=>GEAR_BY_ID[id].set),build=Object.keys(SETS).filter(id=>id!=='plain'&&sets.filter(x=>x===id).length>=2).map(id=>SETS[id].name).join(' / ')||'自由混搭';const spent=12+(run.talentSnapshot.fund||0)*5+run.metrics.coinsEarned-run.journal.coins;const sources=Object.entries(v.damageSources).sort((a,b)=>b[1]-a[1]).map(([name,n])=>name+' '+Math.round(n)).join(' · ')||'未受攻击伤害';for(const text of [`${v.mode==='challenge'?'公平挑战':'故事旅途'} · ${build} · ${v.conditions.map(id=>CONDITIONS.find(c=>c.id===id).name).join(' / ')||'常规航线'}`,`星砂收入 ${run.metrics.coinsEarned} / 支出 ${spent} / 结余 ${run.journal.coins}`,`最低生命 ${Math.round(v.minHp)} · 危险时间 ${v.lowTime.toFixed(1)} 秒 · 实际恢复 ${Math.round(v.healed)}`,`受击来源：${sources}`,`抵挡 ${v.barriers} · 回响 ${v.echoes} · 打断 ${v.interrupts} · 支路 ${v.riskCleared}/3`,v.riskCleared?'下一局：换一套行装，或为航线加一个条件。':'下一局：寻找地图上的旗帜，试试风险支路的精英与行装。']){const line=document.createElement('p');line.textContent=text;$('result-review').append(line);}}
   const reward=profile.lastRewards;$('settlement-note').textContent=`本次结算 ${reward?.journey===run.journeyId?reward.total:0} 枚邮票${run.contract.complete?' · 委托已完成':''}${reward?.daily?' · 每日航线首次送达':''}。成就奖励另计。`;
   $('result-score').textContent=score.toLocaleString('zh-CN');$('result-beacons').textContent=`${run.litTotal}/9`;$('result-time').textContent=formatTime(run.totalTime);$('result-best').hidden=!newBest;
   showDialog('result-dialog');
@@ -128,7 +135,11 @@ function processEvents(events){
       if(e.lit===3&&run.chapter<2)toast('三座灯塔已亮，前往街区右侧的金色拱门。',5);
       else toast(`灯塔已点亮 · ${e.lit}/3，附近可恢复生命。`,3);
     }
-    if(e.type==='boss')toast('守夜者醒来了。躲开紫色光球，用灯塔庇护自己。',6);
+    if(e.type==='boss')toast('守夜者醒来了。灯塔可挡光球；看到定向预警请侧移。',6);
+    if(e.type==='boss-warning')toast(e.text,5);
+    if(e.type==='interrupt')toast('光环打断了定向回声。',2);
+    if(e.type==='shield')toast('护灯屏障抵挡了一次攻击。',2);
+    if(e.type==='tailwind')toast('顺风已起 · 3 秒加速。',2);
     if(e.type==='boss-defeated')toast('长夜退去了。前往金色拱门，把黎明送达。',6);
     if(e.type==='level')toast(`信使等级 ${e.level} · 生命与光弹变得更强。`,3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);
@@ -154,7 +165,8 @@ function updateHUD(){
   $('combo-label').hidden=j.combo<2;$('combo-label').textContent=`${j.combo} 连击`;
   $('potion-count').textContent=j.potions;$('potion').disabled=j.potions<1||p.hp>=p.maxHp||j.potionCd>0;
   const poi=nearestPOI(run);$('interact').hidden=!poi;if(poi)$('interact-label').textContent=poiLabel(poi);
-  $('objective').textContent=run.exit.open?(run.chapter===2?'前往金色拱门，把黎明送达':'灯塔已全部点亮 · 前往右侧金色拱门'):lit===3?'击败守夜者 · 站在灯塔附近可以回血':p.embers>=4?'携带足够火种 · 靠近未点亮的灯塔':`收集火种点亮灯塔 · 每座需要 4 枚（${p.embers}/4）`;
+  $('objective').textContent=run.exit.open?(run.chapter===2?'前往金色拱门，把黎明送达':'灯塔已全部点亮 · 前往右侧金色拱门'):lit===3?'击败守夜者 · 看清预警，及时换位':p.embers>=4?'携带足够火种 · 靠近未点亮的灯塔':`收集火种点亮灯塔 · 每座需要 4 枚（${p.embers}/4）`;
+  $('run-status').textContent=run.v12?`${run.v12.mode==='challenge'?'公平航线':'故事旅途'} · ${['灯下大街','雨棚回廊','钟楼侧巷'][run.v12.layout]}${run.v12.barrier?' · 抵挡 ×1':''}${run.v12.shield?' · 护盾 '+Math.ceil(run.v12.shield):''}${run.v12.tailwindUntil>run.totalTime?' · 顺风':''}${run.v12.combatUntil>run.totalTime?' · 战斗休整':''}`:'上次旅途 · 沿用旧规则';
   const boss=run.enemies.find(e=>e.kind==='boss');$('boss-bar').hidden=!boss;if(boss)$('boss-hp').style.width=`${Math.max(0,boss.hp/boss.maxHp*100)}%`;
   for(const [id,cd,max,label] of [['dash',p.dashCd,p.dashMax,'SPACE'],['pulse',p.pulseCd,p.pulseMax,'E']]){
     $(id).classList.toggle('cooldown',cd>0);$(id).setAttribute('aria-disabled',String(cd>0));$(id).style.setProperty('--cooldown',`${cd/max*100}%`);

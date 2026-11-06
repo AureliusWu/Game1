@@ -1,0 +1,7 @@
+{
+  "experiments": 840,
+  "summaryDistributionsVerified": 1032,
+  "fairProfilePairsIdentical": 120,
+  "runtimeHashesVerified": 17,
+  "note": "Independent Python recomputation of medians, p90, ranges and normalized challenge pairs. Human win rate and visual fog difficulty are not inferred from these bots."
+}

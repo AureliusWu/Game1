@@ -23,6 +23,11 @@ if "name='io.github.aureliuswu.embercourier'" not in badging or f"versionName='{
 fingerprint = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-f]+)', signature)
 if not fingerprint:
     raise RuntimeError('No verified signing certificate')
+if fingerprint.group(1) != 'd4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7':
+    raise RuntimeError('Signing certificate differs from the existing upgrade identity')
+major, minor, patch = (int(part) for part in version.split('.'))
+if f"versionCode='{major * 10000 + minor * 100 + patch}'" not in badging:
+    raise RuntimeError('APK versionCode does not match the source')
 dist = root / 'dist'
 runtime = {}
 with zipfile.ZipFile(apk) as archive:

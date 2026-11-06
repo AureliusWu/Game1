@@ -13,6 +13,8 @@ for(const icon of manifest.icons)if(!fs.existsSync(path.join(root,icon.src)))thr
 const code=fs.readFileSync(path.join(root,'app.mjs'),'utf8');
 for(const m of code.matchAll(/\$\('([^']+)'\)/g))if(!ids.includes(m[1]))throw new Error('Missing UI element '+m[1]);
 const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
+if(!html.includes(`v${version}`)||!sw.includes(`ember-courier-v${version}`)||!fs.readFileSync(path.join(root,'core.mjs'),'utf8').includes(`VERSION = '${version}'`))throw new Error('Package, UI, core and offline cache versions must match');
 for(const file of files)if(/\.(mjs|css|html|png|svg|webmanifest)$/.test(file)&&!sw.includes(`'./${file}'`))throw new Error('Asset not in offline cache: '+file);
 const total=files.reduce((n,f)=>n+fs.statSync(path.join(root,f)).size,0);
 console.log(`Validated ${files.length} static files, ${ids.length} unique UI IDs; ${(total/1024).toFixed(1)} KiB total. No build or runtime dependencies.`);

@@ -9,5 +9,9 @@
 - Original code-drawn visuals and synthesized audio are part of the product. Do not introduce copyrighted external art or samples.
 - `.openai/hosting.json` identifies the existing hosted game. Preserve its project ID and current audience (public since the authorized v1.1.1 web release). CI does not independently deploy to that preview.
 - v1.1.0 adds data in `content.mjs`, pure expedition transitions in `systems.mjs`, idempotent metaprogression in `progress.mjs`, and UI in `hub.mjs`. Keep rewards atomic and world interactions proximity-checked.
-- Save schema 2 migrates schema 1 rather than dropping it. Keep the existing run/stat keys and the separate profile key. Talents snapshot at launch; equipment recalculates from source data without healing exploits.
+- Save schema 3 migrates schemas 1/2 with rulesVersion 111 for legacy runs; only rulesVersion 120 enables the new expedition rules. Keep old-run behavior and source-derived stats. Keep the existing run/stat keys and the separate profile key. Talents snapshot at launch; equipment recalculates from source data without healing exploits.
 - Full expansion journeys must exercise residents, paid choices, real equipment/shops/forges, delivery, actual enemies, save/resume and distinct endings. Preserve the direct original route.
+
+- v1.2.0 adds radius-aware bounded navigation in routes.mjs and pure expedition hooks in expedition.mjs. Map, combat and loot random streams remain separate. Preserve finite patrol reward reservations and atomic claim state across saves.
+- Field upgrade choices stay in the current chapter; chapter choices advance once. Persist offers and their choice kind.
+- Fair challenges normalize the starting loadout and talents; the rule/date/condition key owns first rewards and personal bests. Keep eight new achievement rewards as commemorative letters.

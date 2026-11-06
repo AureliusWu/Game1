@@ -20,7 +20,7 @@ jobs:
         run: node scripts/check.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: Ember-Courier-web-v1.1.1
+          name: Ember-Courier-web-v1.2.0
           path: dist/
           if-no-files-found: error
           retention-days: 30
