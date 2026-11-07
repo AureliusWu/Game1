@@ -18,7 +18,7 @@ GitHub Pages 为主要网页地址：https://aureliuswu.github.io/Game1/ 。仓�
 
 手动入口 target 可选 all / web / android / windows / check。publish=false 只运行构建和验收，不部署、不生成正式签名 APK、不创建 Release；web 可单独修复网页部署，android/windows 可单独产出对应 Actions 构建产物。新版本发布使用 all + publish=true。PR 不执行签名或发布。
 
-原重复的 visual-qa 触发器已合并至 Android 流程。原生与 Windows 并行，公共验收只跑一次；测试更改跳过不相关的原生任务。过期 PR 运行自动取消，main 发布串行；所有任务设置超时并保留失败诊断。
+原重复的 visual-qa 触发器已合并至 Android 流程。原生与 Windows 并行，公共验收只跑一次；测试更改跳过不相关的原生任务。过期 PR 运行自动取消，main 发布串行；所有任务设置超时并保留失败诊断。官方 Actions 已核对并固定为当前 Node 24 版本，避免依赖已弃用的 Node 20 执行器。
 
 ## 版本与产物
 

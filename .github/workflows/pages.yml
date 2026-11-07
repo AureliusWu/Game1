@@ -16,25 +16,25 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: canonical-web
           path: artifacts/web
       - name: Extract the already validated web archive
         run: python3 -c "import glob,zipfile; zipfile.ZipFile(glob.glob('artifacts/web/*.zip')[0]).extractall('pages')"
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6.0.0
+      - uses: actions/upload-pages-artifact@v5.0.0
         with:
           path: pages
       - name: Deploy Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5.0.1
       - name: Check live HTTPS, module MIME and every runtime hash
         env:
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
         run: python3 scripts/verify-pages.py "$PAGE_URL"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: Pages-live-verification
           path: artifacts/pages/

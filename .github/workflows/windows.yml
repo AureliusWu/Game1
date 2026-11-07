@@ -8,8 +8,8 @@ jobs:
     runs-on: windows-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.1.0
         with:
           node-version: '22'
           cache: npm
@@ -20,14 +20,14 @@ jobs:
         run: |
           "electron=$env:LOCALAPPDATA/electron/Cache" >> $env:GITHUB_OUTPUT
           "builder=$env:LOCALAPPDATA/electron-builder/Cache" >> $env:GITHUB_OUTPUT
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6.1.0
         with:
           path: |
             ${{ steps.paths.outputs.electron }}
             ${{ steps.paths.outputs.builder }}
           key: windows-electron-${{ hashFiles('windows/package-lock.json') }}
           restore-keys: windows-electron-
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8.0.2
         with:
           name: canonical-web
           path: artifacts/web
@@ -45,7 +45,7 @@ jobs:
       - name: Verify ASAR hashes and package desktop provenance
         shell: pwsh
         run: node scripts/package_windows.mjs "$env:RUNNER_TEMP/windows-qa/windows-smoke.json"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7.0.2
         with:
           name: Windows-package
           path: artifacts/windows/
@@ -53,7 +53,7 @@ jobs:
           retention-days: 14
       - name: Preserve actual EXE screenshots and startup diagnostics
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.2
         with:
           name: Windows-desktop-QA
           path: |
