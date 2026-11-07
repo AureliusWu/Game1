@@ -20,6 +20,10 @@ test('shared runtime edits validate both native packages',()=>{
  const p=planJobs({...main,changed:['dist/app.mjs']});
  assert.equal(p.android,true);assert.equal(p.windows,true);assert.equal(p.deploy_web,true);
 });
+test('cross-platform checkout policy changes revalidate all packages',()=>{
+ const p=planJobs({...main,changed:['.gitattributes']});
+ assert.equal(p.android,true);assert.equal(p.windows,true);assert.equal(p.deploy_web,true);
+});
 test('pull requests never publish or request Android signing',()=>{
  const p=planJobs({event:'pull_request',ref:'refs/pull/12/merge',changed:['dist/app.mjs']});
  assert.equal(p.android,true);assert.equal(p.windows,true);assert.equal(p.release,false);assert.equal(p.sign_android,false);assert.equal(p.deploy_web,false);

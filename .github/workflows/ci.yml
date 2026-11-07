@@ -2,9 +2,9 @@ name: Game CI and releases
 on:
   push:
     branches: [main]
-    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.github/workflows/**']
+    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.gitattributes', '.github/workflows/**']
   pull_request:
-    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.github/workflows/**']
+    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.gitattributes', '.github/workflows/**']
   workflow_dispatch:
     inputs:
       target:

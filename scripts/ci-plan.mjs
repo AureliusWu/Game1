@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 
 export function planJobs({event,ref,changed=[],tagExists=false,message='',target='all',publish=true}){
  const manual=event==='workflow_dispatch',main=ref==='refs/heads/main',qa=message.includes('[qa-only]');
- const shared=changed.some(p=>/^(dist\/|package\.json$|\.github\/workflows\/ci\.yml$)/.test(p));
+ const shared=changed.some(p=>/^(dist\/|package\.json$|\.gitattributes$|\.github\/workflows\/ci\.yml$)/.test(p));
  const release=main&&publish&&!qa&&!tagExists&&(!manual||target==='all');
  const selected=kind=>manual?target==='all'||target===kind:false;
  const web=release||selected('web')||!manual&&(shared||changed.some(p=>/^(scripts\/package_web\.py|scripts\/verify-pages\.py|\.github\/workflows\/pages\.yml)$/.test(p)));
