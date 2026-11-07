@@ -1,0 +1,62 @@
+name: Windows portable EXE
+on:
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: windows/package-lock.json
+      - name: Locate desktop download caches
+        id: paths
+        shell: pwsh
+        run: |
+          "electron=$env:LOCALAPPDATA/electron/Cache" >> $env:GITHUB_OUTPUT
+          "builder=$env:LOCALAPPDATA/electron-builder/Cache" >> $env:GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ${{ steps.paths.outputs.electron }}
+            ${{ steps.paths.outputs.builder }}
+          key: windows-electron-${{ hashFiles('windows/package-lock.json') }}
+          restore-keys: windows-electron-
+      - uses: actions/download-artifact@v4
+        with:
+          name: canonical-web
+          path: artifacts/web
+      - name: Install locked desktop build dependencies
+        run: npm ci --prefix windows --no-audit --no-fund
+      - name: Verify and embed the canonical web assets
+        run: node scripts/prepare-windows.mjs
+      - name: Build portable Windows x64 EXE
+        run: npm --prefix windows run pack
+      - name: Launch the actual portable EXE and test its renderer
+        shell: pwsh
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          ./scripts/smoke_windows.ps1 -Executable "windows/out/Ember-Courier-v$version-Windows-x64.exe" -OutputDirectory "$env:RUNNER_TEMP/windows-qa"
+      - name: Verify ASAR hashes and package desktop provenance
+        shell: pwsh
+        run: node scripts/package_windows.mjs "$env:RUNNER_TEMP/windows-qa/windows-smoke.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Windows-package
+          path: artifacts/windows/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Preserve actual EXE screenshots and startup diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-desktop-QA
+          path: |
+            ${{ runner.temp }}/windows-qa/
+            windows/out/builder-debug.yml
+          retention-days: 14

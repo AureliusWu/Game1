@@ -1,43 +1,38 @@
 # 部署与维护
 
-## 已准备的在线版
+GitHub Pages 为主要网页地址：https://aureliuswu.github.io/Game1/ 。仓库 Settings → Pages → Source 使用 GitHub Actions；工作流部署后逐项检查公开资源，验证结果保存在 Actions 的 Pages-live-verification 产物。
 
-- 地址：https://ember-courier-game1.dazzlingmodel.chatgpt.site
-- 访问范围：按作者 2026-11-06 的网页发布要求，现已公开访问。
-- 身份保存在 `.openai/hosting.json`。后续更新应复用同一 project_id 与访问范围。
-- 在线预览的源仓库由托管服务管理；GitHub 的 `AureliusWu/Game1` 是完整源码镜像。两处修改不会凭空互相同步，发布时需同步同一份已验证源码。
+原公开预览 https://ember-courier-game1.dazzlingmodel.chatgpt.site/ 的身份仍保存在 `.openai/hosting.json`，保留原 project_id 和公开范围。GitHub 工作流不自动更新该预览。不同域名的网页存档相互独立，当前没有跨来源迁移/同步。
 
-## 任意静态托管
+## 工作流
 
-把 `dist/` 的全部文件原样上传即可。无需构建、安装依赖、环境变量、数据库或 API 密钥。可以放在域名根目录或 `/Game1/` 子目录，运行时使用相对路径。
+唯一触发入口为 `Game CI and releases`（ci.yml），支持 main 推送、PR 和手动执行。仅相关源码/测试/脚本/工作流变更自动触发；文档更改不重新打包。
 
-服务器应将 `.mjs` / `.js` 返回为 JavaScript、`.webmanifest` 返回为 `application/manifest+json`。开发服务器已包含这些 MIME 映射。PWA 安装与离线功能需要 HTTPS 或 localhost 安全上下文；普通 HTTP 可以运行游戏，但浏览器可能禁用 Service Worker。
+| 阶段 | 行为 |
+| --- | --- |
+| quality | 一次 Node 规则与 CI 契约测试、静态/版本/缓存检查，生成公共网页 ZIP 与资源哈希清单 |
+| android.yml | 按需编译、lint、模拟器真实验收；main 可生成原证书签名 APK；缓存 Gradle 和 Android 系统镜像 |
+| windows.yml | 按需构建 x64 免安装 EXE，运行实际 EXE 的保存/恢复/方向保护验收；缓存 npm、Electron 和打包工具 |
+| release.yml | 新版本且两端构建通过，验证网页/APK/EXE 同版本、同提交和同资源；发布三端包、校验和与来源清单 |
+| pages.yml | main 网页变更且所有必要任务成功后部署公共网页产物；线上验证 HTTPS、模块 MIME 和每个资源的 SHA-256 |
 
-## GitHub Actions
+手动入口 target 可选 all / web / android / windows / check。publish=false 只运行构建和验收，不部署、不生成正式签名 APK、不创建 Release；web 可单独修复网页部署，android/windows 可单独产出对应 Actions 构建产物。新版本发布使用 all + publish=true。PR 不执行签名或发布。
 
-`ci.yml` 在 main 推送、PR 与手动触发时运行所有测试和静态检查，上传按提交 SHA 标识的 `Ember-Courier-web-*` 成品。下载并解压后，仍需通过 HTTP 服务器打开。
+原重复的 visual-qa 触发器已合并至 Android 流程。原生与 Windows 并行，公共验收只跑一次；测试更改跳过不相关的原生任务。过期 PR 运行自动取消，main 发布串行；所有任务设置超时并保留失败诊断。
 
-`pages.yml` 是独立的可选镜像：仓库 Settings → Pages → Source 选择 GitHub Actions 后，在 Actions 手动运行 Publish GitHub Pages。它不会修改当前公开站点的访问范围。本次交付不将尚未启用的 Pages 当作已发布地址。
+## 版本与产物
 
-## 版本与存档
+运行代码变更同时更新根 package.json、core VERSION、界面版本、离线缓存名，以及 windows/package.json 和 lockfile 的根版本。已发布版本不可修改运行资源或覆盖资产；QA/CI 修正使用 `[qa-only]` 并保持发行资产不可变。签名 APK、Windows EXE、网页 ZIP 及 SHA256SUMS.txt 从 GitHub Releases 下载。
 
-任何运行时代码或资源改变，都应同时更新包版本、界面版本、文档与 `sw.js` 的缓存版本。Service Worker 不会强制替换正在游玩的旧版本；关闭该游戏所有标签后重新打开，才切换到准备好的新版本，避免一局中混用不同模块。
+APK 保持 `io.github.aureliuswu.embercourier` 和原证书，覆盖安装延续数据。EXE 的用户数据目录为 `%APPDATA%/EmberCourier`；当前 Windows 产物未配置代码签名。各平台均保留原有存储键、旧运行规则和迁移身份。
 
-v1.1.0 将运行中存档从 schema 1 自动迁移到 schema 2，保留旧世界与运行状态，并补齐装备/经济/居民系统。永久成长保存在 `ember-courier.profile.v1`，旧统计键和运行存档键保留。后续存档字段变动需要迁移或增加 `SAVE_VERSION`。保留存储键能延续历史记录；修改键或清理站点数据会丢失本地进度。更换域名、浏览器或设备不会自动迁移存档。
+## 静态托管与离线更新
 
-## 验证
+`dist/` 仍可直接托管在根目录或子目录。所有运行路径相对；不需要构建、API、数据库或运行依赖。服务器应将 .mjs/.js 作为 JavaScript 返回，PWA 离线缓存需要 HTTPS 或 localhost。Service Worker 不强制替换正在进行的旅途，关闭所有游戏标签后重新打开完成更新。APK / EXE 使用包内资源整体更新，不启用网页缓存。
 
 ```bash
 node --test tests/*.test.mjs
 node scripts/check.mjs
 ```
 
-部署的是 `dist/`，不是源码目录。不要把调试页面、测试工具、凭证或临时截图放进 `dist/`。
-
-## Android 与 GitHub Release
-
-发行流程见 [ANDROID.md](ANDROID.md)，双端发行说明见 [v1.2.0](releases/v1.2.0.md)。网页 ZIP 和签名 APK 一起出现在 GitHub Releases。
-
-v1.2.0 使用 schema 3，并显式保存运行规则版本。旧运行继续旧规则，永久存储键保持；新资源 `routes.mjs`、`expedition.mjs` 已加入 `ember-courier-v1.2.0` 离线缓存。
-
-当前 v1.3.0「无尽夜航」增加 `endless.mjs`，全部 18 个静态资源已纳入 `ember-courier-v1.3.0` 缓存。现有 Sites 身份和公开受众保持，发行流程继续同时验证 APK 与网页资源。详见 [发行说明](releases/v1.3.0.md)。
+Android 和 Windows 本地打包分别见 [ANDROID.md](ANDROID.md) 与 [WINDOWS.md](WINDOWS.md)。不得把调试页面、测试脚本、凭证或临时截图放入 dist。

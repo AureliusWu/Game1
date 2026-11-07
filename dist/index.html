@@ -8,6 +8,7 @@
 <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./battle.css">
   <link rel="stylesheet" href="./growth.css">
+<link rel="stylesheet" href="./orientation.css">
 </head>
 <body>
 <svg class="sprite" aria-hidden="true"><defs>
@@ -31,6 +32,7 @@
 <symbol id="i-chest" viewBox="0 0 24 24"><path d="M3 10a9 9 0 0 1 18 0v11H3Zm0 3h18M7 5v16M17 5v16"/><rect x="10" y="11" width="4" height="5" rx="1"/></symbol>
 <symbol id="i-letter" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7M3 19l6-7m12 7-6-7"/></symbol>
 </defs></svg>
+<dialog id="orientation-dialog" aria-label="横屏游戏"><div class="turn-device"><svg aria-hidden="true"><use href="#i-full"/></svg></div><h2>请横屏游玩</h2><p>将手机横置，或把窗口调宽。<br>旅途与选卡倒计时会暂停，横屏后继续。</p><button id="orientation-enter" class="primary">全屏并尝试横屏</button></dialog>
 <main id="menu" class="view menu-view">
   <header class="site-header">
     <a class="brand" href="./" aria-label="余烬信使首页"><img src="./icon.svg" width="38" height="38" alt=""><span>暮色邮局<small>NIGHTFALL POST OFFICE</small></span></a>
@@ -69,7 +71,7 @@
     <div><span class="strip-number">02</span><p>组合进化<small>武器与被动搭配，变化看得见</small></p></div>
     <div><span class="strip-number">03</span><p>挑战更深层<small>每五层首领，路由你来选</small></p></div>
   </section>
-  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.6.1</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
+  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.7.0</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
 </main>
 <section id="game" class="view game-view" hidden aria-label="余烬信使游戏区域">
   <canvas id="world" tabindex="0" aria-label="游戏画面。使用 WASD 或方向键移动，空格冲刺，E 释放光环，P 暂停。手机使用左侧摇杆和右侧技能键。"></canvas>

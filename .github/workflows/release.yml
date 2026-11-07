@@ -1,125 +1,46 @@
-name: Publish Web and Android
+name: Publish verified release
 on:
-  workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'android/**'
-      - 'dist/**'
-      - 'package.json'
-      - 'scripts/package_release.py'
-      - '.github/workflows/release.yml'
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        required: true
 permissions:
-  contents: read
-concurrency:
-  group: game-release
-  cancel-in-progress: false
+  contents: write
 jobs:
-  release:
-    # QA-only follow-ups preserve the immutable published version and use visual-qa.yml.
-    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[qa-only]')
+  publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    permissions:
-      contents: write
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/download-artifact@v4
         with:
-          node-version: '22'
-      - uses: actions/setup-java@v4
+          name: canonical-web
+          path: artifacts/web
+      - uses: actions/download-artifact@v4
         with:
-          distribution: temurin
-          java-version: '17'
-      - uses: gradle/actions/setup-gradle@v4
-      - name: Validate complete gameplay and web release
-        run: node --test tests/*.test.mjs && node scripts/check.mjs
-      - name: Compile Android app and instrumented smoke test
-        working-directory: android
-        run: ./gradlew --no-daemon --console=plain :app:assembleDebug :app:assembleDebugAndroidTest
-      - name: Start Android 35 emulator
-        timeout-minutes: 8
-        run: |
-          sdk_root="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          if [ ! -x "$sdk_root/cmdline-tools/latest/bin/sdkmanager" ]; then
-            curl -fsSL https://dl.google.com/android/repository/commandlinetools-linux-13114758_latest.zip -o /tmp/android-commandline-tools.zip
-            echo "7ec965280a073311c339e571cd5de778b9975026cfcbe79f2b1cdcb1e15317ee  /tmp/android-commandline-tools.zip" | sha256sum -c -
-            mkdir -p "$sdk_root/cmdline-tools"
-            unzip -q /tmp/android-commandline-tools.zip -d /tmp/ember-commandline-tools
-            mv /tmp/ember-commandline-tools/cmdline-tools "$sdk_root/cmdline-tools/latest"
-          fi
-          export ANDROID_HOME="$sdk_root"
-          export ANDROID_SDK_ROOT="$sdk_root"
-          export PATH="$sdk_root/cmdline-tools/latest/bin:$sdk_root/platform-tools:$PATH"
-          echo "ANDROID_HOME=$sdk_root" >> "$GITHUB_ENV"
-          echo "ANDROID_SDK_ROOT=$sdk_root" >> "$GITHUB_ENV"
-          echo "$sdk_root/platform-tools" >> "$GITHUB_PATH"
-          sudo apt-get update -qq
-          sudo apt-get install -y --no-install-recommends libpulse0 libx11-6 libx11-xcb1 libxcb1 libxcb-cursor0 libgl1 libegl1 libnss3 libxkbcommon0 >/dev/null
-          sudo chmod 666 /dev/kvm
-          export ANDROID_AVD_HOME="$RUNNER_TEMP/ember-avd"
-          export ANDROID_USER_HOME="$RUNNER_TEMP/ember-android"
-          mkdir -p "$ANDROID_AVD_HOME" "$ANDROID_USER_HOME"
-          trap 'tail -100 /tmp/ember-emulator.log 2>/dev/null || true' ERR
-          yes | sdkmanager --licenses >/dev/null
-          sdkmanager 'emulator' 'system-images;android-35;google_apis;x86_64' >/dev/null
-          echo no | avdmanager create avd --name ember --package 'system-images;android-35;google_apis;x86_64' --force
-          "$ANDROID_HOME/emulator/emulator" -accel-check
-          "$ANDROID_HOME/emulator/emulator" -avd ember -no-window -no-audio -no-boot-anim -no-snapshot -gpu software -feature -Vulkan -camera-back none -camera-front none -memory 2048 > /tmp/ember-emulator.log 2>&1 &
-          emulator_pid=$!
-          adb start-server
-          booted=false
-          for attempt in $(seq 1 120); do
-            kill -0 "$emulator_pid" || { cat /tmp/ember-emulator.log; exit 1; }
-            if [ "$(adb -e shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")" = "1" ]; then booted=true; break; fi
-            sleep 2
-          done
-          if [ "$booted" != true ]; then cat /tmp/ember-emulator.log; exit 1; fi
-          adb shell input keyevent 82
-          adb shell settings put secure immersive_mode_confirmations confirmed
-          adb shell settings put global window_animation_scale 0
-          adb shell settings put global transition_animation_scale 0
-          adb shell settings put global animator_duration_scale 0
-      - name: Verify packaged offline game, saves, back and resume
-        working-directory: android
-        run: ./gradlew --no-daemon --console=plain :app:connectedDebugAndroidTest
-      - name: Build signed production APK
-        working-directory: android
-        env:
-          EMBER_ANDROID_SIGNING_JSON: ${{ secrets.EMBER_ANDROID_SIGNING_JSON }}
-        run: ./gradlew --no-daemon --console=plain :app:assembleRelease
-      - name: Preserve actual compact draft screenshots
-        run: |
-          mkdir -p artifacts/qa
-          adb pull /sdcard/Download/ember-draft-portrait.png artifacts/qa/draft-portrait.png
-          adb pull /sdcard/Download/ember-draft-landscape.png artifacts/qa/draft-landscape.png
-          adb pull /sdcard/Download/ember-star-portrait.png artifacts/qa/star-portrait.png
-          adb pull /sdcard/Download/ember-star-landscape.png artifacts/qa/star-landscape.png
-          python3 scripts/check_draft_screenshots.py artifacts/qa
-      - name: Verify signature and identical packaged assets
-        run: python3 scripts/package_release.py android/app/build/outputs/apk/release/app-release.apk
+          name: Android-package
+          path: artifacts/android
+      - uses: actions/download-artifact@v4
+        with:
+          name: Windows-package
+          path: artifacts/windows
+      - name: Require identical assets and source across all platforms
+        run: python3 scripts/assemble_release.py
       - uses: actions/upload-artifact@v4
         with:
           name: Ember-Courier-release
-          path: artifacts/
+          path: artifacts/release/
           if-no-files-found: error
-      - name: Publish release with web build and Android APK
+          retention-days: 30
+      - name: Publish immutable web, APK and EXE assets
         env:
           GH_TOKEN: ${{ github.token }}
+          GAME_VERSION: ${{ inputs.version }}
         run: |
-          version="$(node -p "JSON.parse(require('fs').readFileSync('package.json')).version")"
-          tag="v$version"
+          tag="v$GAME_VERSION"
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists; refusing to overwrite published assets."
             exit 1
           fi
-          gh release create "$tag" artifacts/*.apk artifacts/*.zip artifacts/*.json artifacts/*.txt --target "$GITHUB_SHA" --title "余烬信使 $tag · 网页与 Android" --notes-file "docs/releases/$tag.md"
-      - name: Preserve Android diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: Android-diagnostics
-          path: |
-            android/app/build/reports/androidTests/
-            android/app/build/outputs/androidTest-results/
-            /tmp/ember-emulator.log
+          gh release create "$tag" artifacts/release/* --target "$GITHUB_SHA" --title "余烬信使 $tag · 网页 / Android / Windows" --notes-file "docs/releases/$tag.md"

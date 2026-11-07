@@ -1,4 +1,4 @@
-"""Package a verified APK and the exact same web assets for GitHub Releases."""
+"""Verify the upgrade signing identity and APK against the canonical web artifact."""
 import hashlib
 import json
 import os
@@ -29,6 +29,10 @@ major, minor, patch = (int(part) for part in version.split('.'))
 if f"versionCode='{major * 10000 + minor * 100 + patch}'" not in badging:
     raise RuntimeError('APK versionCode does not match the source')
 dist = root / 'dist'
+canonical = json.loads((root / f'artifacts/web/Ember-Courier-Web-v{version}-provenance.json').read_text())
+commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+if canonical['version'] != version or canonical['commit'] != commit:
+    raise RuntimeError('Canonical web artifact differs from the source commit')
 runtime = {}
 with zipfile.ZipFile(apk) as archive:
     for file in sorted(dist.iterdir()):
@@ -36,22 +40,16 @@ with zipfile.ZipFile(apk) as archive:
         if archive.read('assets/' + file.name) != data:
             raise RuntimeError('APK asset differs from web release: ' + file.name)
         runtime[file.name] = hashlib.sha256(data).hexdigest()
+if runtime != canonical['web_asset_sha256']:
+    raise RuntimeError('APK assets differ from the canonical web artifact')
 
-out = root / 'artifacts'
-out.mkdir(exist_ok=True)
+out = root / 'artifacts/android'
+out.mkdir(parents=True, exist_ok=True)
 apk_target = out / f'Ember-Courier-v{version}.apk'
 shutil.copyfile(apk, apk_target)
-web = out / f'Ember-Courier-web-v{version}.zip'
-with zipfile.ZipFile(web, 'w', zipfile.ZIP_DEFLATED) as archive:
-    for file in sorted(dist.iterdir()):
-        archive.write(file, file.name)
-commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
-provenance = out / f'Ember-Courier-v{version}-provenance.json'
+provenance = out / f'Ember-Courier-Android-v{version}-provenance.json'
 provenance.write_text(json.dumps({'version': version, 'commit': commit,
     'application_id': 'io.github.aureliuswu.embercourier', 'min_android_api': 26,
     'signing_certificate_sha256': fingerprint.group(1), 'web_asset_sha256': runtime}, indent=2) + '\n')
-checks = out / 'SHA256SUMS.txt'
-checks.write_text(''.join(hashlib.sha256(file.read_bytes()).hexdigest() + '  ' + file.name + '\n'
-    for file in (apk_target, web, provenance)))
 print(f'Verified release signature, package/version and all {len(runtime)} embedded assets.')
-print(f'Packaged {apk_target.name} ({apk_target.stat().st_size:,} bytes), web ZIP and checksums.')
+print(f'Packaged {apk_target.name} ({apk_target.stat().st_size:,} bytes).')

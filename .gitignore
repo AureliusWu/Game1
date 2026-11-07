@@ -9,3 +9,10 @@ android/local.properties
 *.keystore
 *.p12
 signing.json
+
+windows/game/
+windows/out/
+windows/build-info.json
+windows/LICENSE
+__pycache__/
+*.pyc

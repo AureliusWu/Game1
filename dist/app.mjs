@@ -1,3 +1,4 @@
+import {createLandscapeGate} from './orientation.mjs';
 import {ensureDraft,recommendedChoice,stepDraft,toggleDraft} from './draft.mjs';
 import {AFFIXES,isTactical} from './tactics.mjs';
 import {isCombat,overdriving} from './combat.mjs';
@@ -103,6 +104,7 @@ function announceChapter(){
   $('letter-toast').hidden=true;$('game-toast').hidden=true;letterUntil=0;toastUntil=0;
 }
 async function begin(resume=false){
+  if(landscapeGate.check()){await landscapeGate.enter();if(landscapeGate.blocked)return;}
   audio.unlock();closeDialogs();
   const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
@@ -280,6 +282,7 @@ $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenEle
 for(const id of ['dash','pulse'])$(id).addEventListener('pointerdown',e=>{e.preventDefault();audio.unlock();id==='dash'?doDash():doPulse();});
 for(const id of ['dash','pulse'])$(id).addEventListener('click',e=>{if(e.detail===0){audio.unlock();id==='dash'?doDash():doPulse();}});
 window.addEventListener('keydown',e=>{
+  if(landscapeGate.blocked){if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();return;}
   if(['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName))return;
   const modal=document.querySelector('dialog[open]');
   if(screen==='game'&&!modal&&['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
@@ -311,7 +314,7 @@ function frame(now){
   if(screen==='menu'){
     if(!document.hidden)drawTitle($('title-art'),now/1000,settings.lowMotion);
   }else if(run){
-    const active=!paused&&!document.querySelector('dialog[open]')&&run.phase==='playing'&&!document.hidden;
+    const active=!landscapeGate.blocked&&!paused&&!document.querySelector('dialog[open]')&&run.phase==='playing'&&!document.hidden;
     if(active){
       let x=joy.x+(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
       let y=joy.y+(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
@@ -324,13 +327,24 @@ function frame(now){
       if(letterUntil&&run.totalTime>letterUntil){$('letter-toast').hidden=true;letterUntil=0;}
       if(toastUntil&&run.totalTime>toastUntil){$('game-toast').hidden=true;toastUntil=0;}
     }
-    if(run.phase==='upgrade'&&$('upgrade-dialog').open){const auto=stepDraft(run,elapsed,{blocked:document.hidden||paused||document.querySelectorAll('dialog[open]').length>1});updateDraftClock();if(auto&&!applyDraftChoice(auto.id,auto.key,true)){const c=ensureDraft(run);if(c){c.fired=false;c.remaining=1;}}saveTimer+=elapsed;if(saveTimer>1){checkpoint();saveTimer=0;}}
+    if(run.phase==='upgrade'&&$('upgrade-dialog').open){const auto=stepDraft(run,elapsed,{blocked:landscapeGate.blocked||document.hidden||paused||document.querySelectorAll('dialog[open]').length>1});updateDraftClock();if(auto&&!applyDraftChoice(auto.id,auto.key,true)){const c=ensureDraft(run);if(c){c.fired=false;c.remaining=1;}}saveTimer+=elapsed;if(saveTimer>1){checkpoint();saveTimer=0;}}
     if(!document.hidden)renderer.draw(run,active||run.phase==='upgrade'?dt:0);
     audio.update(active,run.chapter);
   }
   requestAnimationFrame(frame);
 }
-updateSettings();updateMenu();setScreen('menu');requestAnimationFrame(frame);
+const landscapeGate=createLandscapeGate({
+ viewport:()=>({width:window.innerWidth,height:window.innerHeight}),
+ show:blocked=>{const d=$('orientation-dialog');document.body.dataset.orientation=blocked?'portrait':'landscape';if(blocked&&!d.open)d.showModal();else if(!blocked&&d.open)d.close();},
+ suspend:()=>{clearInput();checkpoint();},
+ fullscreen:()=>!document.fullscreenElement&&document.documentElement.requestFullscreen?document.documentElement.requestFullscreen():undefined,
+ lock:kind=>window.screen.orientation?.lock?.(kind)
+});
+$('orientation-enter').addEventListener('click',()=>landscapeGate.enter());
+$('orientation-dialog').addEventListener('cancel',e=>e.preventDefault());
+window.addEventListener('resize',()=>landscapeGate.check());
+window.screen.orientation?.addEventListener?.('change',()=>landscapeGate.check());
+updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAnimationFrame(frame);
 // The Android host calls these hooks without exposing a native JavaScript bridge.
 window.emberCourierNative=Object.freeze({
   pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
@@ -342,4 +356,4 @@ window.emberCourierNative=Object.freeze({
   }
 });
 // APK assets are updated atomically with the package and do not need a web cache.
-if('serviceWorker' in navigator&&location.protocol!=='file:'&&location.hostname!=='appassets.androidplatform.net')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+if('serviceWorker' in navigator&&location.protocol!=='file:'&&location.protocol!=='ember:'&&location.hostname!=='appassets.androidplatform.net')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));

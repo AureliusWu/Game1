@@ -1,26 +1,95 @@
-name: Game quality and playable build
+name: Game CI and releases
 on:
   push:
     branches: [main]
+    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.github/workflows/**']
   pull_request:
+    paths: ['dist/**', 'android/**', 'windows/**', 'tests/**', 'scripts/**', 'package.json', '.github/workflows/**']
   workflow_dispatch:
+    inputs:
+      target:
+        description: Platform to build (all also publishes a new version)
+        type: choice
+        options: [all, web, android, windows, check]
+        default: all
+      publish:
+        description: Deploy Pages / sign Android / publish a new release on main
+        type: boolean
+        default: true
 permissions:
   contents: read
+concurrency:
+  group: game-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 jobs:
-  verify:
+  quality:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      web: ${{ steps.plan.outputs.web }}
+      android: ${{ steps.plan.outputs.android }}
+      windows: ${{ steps.plan.outputs.windows }}
+      release: ${{ steps.plan.outputs.release }}
+      deploy_web: ${{ steps.plan.outputs.deploy_web }}
+      sign_android: ${{ steps.plan.outputs.sign_android }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Rules, persistence, story and endless journeys
+      - name: Select affected platforms and protect published versions
+        id: plan
+        run: node scripts/ci-plan.mjs
+      - name: Rules, persistence, story, growth, orientation and CI contracts
         run: node --test tests/*.test.mjs
-      - name: Verify static release, UI references and offline assets
+      - name: Verify static assets, versions and offline coverage
         run: node scripts/check.mjs
+      - name: Validate workflow contracts with pinned actionlint
+        run: |
+          curl -fsSL --retry 3 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
+          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          "$RUNNER_TEMP/actionlint" -shellcheck="" -pyflakes=""
+      - name: Build the canonical web archive once
+        run: python3 scripts/package_web.py
       - uses: actions/upload-artifact@v4
         with:
-          name: Ember-Courier-web-${{ github.sha }}
-          path: dist/
+          name: canonical-web
+          path: artifacts/web/
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 14
+  android:
+    needs: quality
+    if: needs.quality.outputs.android == 'true'
+    uses: ./.github/workflows/android.yml
+    with:
+      sign_release: ${{ github.ref == 'refs/heads/main' && needs.quality.outputs.sign_android == 'true' }}
+    secrets:
+      EMBER_ANDROID_SIGNING_JSON: ${{ secrets.EMBER_ANDROID_SIGNING_JSON }}
+  windows:
+    needs: quality
+    if: needs.quality.outputs.windows == 'true'
+    uses: ./.github/workflows/windows.yml
+  publish:
+    needs: [quality, android, windows]
+    if: github.ref == 'refs/heads/main' && needs.quality.outputs.release == 'true'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.quality.outputs.version }}
+  pages:
+    needs: [quality, android, windows, publish]
+    if: >-
+      !cancelled() && github.ref == 'refs/heads/main' && needs.quality.result == 'success' && needs.quality.outputs.deploy_web == 'true' &&
+      (needs.android.result == 'success' || needs.android.result == 'skipped') &&
+      (needs.windows.result == 'success' || needs.windows.result == 'skipped') &&
+      (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yml

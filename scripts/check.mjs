@@ -4,6 +4,7 @@ import {spawnSync} from 'node:child_process';
 const root=path.resolve('dist');
 const files=fs.readdirSync(root);
 for(const name of files.filter(n=>/\.(mjs|js)$/.test(n))){const p=spawnSync(process.execPath,['--check',path.join(root,name)],{encoding:'utf8'});if(p.status!==0)throw new Error(p.stderr);}
+for(const file of ['windows/main.cjs',...fs.readdirSync('scripts').filter(n=>n.endsWith('.mjs')).map(n=>'scripts/'+n)]){const p=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});if(p.status!==0)throw new Error(p.stderr);}
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 if(new Set(ids).size!==ids.length)throw new Error('Duplicate HTML IDs');
@@ -15,6 +16,9 @@ for(const m of code.matchAll(/\$\('([^']+)'\)/g))if(!ids.includes(m[1]))throw ne
 const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
 const version=JSON.parse(fs.readFileSync('package.json','utf8')).version;
 if(!html.includes(`v${version}`)||!sw.includes(`ember-courier-v${version}`)||!fs.readFileSync(path.join(root,'core.mjs'),'utf8').includes(`VERSION = '${version}'`))throw new Error('Package, UI, core and offline cache versions must match');
+const desktop=JSON.parse(fs.readFileSync('windows/package.json','utf8')),lock=JSON.parse(fs.readFileSync('windows/package-lock.json','utf8'));
+if(desktop.version!==version||lock.version!==version||lock.packages[''].version!==version)throw new Error('Windows package/lock and game versions must match');
+if(manifest.orientation!=='landscape'||!fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8').includes('android:screenOrientation="sensorLandscape"'))throw new Error('Web and Android must declare landscape orientation');
 for(const file of files)if(/\.(mjs|css|html|png|svg|webmanifest)$/.test(file)&&!sw.includes(`'./${file}'`))throw new Error('Asset not in offline cache: '+file);
 const total=files.reduce((n,f)=>n+fs.statSync(path.join(root,f)).size,0);
 console.log(`Validated ${files.length} static files, ${ids.length} unique UI IDs; ${(total/1024).toFixed(1)} KiB total. No build or runtime dependencies.`);

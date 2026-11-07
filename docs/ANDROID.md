@@ -8,7 +8,7 @@
 - 版本取自根目录 package.json；versionCode 为 major × 10000 + minor × 100 + patch。
 - 游戏资源在 Gradle 中直接引用 `../../dist`，没有需要手动同步的第二份网页源码。
 - APK 禁用网页 Service Worker，安装更新原子替换内置资源；原浏览器 PWA 缓存行为保持。
-- 设备方向改变不重建 Activity；暂停/返回调用游戏本身的保存与模态规则。
+- 原生 `sensorLandscape` 锁定左右两种横屏；方向改变不重建 Activity；暂停/返回调用游戏本身的保存与模态规则。
 
 ## 本地构建
 
@@ -25,12 +25,13 @@ cd android
 ```bash
 ./gradlew :app:assembleRelease
 cd ..
+python3 scripts/package_web.py
 python3 scripts/package_release.py android/app/build/outputs/apk/release/app-release.apk
 ```
 
 ## 自动发行
 
-修改 Android/运行资源/版本或手动运行 `Publish Web and Android`，会验证游戏、编译 APK、运行 Android 模拟器真实页面操作，再签名、核对资源哈希和签名并发布 GitHub Release。已发布同版本不会自动覆盖；修正后递增 patch 和 versionCode。网页托管需继续使用现有 Sites 项目与公开访问范围。
+统一入口 `Game CI and releases` 根据变更调用 `android.yml`。公共规则检查只运行一次；Android 任务编译、lint、启动缓存系统镜像的模拟器，运行真实页面输入、两向横屏、成长与保存继续测试，再产出原签名 APK。发布前验证证书和全部网页资源哈希。手动选择 android 可独立构建；all 在新版本时发布三端 Release。已发布版本不可覆盖，修正运行代码应递增版本号。网页由 GitHub Pages 工作流发布，详见 [部署说明](DEPLOYMENT.md)。
 
 网页、APK 的 localStorage 位于各自来源；安装同包名/同签名且 versionCode 更高的版本会保留本地数据，卸载、清数据或切换浏览器不会。当前未实现跨端自动同步。
 

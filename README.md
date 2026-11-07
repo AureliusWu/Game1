@@ -4,13 +4,17 @@
 
 一款原创俯视角无尽肉鸽。你是猫头鹰信使 **烛羽**：清开敌潮、拾光升级、搭配武器进化与奇物，每五层迎战首领，再选择更深一层的路线。原有三章送信冒险作为剧情模式完整保留。
 
-**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.6.1.md) · [部署说明](docs/DEPLOYMENT.md)
+**[在线试玩](https://aureliuswu.github.io/Game1/)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/releases/v1.7.0-verification.json) · [部署说明](docs/DEPLOYMENT.md)
 
-当前版本：**v1.6.1「星图来信」** · [升级说明](docs/releases/v1.6.1.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
+当前版本：**v1.7.0「横屏启航」** · [升级说明](docs/releases/v1.7.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
 
-网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
+网页通过 GitHub Pages 自动发布；Android APK、Windows x64 免安装 EXE 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。构建说明见 [Android](docs/ANDROID.md) 与 [Windows](docs/WINDOWS.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
 v1.5.1 修订：选卡时收起成就浮层，保留上方角色；选卡按钮固定在卡牌下方，小屏无需滚动面板才能操作。
+
+## v1.7 · 横屏启航
+
+Android 锁定左右横屏；网页竖屏时暂停并提示横置。新增 Windows 离线免安装版与三端统一工作流：一次公共验收，按变更并行构建，核对资源一致后发布 Release 和 Pages。
 
 ## v1.6 · 星图来信
 
@@ -53,7 +57,7 @@ v1.5.1 修订：选卡时收起成就浮层，保留上方角色；选卡按钮�
 - 每章点亮三座灯塔后，走进右侧金色拱门。第一章第二盏灯与两次换章时，从 12 项强化池中选择三次。
 - 漫游 / 标准 / 长夜三档难度，单局约 3–8 分钟；熟练玩家可更快。
 - 原创 Canvas 矢量风格画面、猫头鹰角色、合成氛围音乐与音效。
-- 支持键鼠、触屏、横竖屏；自动存档、最高分与旅途统计；PWA 离线缓存。
+- 支持键鼠、触屏，固定横屏游玩；自动存档、最高分与旅途统计；PWA 离线缓存。
 
 ## v1.2.0 · 夜路有选择
 

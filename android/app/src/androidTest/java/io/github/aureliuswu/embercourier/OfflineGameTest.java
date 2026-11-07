@@ -47,7 +47,7 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        assertTrue("Unexpected screenshot name", name.matches("(draft|star)-(portrait|landscape)\\.png"));
+        assertTrue("Unexpected screenshot name", name.matches("(draft|star)-landscape(-reverse)?\\.png"));
         CountDownLatch rendered = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> {
             WebView web = activity.findViewById(R.id.game_webview);
@@ -87,12 +87,12 @@ public final class OfflineGameTest {
             js("document.querySelector('[data-action=tree][data-id=light-step]').click()");
             assertEquals(Integer.toString(before - 2), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertEquals("true", js("!document.querySelector('[data-action=tree][data-id=wide-bag]').disabled"));
-            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            await("innerHeight > innerWidth");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
+            await("innerWidth > innerHeight");
             assertEquals("true", js("(()=>{const r=document.querySelector('.star-paths').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1})()"));
             js("document.querySelector('[data-action=tree][data-id=light-step]').scrollIntoView({block:'center'})");
             await("(()=>{const p=document.getElementById('hub-panel').getBoundingClientRect(),b=document.querySelector('[data-action=tree][data-id=light-step]').getBoundingClientRect();return b.height>=30&&b.left>=p.left&&b.right<=p.right&&b.top>=p.top&&b.bottom<=p.bottom-1})()");
-            capture("star-portrait.png");
+            capture("star-landscape-reverse.png");
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
             assertEquals("true", js("document.documentElement.scrollWidth<=innerWidth+1 && document.querySelectorAll('.star-path').length===3"));
@@ -114,6 +114,9 @@ public final class OfflineGameTest {
         try {
             await("typeof window.emberCourierNative === 'object'");
             assertEquals("\"https://appassets.androidplatform.net/assets/index.html\"", js("location.href"));
+            ActivityInfo declared = activity.getPackageManager().getActivityInfo(activity.getComponentName(), 0);
+            assertEquals("Native app must lock both landscape directions", ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, declared.screenOrientation);
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
             PackageInfo info = activity.getPackageManager().getPackageInfo(activity.getPackageName(), PackageManager.GET_PERMISSIONS);
             if (info.requestedPermissions != null) for (String permission : info.requestedPermissions)
                 assertFalse("Game must work with no network permission", "android.permission.INTERNET".equals(permission));
@@ -136,8 +139,8 @@ public final class OfflineGameTest {
         try {
             await("typeof window.emberCourierNative === 'object'");
             assertEquals("4", js("document.querySelectorAll('#route-conditions input').length"));
-            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            await("innerHeight > innerWidth");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
+            await("innerWidth > innerHeight");
             assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
             // Emulator pointer capabilities differ; exercise the actual touch setting explicitly.
             js("document.getElementById('settings-open').click(); if(!document.getElementById('touch-setting').checked)document.getElementById('touch-setting').click(); document.querySelector('#settings [data-close]').click()");
@@ -163,8 +166,8 @@ public final class OfflineGameTest {
             assertTrue("Touch test activity never received window focus", focused);
             getInstrumentation().waitForIdleSync();
             js("if(document.getElementById('pause-dialog').open)window.emberCourierNative.back()");
-            // Measure coordinates only after the real window and portrait viewport are ready.
-            await("innerHeight > innerWidth && !document.getElementById('pause-dialog').open");
+            // Measure coordinates only after the real window and reverse-landscape viewport are ready.
+            await("innerWidth > innerHeight && !document.getElementById('pause-dialog').open");
             double beforeX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
             JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,innerWidth,devicePixelRatio]})()"));
             final int[] origin = new int[2];
@@ -196,8 +199,8 @@ public final class OfflineGameTest {
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
             assertEquals("true", js("document.getElementById('pause-dialog').open"));
-            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            await("innerHeight > innerWidth");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
+            await("innerWidth > innerHeight");
             js("window.emberCourierNative.back(); document.getElementById('game-hub').click()");
             assertEquals("true", js("document.getElementById('hub-dialog').open && document.getElementById('hub-dialog').getBoundingClientRect().width <= innerWidth"));
             js("window.emberCourierNative.back(); window.emberCourierNative.pause(); document.getElementById('save-exit').click()");
@@ -222,8 +225,8 @@ public final class OfflineGameTest {
             js("window.emberCourierNative.back(); document.getElementById('dash').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); document.getElementById('pulse').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); window.emberCourierNative.pause()");
             assertEquals("true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.endless.combat.version===1 && s.endless.combat.dashSerial===1 && s.metrics.dashes===1 && s.metrics.pulses===1})()"));
             assertEquals("true", js("!document.getElementById('combat-meter').hidden"));
-            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            await("innerHeight > innerWidth");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
+            await("innerWidth > innerHeight");
             assertEquals("true", js("(()=>{const a=document.getElementById('combat-meter').getBoundingClientRect(),b=document.getElementById('build-open').getBoundingClientRect();return a.bottom+1 <= b.top && document.documentElement.scrollWidth <= innerWidth+1})()"));
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
@@ -238,15 +241,15 @@ public final class OfflineGameTest {
         activity = (MainActivity) getInstrumentation().startActivitySync(intent);
         try {
             await("typeof window.emberCourierNative === 'object'");
-            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
-            await("innerHeight > innerWidth");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
+            await("innerWidth > innerHeight");
             js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
             // Real kills and collected room XP open this panel; no actor or reward edits.
             await("document.getElementById('upgrade-dialog').open", 600);
             js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
-            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect();return d.open && !d.matches(':modal') && r.top>innerHeight*.50 && r.height<=innerHeight*.45 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect();return d.open && !d.matches(':modal') && r.top>innerHeight*.48 && r.height<=innerHeight*.49 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
-            capture("draft-portrait.png");
+            capture("draft-landscape-reverse.png");
             String remaining = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining");
             Thread.sleep(700);
             js("window.emberCourierNative.pause()");

@@ -1,0 +1,44 @@
+{
+  "name": "ember-courier-windows",
+  "version": "1.7.0",
+  "private": true,
+  "description": "Ember Courier offline Windows desktop game",
+  "author": "AureliusWu",
+  "license": "MIT",
+  "main": "main.cjs",
+  "scripts": {
+    "pack": "electron-builder --win portable --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.2.3",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "io.github.aureliuswu.embercourier",
+    "productName": "Ember Courier",
+    "executableName": "Ember-Courier",
+    "asar": true,
+    "directories": {
+      "output": "out"
+    },
+    "files": [
+      "main.cjs",
+      "game/**",
+      "build-info.json",
+      "package.json",
+      "LICENSE"
+    ],
+    "win": {
+      "target": [
+        "portable"
+      ],
+      "icon": "../dist/icon-512.png",
+      "signAndEditExecutable": false
+    },
+    "portable": {
+      "artifactName": "Ember-Courier-v${version}-Windows-x64.exe",
+      "requestExecutionLevel": "user"
+    },
+    "compression": "normal"
+  }
+}

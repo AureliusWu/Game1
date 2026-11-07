@@ -1,0 +1,10 @@
+#orientation-dialog{position:fixed;inset:0;margin:0;width:100vw;max-width:none;height:100dvh;max-height:none;border:0;border-radius:0;padding:32px 22px;background:radial-gradient(ellipse at 50% 35%,#244e4b,#0b252c 75%);color:#e9dcba;text-align:center;box-sizing:border-box}
+#orientation-dialog[open]{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px}
+#orientation-dialog::backdrop{background:#0b252c}
+#orientation-dialog .turn-device{width:94px;height:54px;border:2px solid #d9c48b;border-radius:11px;display:grid;place-items:center;box-shadow:0 0 35px #d9c48b13}
+#orientation-dialog .turn-device svg{width:28px;height:28px;color:#b5d1ba}
+#orientation-dialog h2{font:600 28px var(--serif);letter-spacing:3px;margin:10px 0 0}
+#orientation-dialog p{max-width:300px;color:#a9c2b2;font:13px/1.9 var(--sans);margin:0}
+#orientation-dialog .primary{font-size:13px;min-height:44px;padding:12px 24px;margin-top:8px}
+body[data-orientation=portrait]{overflow:hidden!important}
+body[data-orientation=portrait] #game{visibility:hidden}
