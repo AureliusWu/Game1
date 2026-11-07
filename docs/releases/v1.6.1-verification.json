@@ -1,0 +1,150 @@
+{
+  "version": "1.6.1",
+  "status": "released",
+  "generated_at": "2026-11-07T11:40:03.763Z",
+  "github": {
+    "repository": "AureliusWu/Game1",
+    "release_source_commit": "e74272dfe990bcd34f2ec91fcd0d27ffb6629a97",
+    "release_tree": "a669262d647525f97908b38c4c350b5ae101f6df",
+    "qa_only_commit": "c5c4f05e98a6368fba6cd590757209669b8096c8",
+    "release_url": "https://github.com/AureliusWu/Game1/releases/tag/v1.6.1",
+    "immutable_assets_preserved": true
+  },
+  "checks": {
+    "node_tests": {
+      "passed": 174,
+      "failed": 0,
+      "skipped": 0
+    },
+    "static_assets": 27,
+    "simulation_identity": "Identical to v1.6.0 after excluding core VERSION; all other simulation and narrative modules byte-identical.",
+    "action_samples": {
+      "reused_from": "v1.6.0",
+      "total": 52,
+      "active_completed_10_floors": 48,
+      "idle_lost": 2,
+      "idle_time_limited": 2
+    },
+    "native_release": {
+      "run_id": 42368207236,
+      "status": "success",
+      "tests": 6,
+      "failed": 0,
+      "skipped": 0,
+      "artifact_id": 13573080696
+    },
+    "independent_native": {
+      "run_id": 42368735855,
+      "status": "success",
+      "tests": 6,
+      "failed": 0,
+      "skipped": 0,
+      "artifact_id": 13572653590,
+      "qa_only_commit": "c5c4f05e98a6368fba6cd590757209669b8096c8"
+    },
+    "visual_geometry": [
+      "Short landscape hub-panel >= 50% of viewport height",
+      "First star-node button >= 30px high and fully contained in the scrolled panel in portrait and landscape"
+    ],
+    "manual_png_review": "PASS: real 320x640 and 640x320 star cards and all draft footer controls inspected.",
+    "latest_quality": {
+      "run_id": 42368735832,
+      "status": "success"
+    }
+  },
+  "android": {
+    "application_id": "io.github.aureliuswu.embercourier",
+    "version_code": 10601,
+    "version_name": "1.6.1",
+    "certificate_sha256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7",
+    "min_api": 26,
+    "debuggable": false
+  },
+  "site": {
+    "project_id": "appgprj_6aeda9efaf088191ae1711329f052d72",
+    "audience": "public",
+    "source_commit": "46237f4178b7d46901121878ad16893fa9ffaa72",
+    "saved_version_id": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_3a34f507f9a481919cebe460c48ca979",
+    "version_number": 11,
+    "deployment_id": "appgdep_6aef0d0f3e748191af78752f3729f64d",
+    "status": "succeeded",
+    "url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site/",
+    "archive_content_hash": "sha256:d6be029bd178af93bc39e73fd78ac5726d2719ab99689302b5675a367b94d64a",
+    "browser_verified_version": "1.6.1",
+    "upgrade_behavior": "Reload left the active v1.6.0 client intact; closing the old tab and reopening activated v1.6.1 without mixed modules."
+  },
+  "assets": {
+    "Ember-Courier-v1.6.1.apk": {
+      "sha256": "c7ff4f65ebea9815d5515d7faacf1f86553b63148c943f8aa706ba33f06b0b07",
+      "bytes": 1106702
+    },
+    "Ember-Courier-web-v1.6.1.zip": {
+      "sha256": "4ef0851246272c7a0834c389b40a7dae1438fc7bfbd92b2a425905be7ac23412",
+      "bytes": 168754
+    },
+    "Ember-Courier-v1.6.1-provenance.json": {
+      "sha256": "81eb4d16568bfb1bde8dba9f51ceb413d0f0631b357a356dfe76900a0092fb5b",
+      "bytes": 2629
+    }
+  },
+  "runtime_sha256": {
+    "app.mjs": "ca23a088912f08dcb944f22d65d33f68abe1f8bdcc5cd8d7665a6e8fac050366",
+    "audio.mjs": "8c0c7202487574d8d925b9bb276711097b3189cc128c5c9137bfd558d71bc7be",
+    "battle.css": "ad7421c1492d892b66bbe52078a439962e8422ffb7fbd4a5f1efa408d78b3ece",
+    "battlefx.mjs": "561a096a0569a56f9a0f56d7e4f00ab4d7e0ad7a19821c49d91bb1f9d2d3b51b",
+    "combat.mjs": "52fe6ea46f71d19a4a738bd31ec88140d5e3548856b7d5879ecbf0a97fa652f2",
+    "content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+    "core.mjs": "4040e616ae5bd5ae6855fc58a3f8fb67c85fbce02bc9d49342c70c7cd0b54a42",
+    "draft.mjs": "b516d5c8cd47ea23456613317acd026d2261897d552a1904954bd6efbd3b0e2a",
+    "endless.mjs": "6964d65bce21b109de20da4b1f7173533bdc49be52cdcafd1824cf9e8ff432a6",
+    "expedition.mjs": "1bf0df412ebe3deb348fd8d986fca4cc5dda505dedc430d7870607eb9aa9df8a",
+    "growth-view.mjs": "5ce99be4c8c9e83ae98399f26b8ba082cf297070a31bf1b238800f2a4787465e",
+    "growth.css": "f9d7292ecf9195f26f0a0d64230be59c19aeae2b9ba0218742372fbfd62e3344",
+    "growth.mjs": "3fced9f21f955281a229155f6024046287da502a27e0b6fe353d9fb2c733b3be",
+    "hub.mjs": "9a44f536cbab979e34912de7cdd42a9e4ff082e99d831359a351dad2ea2bb96f",
+    "icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+    "icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+    "icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+    "index.html": "32d366c3e6ad5e276bbd70c37a04a62e06e8c418427436adc57db00df82b4d9d",
+    "manifest.webmanifest": "8c88419661786cb0e8f48f8d79090208c212b611b996db4bc41a087062057757",
+    "narrative.mjs": "6cb679790753edb10c7f8c4dfe0057c2b1fca22e231e6ce615baf647e2d37ac3",
+    "progress.mjs": "eeafcbfaf60f6e07849b150defdde4c214b83526ebd0ffd838801f19f4a73638",
+    "render.mjs": "c85609aeacae11fa1c2b40bb3b02787afdad7d2d5c291277cc041b0a411851f0",
+    "routes.mjs": "1389638c7856d961d7522b75f73e2455604c93b109d9b9f73c54f8d407b7ef16",
+    "style.css": "b22e4ec22418c143377bee38d34fa870c6917233522b510fd911d7c068cddb64",
+    "sw.js": "9ca639d906b175e58208bb749f383c46628530916ebecfeaac26bed310ee2d08",
+    "systems.mjs": "9a2d00d141d73dd4736776bea42ee969bbf41bf26b101d0d43592debfef14d71",
+    "tactics.mjs": "1936db6c8fe0fab6de989835512eaa0e05ab7121fd63683235f36c53e1bb62a8"
+  },
+  "screenshots": [
+    {
+      "name": "draft-landscape.png",
+      "width": 640,
+      "height": 320,
+      "sha256": "67e6ab44a86d7daa18033ebf06661393ea3d121c38afcbbdb9f19386306e579a"
+    },
+    {
+      "name": "draft-portrait.png",
+      "width": 320,
+      "height": 640,
+      "sha256": "5a4deddaff20a986cf61e784fe484a15e2c34186e7d147b40cbf14ce036015f9"
+    },
+    {
+      "name": "star-landscape.png",
+      "width": 640,
+      "height": 320,
+      "sha256": "0eb898a5fa269ade728f22ae55537492c50bd4f643f391051d766c6ff0ceac28"
+    },
+    {
+      "name": "star-portrait.png",
+      "width": 320,
+      "height": 640,
+      "sha256": "4bd07cf6149bb50747582e93698db3e0347a9989c52e95b2bcb78f512f35bb5c"
+    }
+  ],
+  "notes": [
+    "v1.6.0 original features are preserved; v1.6.1 changes CSS and version/cache markers only.",
+    "Early independent touch QA lost real Android window focus; QA-only follow-up explicitly foregrounds the existing Activity before measuring coordinates and injecting touch. Existing assertions remain.",
+    "No v1.6.0 or v1.6.1 published assets were overwritten."
+  ]
+}
