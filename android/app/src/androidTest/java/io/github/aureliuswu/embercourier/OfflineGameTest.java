@@ -81,7 +81,7 @@ public final class OfflineGameTest {
             original = js("localStorage.getItem('ember-courier.profile.v1')");
             // Seeded UI fixture only; action-only Node journeys verify the earned economy separately.
             String pageStart = js("performance.timeOrigin");
-            js("localStorage.setItem('ember-courier.profile.v1',JSON.stringify({version:1,stamps:20,earned:20,spent:0,growth:{version:1,tree:{},claims:[],arcs:[]}})); location.reload()");
+            js("window.addEventListener('pagehide',()=>localStorage.setItem('ember-courier.profile.v1',JSON.stringify({version:1,stamps:20,earned:20,spent:0,growth:{version:1,tree:{},claims:[],arcs:[]}})),{once:true}); location.reload()");
             await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
             js("document.querySelector('[data-hub=tree]').click()");
             await("document.querySelectorAll('.star-node').length===15");
@@ -103,7 +103,7 @@ public final class OfflineGameTest {
         } finally {
             if (original != null) {
                 String pageStart = js("performance.timeOrigin");
-                js("localStorage.setItem('ember-courier.profile.v1'," + original + ");location.reload()");
+                js("window.addEventListener('pagehide',()=>localStorage.setItem('ember-courier.profile.v1'," + original + "),{once:true});location.reload()");
                 await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
             }
             getInstrumentation().runOnMainSync(() -> activity.finish());
