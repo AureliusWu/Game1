@@ -6,6 +6,8 @@ import {createGame,tick,dash,pulse,chooseUpgrade,serialize,restore,finalScore,CH
 import {supplyCost,buyEndlessSupply,WEATHERS,weatherFor,isEndless,liveDraft,SKILLS,SKILL_BY_ID,RELICS,OATHS,oathRank,rankOf,evolved,choiceInfo,xpThreshold,rerollEndless,retireEndless} from './endless.mjs';
 import {Renderer,drawTitle} from './render.mjs';
 import {ENDLESS_MAPS} from './endless-maps.mjs';
+import {nativePlatform,safeWebRestart,UPDATE_MESSAGE} from './update.mjs';
+import {VERSION} from './core.mjs';
 import {AudioEngine} from './audio.mjs';
 import {GEAR_BY_ID,CONTRACTS,ACHIEVEMENTS,ENDINGS,CONDITIONS,SETS} from './content.mjs';
 import {XP_THRESHOLDS} from './systems.mjs';
@@ -99,7 +101,7 @@ function clearInput(){keys.clear();joystickId=null;joy={x:0,y:0};destination=nul
 function showDialog(id){const d=$(id);if(!d.open)d.showModal();clearInput();}
 function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))if(d.id!=='orientation-dialog')d.close();renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;}
 function checkpoint(){if(run&&!ended){syncProgress();const data=serialize(run);if(data)storage.set(STORE.save,data);}persistProfile();}
-function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);}}
+function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);queueMicrotask(()=>applyWebUpdateIfSafe());}}
 function announceChapter(){
   const ch=CHAPTERS[run.chapter];$('banner-number').textContent=isEndless(run)?`FLOOR ${run.endless.floor} · ${run.endless.floor%5===0?'BOSS':'ENDLESS NIGHT'}`:`CHAPTER ${ch.number}`;$('banner-title').textContent=isEndless(run)?ENDLESS_MAPS[run.endless.mapIndex]?.name||ch.name:ch.name;$('banner-subtitle').textContent=isEndless(run)?'清开敌潮 · 拾取经验 · 打出你的构筑':ch.subtitle;
   $('chapter-banner').hidden=false;$('chapter-banner').style.animation='none';void $('chapter-banner').offsetWidth;$('chapter-banner').style.animation='';bannerUntil=run.totalTime+(isCombat(run)?run.endless.floor===1?2.4:1.4:4.2);
@@ -284,6 +286,7 @@ $('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();
 for(const b of document.querySelectorAll('.sound-toggle'))b.addEventListener('click',()=>{settings.sound=!settings.sound;saveSettings();updateSettings();});
 $('sound-setting').addEventListener('change',e=>{settings.sound=e.target.checked;saveSettings();updateSettings();});$('motion-setting').addEventListener('change',e=>{settings.lowMotion=e.target.checked;saveSettings();updateSettings();});
 $('touch-setting').addEventListener('change',e=>{settings.touch=e.target.checked;saveSettings();updateSettings();});
+$('update-check').addEventListener('click',triggerUpdateCheck);
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else $('fullscreen').textContent='当前浏览器暂不支持全屏';}catch{$('fullscreen').textContent='请通过浏览器菜单开启全屏';}});
 for(const id of ['dash','pulse'])$(id).addEventListener('pointerdown',e=>{e.preventDefault();audio.unlock();id==='dash'?doDash():doPulse();});
 for(const id of ['dash','pulse'])$(id).addEventListener('click',e=>{if(e.detail===0){audio.unlock();id==='dash'?doDash():doPulse();}});
@@ -363,5 +366,63 @@ window.emberCourierNative=Object.freeze({
     return false;
   }
 });
-// APK assets are updated atomically with the package and do not need a web cache.
-if('serviceWorker' in navigator&&location.protocol!=='file:'&&location.protocol!=='ember:'&&location.hostname!=='appassets.androidplatform.net')window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+// Native packages use their own protected update paths. Web/PWA stages assets in a waiting service worker.
+const updatePlatform=nativePlatform(location.protocol,location.hostname);
+let webRegistration=null,webApplying=false,webChanged=false;
+const updateStatus=text=>{$('update-status').textContent=text;};
+function canRestartWeb(){
+ return safeWebRestart({screen,hidden:document.hidden,portrait:document.body.dataset.orientation==='portrait',openDialogs:!!document.querySelector('dialog[open]')});
+}
+function applyWebUpdateIfSafe(){
+ if(updatePlatform!=='web'||!webRegistration)return;
+ if(webChanged){if(canRestartWeb()){checkpoint();location.reload();}else updateStatus('新版本已就绪，返回邮局后自动重启');return;}
+ if(!webRegistration.waiting||!navigator.serviceWorker.controller||webApplying)return;
+ if(!canRestartWeb()){updateStatus('新版本已下载，回到邮局后自动安装');return;}
+ webApplying=true;updateStatus('正在安全替换离线游戏资源…');
+ const channel=new MessageChannel();
+ channel.port1.onmessage=event=>{
+  if(event.data?.status==='other-tabs'){webApplying=false;updateStatus('其他游戏标签仍在运行，请关闭后重试');}
+  else if(event.data?.status!=='applying'){webApplying=false;updateStatus('更新暂不可用，请稍后重试');}
+ };
+ webRegistration.waiting.postMessage({type:UPDATE_MESSAGE},[channel.port2]);
+}
+function watchWebRegistration(reg){
+ webRegistration=reg;
+ const examine=()=>{if(reg.waiting){updateStatus('发现新版本 · 将在邮局自动更新');applyWebUpdateIfSafe();}};
+ if(reg.installing)reg.installing.addEventListener('statechange',examine);
+ reg.addEventListener('updatefound',()=>reg.installing?.addEventListener('statechange',examine));
+ examine();
+}
+async function triggerUpdateCheck(){
+ if(updatePlatform!=='web'){
+  updateStatus('正在打开安装包更新通道…');
+  location.href='ember-update://check';
+  return;
+ }
+ if(!('serviceWorker' in navigator)){updateStatus('此浏览器不支持离线自动更新');return;}
+ try{
+  updateStatus('正在检查最新版…');
+  const reg=webRegistration||await navigator.serviceWorker.getRegistration('./');
+  if(!reg){updateStatus('尚未安装离线缓存，刷新页面后再试');return;}
+  await reg.update();watchWebRegistration(reg);
+  if(!reg.waiting)updateStatus('v'+VERSION+' · 当前已是最新版本');
+ }catch{updateStatus('当前离线或更新源不可用，稍后自动重试');}
+}
+if(updatePlatform==='web'&&'serviceWorker' in navigator){
+ navigator.serviceWorker.addEventListener('controllerchange',()=>{
+  webChanged=true;webApplying=false;
+  applyWebUpdateIfSafe();
+ });
+ window.addEventListener('load',async()=>{
+  try{
+   const reg=await navigator.serviceWorker.register('./sw.js',{updateViaCache:'none'});watchWebRegistration(reg);
+   if(navigator.onLine)await reg.update();
+   applyWebUpdateIfSafe();
+  }catch{updateStatus('离线模式可正常游玩，恢复网络后检查更新');}
+ });
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){webRegistration?.update().catch(()=>{});applyWebUpdateIfSafe();}});
+ window.addEventListener('online',()=>webRegistration?.update().catch(()=>{}));
+ window.setInterval(()=>{if(!document.hidden)webRegistration?.update().catch(()=>{});},20*60*1000);
+}else{
+ updateStatus(updatePlatform==='android'?'Android：支持同签名覆盖安装并保留数据':updatePlatform==='windows'?'Windows：支持校验后原位置覆盖更新':'本地文件模式：请获取新版安装包');
+}
