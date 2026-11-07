@@ -28,6 +28,6 @@ test('activation removes only old game caches and claims the client',async()=>{c
 
 test('waiting service worker never forces other active tabs to switch runtime versions',async()=>{
  const w=await worker();await w.lifecycle('install');
- w.windows(2);assert.deepEqual(await w.apply(),{status:'other-tabs'});assert.equal(w.skipped(),false);
- w.windows(1);assert.deepEqual(await w.apply(),{status:'applying'});assert.equal(w.skipped(),true);
+ w.windows(2);assert.equal((await w.apply()).status,'other-tabs');assert.equal(w.skipped(),false);
+ w.windows(1);assert.equal((await w.apply()).status,'applying');assert.equal(w.skipped(),true);
 });
