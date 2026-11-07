@@ -75,18 +75,17 @@ public final class OfflineGameTest {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         activity = (MainActivity) getInstrumentation().startActivitySync(intent);
-        String original = null;
         try {
             await("typeof window.emberCourierNative === 'object'");
-            original = js("localStorage.getItem('ember-courier.profile.v1')");
-            // Seeded UI fixture only; action-only Node journeys verify the earned economy separately.
-            String pageStart = js("performance.timeOrigin");
-            js("window.addEventListener('pagehide',()=>localStorage.setItem('ember-courier.profile.v1',JSON.stringify({version:1,stamps:20,earned:20,spent:0,growth:{version:1,tree:{},claims:[],arcs:[]}})),{once:true}); location.reload()");
-            await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
-            js("document.querySelector('[data-hub=tree]').click()");
+            // Earn stamps through actual kills; the game's pagehide autosave remains fully enabled.
+            js("document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=normal]').click();document.getElementById('start').click()");
+            await("document.getElementById('upgrade-dialog').open", 600);
+            js("window.emberCourierNative.pause();document.getElementById('upgrade-exit').click();document.querySelector('[data-hub=tree]').click()");
             await("document.querySelectorAll('.star-node').length===15");
+            int before = Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertTrue("Real kills should earn at least one affordable star node", before >= 2);
             js("document.querySelector('[data-action=tree][data-id=light-step]').click()");
-            assertEquals("18", js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertEquals(Integer.toString(before - 2), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertEquals("true", js("!document.querySelector('[data-action=tree][data-id=wide-bag]').disabled"));
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
             await("innerHeight > innerWidth");
@@ -97,17 +96,10 @@ public final class OfflineGameTest {
             assertEquals("true", js("document.documentElement.scrollWidth<=innerWidth+1 && document.querySelectorAll('.star-path').length===3"));
             capture("star-landscape.png");
             js("document.querySelector('[data-action=reset-tree]').click()");
-            assertEquals("20", js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertEquals(Integer.toString(before), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertEquals("true", js("document.querySelector('[data-action=reset-tree]').disabled"));
             assertEquals("true", js("window.emberCourierNative.back();!document.getElementById('hub-dialog').open"));
-        } finally {
-            if (original != null) {
-                String pageStart = js("performance.timeOrigin");
-                js("window.addEventListener('pagehide',()=>localStorage.setItem('ember-courier.profile.v1'," + original + "),{once:true});location.reload()");
-                await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
-            }
-            getInstrumentation().runOnMainSync(() -> activity.finish());
-        }
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
     }
 
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
@@ -163,6 +155,16 @@ public final class OfflineGameTest {
                 coords[i].x = origin[0] + (float) points.getDouble(i * 2) * density;
                 coords[i].y = origin[1] + (float) points.getDouble(i * 2 + 1) * density;
             }
+            // Wait until this activity owns the window before Android 15 targeted touch injection.
+            boolean focused = false;
+            for (int attempt = 0; attempt < 100; attempt++) {
+                AtomicReference<Boolean> hasFocus = new AtomicReference<>(false);
+                getInstrumentation().runOnMainSync(() -> hasFocus.set(activity.hasWindowFocus()));
+                if (hasFocus.get()) { focused = true; break; }
+                Thread.sleep(100);
+            }
+            assertTrue("Touch test activity never received window focus", focused);
+            getInstrumentation().waitForIdleSync();
             long start = SystemClock.uptimeMillis();
             touch(start, MotionEvent.ACTION_DOWN, 1, props, coords);
             touch(start, MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
