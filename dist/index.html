@@ -105,7 +105,7 @@
   <div class="toast" id="game-toast" hidden role="status"></div>
 </section>
 <dialog id="guide" class="modal guide-modal"><button class="dialog-close icon-button" data-close aria-label="关闭手册"><svg><use href="#i-close"/></svg></button><div class="eyebrow">A COURIER'S FIELD GUIDE</div><h2>长夜行走手册</h2><p class="modal-intro">你是猫头鹰信使「烛羽」。无尽夜航中，清怪拾光、升级选卡、搭配进化，每五层迎战首领。剧情模式保留九座灯塔与三种结局。</p><div class="guide-grid">
-<article><svg><use href="#i-flame"/></svg><h3>拾起微光</h3><p>无尽模式：击败敌人掉落经验微光，靠近拾取。升级后选择强化，武器与对应被动组合会进化。最多持有 <strong>3 武器 / 4 被动</strong>。选卡保留战场视野，战斗暂停；8 秒后按构筑推荐自动选择，路线 12 秒后自动走常规航线。P 或「暂缓」可停表，切到后台也会暂缓。</p></article>
+<article><svg><use href="#i-flame"/></svg><h3>拾起微光</h3><p>无尽模式：击败敌人掉落经验微光，靠近拾取。升级后选择强化，武器与对应被动组合会进化。最多持有 <strong>3 武器 / 4 被动</strong>。新开的无尽局在技能选卡时继续战斗，4 秒后按构筑推荐自动选择；层间路线 6 秒自动走常规航线。可以继续移动、冲刺与使用光环；P 或「暂缓」可暂停选卡，切到后台也会暂停。</p></article>
 <article><svg><use href="#i-sun"/></svg><h3>守住灯火</h3><p>光弹会自动攻击附近的影兽。光环击退敌人并清除范围内弹幕；冲刺期间短暂无敌，并切伤沿途敌人。击杀蓄满破晓能量，自动进入 6 秒超载：刷新冲刺与光环、武器攻速提高 65%。旧版未完成旅途沿用原规则。</p></article>
 <article><svg><use href="#i-star"/></svg><h3>留下归处</h3><p>无尽模式的灯塔是一次性补给：消耗 <strong>5 火种</strong>，回复 20% 生命并震退近敌，不提供持续安全区。避开锁定预警，光环可以打断扑击与首领蓄力、击破结界。首领半血后进入第二阶段，招式轮换更快。</p></article>
 <article><svg><use href="#i-bag"/></svg><h3>把信送达</h3><p>清场后选择下一条路线，挑战精英赚取更多经验，或寻找奇物改变规则。每五层必须战胜首领。可在清场后的路线选择处封存航线，或继续挑战极限。</p></article>
@@ -115,7 +115,7 @@
 <dialog id="records" class="modal records-modal"><button class="dialog-close icon-button" data-close aria-label="关闭记录"><svg><use href="#i-close"/></svg></button><div class="eyebrow">EVERY LITTLE LIGHT COUNTS</div><h2>旅途记录</h2><div class="record-grid"><div><strong id="record-best">0</strong><span>最高得分</span></div><div><strong id="record-wins">0</strong><span>黎明送达</span></div><div><strong id="record-beacons">0</strong><span>累计点灯</span></div><div><strong id="record-runs">0</strong><span>完成旅途</span></div></div><p class="record-note" id="record-note">你的故事，从第一束光开始。</p><p class="fineprint">中途退出的旅途可以续玩；胜负结算后计入记录。</p></dialog>
 <dialog id="pause-dialog" class="modal pause-modal"><div class="eyebrow">THE LIGHT WILL WAIT</div><h2>灯会等你</h2><p class="modal-intro">歇一会儿，再把这封信送完。</p><button class="primary full-width" id="resume">继续旅途 <svg><use href="#i-arrow"/></svg></button><button class="secondary full-width" id="save-exit">保存并回到邮局</button><button class="text-button centered" id="game-settings">旅途设置</button></dialog>
 <dialog id="upgrade-dialog" class="modal upgrade-modal" aria-label="强化与路线选择" aria-modal="false">
-  <div class="draft-heading"><div><h2 id="upgrade-title">选择强化</h2><p id="upgrade-copy"></p></div><div class="draft-clock"><strong id="draft-countdown" aria-live="off">8s</strong><small>自动选择</small></div></div>
+  <div class="draft-heading"><div><h2 id="upgrade-title">选择强化</h2><p id="upgrade-copy"></p></div><div class="draft-clock"><strong id="draft-countdown" aria-live="off">4s</strong><small>自动选择</small></div></div>
   <div class="draft-time-track"><i id="draft-timer-bar"></i></div>
   <div class="upgrade-options" id="upgrade-options"></div>
   <div class="draft-bottom"><p id="draft-suggestion"></p><small id="upgrade-note"></small></div>

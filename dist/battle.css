@@ -11,3 +11,63 @@ body[data-draft] .skill-controls,body[data-draft] .touch-controls,body[data-draf
 #upgrade-dialog.upgrade-modal[open]{display:flex;flex-direction:column;overflow:hidden}#upgrade-dialog .upgrade-options{flex:1 1 auto;min-height:0;overflow:auto}#upgrade-dialog .draft-heading,#upgrade-dialog .draft-time-track,#upgrade-dialog .draft-bottom,#upgrade-dialog .draft-footer{flex-shrink:0}body[data-draft] #achievement-toast{visibility:hidden}
 @media(max-width:520px) and (orientation:portrait){#upgrade-dialog .upgrade-card>span{-webkit-line-clamp:2}.draft-time-track{margin:6px 0}.draft-bottom{margin:5px 0}}
 @media(prefers-reduced-motion:reduce){#upgrade-dialog .upgrade-card{transition:none}}
+
+/* v1.8: readable phone HUD and real-time right-rail draft. */
+@media (orientation:landscape) and (max-height:760px){
+ .hud{padding:calc(8px + env(safe-area-inset-top)) 16px 0}
+ .hud-center{position:absolute;left:50%;transform:translateX(-50%);max-width:50vw}
+ .hud-center>span{font-size:clamp(12px,2vw,22px);letter-spacing:clamp(1px,.5vw,5px);white-space:nowrap}
+ .expedition-hud{left:16px;top:calc(72px + env(safe-area-inset-top));width:clamp(132px,17vw,205px)}
+ .expedition-hud>div:first-child{flex-wrap:wrap;gap:6px}
+ .combat-meter{margin-top:4px;font-size:9px}
+ .combat-meter>div{margin-top:3px}
+ .build-open{left:16px;top:calc(147px + env(safe-area-inset-top));padding:5px 8px}
+ .kill-hud{left:16px;top:calc(186px + env(safe-area-inset-top));gap:5px;max-width:205px}
+ .weapon-chip{padding:3px 6px}
+ .objective{top:calc(69px + env(safe-area-inset-top));max-width:44vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:7px 13px}
+ .objective #objective{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .run-status{top:calc(114px + env(safe-area-inset-top));font-size:10px;max-width:48vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .letter-toast{left:clamp(185px,20vw,320px);top:clamp(145px,30dvh,235px);bottom:auto;width:min(290px,32vw);padding:10px 14px}
+ .letter-toast p{font-size:12px;line-height:1.6;margin:6px 0}
+ .game-bottom #score-label{font-size:13px;letter-spacing:1px;opacity:.7}
+ .boss-panel{max-width:260px}
+}
+@media (orientation:landscape) and (max-height:430px){
+ .expedition-hud{top:calc(61px + env(safe-area-inset-top))}
+ .expedition-hud .combat-meter{font-size:8px}
+ .build-open{top:calc(126px + env(safe-area-inset-top))}
+ .kill-hud{top:calc(158px + env(safe-area-inset-top))}
+ .objective{top:calc(61px + env(safe-area-inset-top))}
+ .run-status{top:calc(101px + env(safe-area-inset-top))}
+ .letter-toast{top:34%;width:min(225px,32vw)}
+}
+body[data-live-draft=true] .skill-controls,body[data-live-draft=true] .touch-controls,body[data-live-draft=true] .potion-button,body[data-live-draft=true] .toast{visibility:visible}
+body[data-live-draft=true] #upgrade-dialog.upgrade-modal{
+ inset:calc(78px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) auto auto;
+ margin:0;width:min(360px,calc(100vw - 250px));max-height:calc(100dvh - 111px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+ padding:9px 11px 10px;box-shadow:0 8px 30px #061a21bb;background:#102d34ef;border-radius:12px;
+}
+body[data-live-draft=true] #upgrade-dialog .draft-heading h2{font-size:16px;letter-spacing:1px}
+body[data-live-draft=true] #upgrade-dialog .draft-heading p{font-size:9px;line-height:1.3;margin-top:2px}
+body[data-live-draft=true] #upgrade-dialog .draft-clock strong{font-size:16px;min-width:23px}
+body[data-live-draft=true] #upgrade-dialog .draft-clock small{font-size:8px}
+body[data-live-draft=true] #upgrade-dialog .draft-time-track{margin:5px 0}
+body[data-live-draft=true] #upgrade-dialog .upgrade-options{display:grid;grid-template-columns:1fr;gap:5px;overflow-y:auto;flex:0 1 auto}
+body[data-live-draft=true] #upgrade-dialog .upgrade-card{display:grid;grid-template-columns:29px minmax(0,1fr);grid-template-rows:auto auto auto;align-items:center;gap:2px 7px;padding:5px 8px;min-height:0}
+body[data-live-draft=true] #upgrade-dialog .choice-icon{position:static;width:auto;grid-column:1;grid-row:1/span 3;display:flex;flex-direction:column;gap:3px;justify-content:center}
+body[data-live-draft=true] #upgrade-dialog .choice-icon svg{width:17px;height:17px}
+body[data-live-draft=true] #upgrade-dialog .upgrade-card strong{grid-column:2;font-size:13px;line-height:1.2;padding:0}
+body[data-live-draft=true] #upgrade-dialog .upgrade-card>span{grid-column:2;font-size:10px;line-height:1.25;-webkit-line-clamp:1}
+body[data-live-draft=true] #upgrade-dialog .card-detail{display:none}
+body[data-live-draft=true] #upgrade-dialog .draft-tag{grid-column:2;font-size:9px;line-height:1.2;margin-top:0}
+body[data-live-draft=true] #upgrade-dialog .draft-bottom{margin:5px 0 3px}
+body[data-live-draft=true] #upgrade-dialog .draft-bottom small{display:none}
+body[data-live-draft=true] #upgrade-dialog .draft-bottom p{font-size:9px;line-height:1.25}
+body[data-live-draft=true] #upgrade-dialog .draft-footer{gap:4px}
+body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{font-size:9px;min-height:24px;padding:3px 7px}
+@media (orientation:landscape) and (max-height:430px){
+ body[data-live-draft=true] #upgrade-dialog.upgrade-modal{top:calc(65px + env(safe-area-inset-top));max-height:calc(100dvh - 77px - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:min(315px,calc(100vw - 220px));padding:7px 8px}
+ body[data-live-draft=true] #upgrade-dialog .draft-heading p{display:none}
+ body[data-live-draft=true] #upgrade-dialog .upgrade-card{padding:4px 7px}
+ body[data-live-draft=true] #upgrade-dialog .draft-bottom{display:none}
+}
