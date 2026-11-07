@@ -84,3 +84,20 @@ test('continuous runs can bank their earned result from pause after one complete
  assert.equal(retireEndless(s),true);assert.equal(s.phase,'won');assert.equal(s.endless.retired,true);
  assert.equal(retireEndless(s),false);
 });
+
+test('first two genuine kills grant one early skill draft only for the new continuous mode',async()=>{
+ const {onEndlessKill}=await import('../dist/endless.mjs');
+ const s=newRun(),e={kind:'shade',id:999,x:1000,y:650,r:18,rewardCoins:2,rewardXP:6,damage:13};
+ s.kills=1;onEndlessKill(s,e);assert.equal(s.endless.pending,0);
+ s.kills=2;onEndlessKill(s,{...e,id:1000});assert.equal(s.endless.pending,1);
+ s.kills=3;onEndlessKill(s,{...e,id:1001});assert.equal(s.endless.pending,1);
+ const legacy=oldRun();legacy.kills=2;legacy.endless.roomKills=1;onEndlessKill(legacy,e);assert.equal(legacy.endless.pending,0);
+});
+test('wander remains playable for mobile learning without removing normal anti-AFK pressure',()=>{
+ const s=createGame({seed:1221,mode:'endless',starter:'cinder',seamless:true,difficulty:'wander'});
+ const old=oldRun();const base={hp:45,r:18,speed:76,damage:13};
+ assert.equal(endlessEnemy(s,'shade',base).hp,endlessEnemy(old,'shade',base).hp);
+ let warnings=0;
+ for(let i=0;i<150;i++){s.totalTime+=.05;s.events=[];updateEndlessCombat(s,.05,{spawn:()=>false,hurt:()=>{}});warnings+=s.events.filter(e=>e.type==='pressure-warning').length;}
+ assert.equal(warnings,0);
+});

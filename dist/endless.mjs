@@ -113,7 +113,7 @@ export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
- const threat=r.flowVersion===1?1:0;
+ const threat=r.flowVersion===1&&s.difficulty!=='wander'?1:0;
  return {...stats,hp:stats.hp*scale*(elite?2:1)*armor*(1+threat*.6),maxHp:stats.hp*scale*(elite?2:1)*armor*(1+threat*.6),speed:Math.min(threat?225:170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)*(1+threat*.25)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1)*(1+threat*.25),
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
@@ -187,7 +187,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
   }
   r.spawnIn=(isCombat(s)?Math.max(r.flowVersion===1?.72:1.1,(r.flowVersion===1?1.15:1.95)-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
- if(r.flowVersion===1){
+ if(r.flowVersion===1&&s.difficulty!=='wander'){
   const st=r.stillness??(r.stillness={x:p.x,y:p.y,seconds:0,cooldown:3});
   const traveled=Math.hypot(p.x-st.x,p.y-st.y);st.x=p.x;st.y=p.y;
   st.seconds=traveled>2.5||p.dash>0?0:Math.min(20,st.seconds+dt);
@@ -212,6 +212,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
 const lvThunder=s=>rankOf(s,'thunder');
 export function onEndlessKill(s,e){
  const r=s.endless;r.roomKills++;
+ if(r.flowVersion===1&&r.floor===1&&r.roomKills===2){r.pending++;emit(s,'early-draft',{kills:2});}
  chargeCombat(s,e);
  rewardKill(s,e);
  if(e.kind==='boss'){r.bosses++;r.rerolls=Math.min(3,r.rerolls+1);}

@@ -78,9 +78,10 @@ public final class OfflineGameTest {
         try {
             await("typeof window.emberCourierNative === 'object'");
             // Earn stamps through actual kills; the game's pagehide autosave remains fully enabled.
-            js("document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=normal]').click();document.getElementById('start').click()");
-            await("document.getElementById('upgrade-dialog').open", 600);
-            js("window.emberCourierNative.pause();document.getElementById('upgrade-exit').click();document.querySelector('[data-hub=tree]').click()");
+            js("document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
+            // Let real kills earn enough stamps for the metaprogression purchase.
+            await("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps>=2", 600);
+            js("window.emberCourierNative.pause();(document.getElementById('upgrade-dialog').open?document.getElementById('upgrade-exit'):document.getElementById('save-exit')).click();document.querySelector('[data-hub=tree]').click()");
             await("document.querySelectorAll('.star-node').length===15");
             int before = Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertTrue("Real kills should earn at least one affordable star node", before >= 2);
@@ -247,7 +248,7 @@ public final class OfflineGameTest {
             await("typeof window.emberCourierNative === 'object'");
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
             await("innerWidth > innerHeight");
-            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
+            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=wander]').click(); document.getElementById('start').click()");
             // Real kills and collected room XP open this panel; no actor or reward edits.
             // New v1.8 live-draft rail lives at top-right; assert it leaves the lower-right action buttons unobstructed.
             await("document.getElementById('upgrade-dialog').open", 600);
@@ -280,10 +281,12 @@ public final class OfflineGameTest {
         activity = (MainActivity) getInstrumentation().startActivitySync(intent);
         try {
             await("typeof window.emberCourierNative === 'object'");
-            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
+            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=wander]').click(); document.getElementById('start').click()");
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.starter === 'thunder'"));
             // The real auto-attacks and enemies produce this draft. No simulation state is edited.
             await("document.getElementById('upgrade-dialog').open", 600);
+            // Freeze genuinely earned draft while native UI transitions are exercised.
+            js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
             assertEquals("true", js("document.querySelectorAll('#upgrade-options button').length === 3"));
             // The same real earned draft exercises the new banish modal and its saved charge.
             assertEquals("false", js("document.getElementById('draft-banish').disabled"));
