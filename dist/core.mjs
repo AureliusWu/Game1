@@ -4,7 +4,7 @@ import {UPGRADES as UPGRADE_DATA} from './content.mjs';
 import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
-import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
+import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,choiceInfo,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
