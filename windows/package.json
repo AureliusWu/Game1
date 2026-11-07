@@ -1,6 +1,6 @@
 {
   "name": "ember-courier-windows",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "private": true,
   "description": "Ember Courier offline Windows desktop game",
   "author": "AureliusWu",
@@ -23,6 +23,7 @@
     },
     "files": [
       "main.cjs",
+      "update.cjs",
       "game/**",
       "build-info.json",
       "package.json",

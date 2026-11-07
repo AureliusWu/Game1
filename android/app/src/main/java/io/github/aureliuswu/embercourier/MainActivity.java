@@ -6,6 +6,8 @@ import android.app.AlertDialog;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -28,6 +30,7 @@ public final class MainActivity extends Activity {
     private WebView game;
     private boolean resumed;
     private boolean exitPrompt;
+    private UpdateManager updateManager;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle state) {
@@ -53,6 +56,7 @@ public final class MainActivity extends Activity {
         // Explicit MIME types are required for strict ES-module loading, particularly .mjs.
         WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", this::assetResponse).build();
+        updateManager = new UpdateManager(this);
         game.setWebViewClient(new WebViewClient() {
             @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 WebResourceResponse response = loader.shouldInterceptRequest(request.getUrl());
@@ -60,6 +64,10 @@ public final class MainActivity extends Activity {
             }
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
+                if ("ember-update".equals(url.getScheme()) && "check".equals(url.getHost())) {
+                    runOnUiThread(() -> { if (updateManager != null) updateManager.check(true); });
+                    return true;
+                }
                 return !"https".equals(url.getScheme()) || !"appassets.androidplatform.net".equals(url.getHost())
                     || !"/assets/index.html".equals(url.getPath());
             }
@@ -79,6 +87,9 @@ public final class MainActivity extends Activity {
         }
         immersive();
         game.loadUrl(GAME_URL);
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (!isFinishing() && updateManager != null) updateManager.autoCheck();
+        }, 7000);
     }
 
     private WebResourceResponse assetResponse(String path) {
@@ -108,6 +119,7 @@ public final class MainActivity extends Activity {
     @Override protected void onResume() {
         super.onResume(); resumed = true;
         if (game != null) { game.resumeTimers(); game.onResume(); }
+        if (updateManager != null) updateManager.onResume();
     }
     @Override protected void onPause() {
         resumed = false;
@@ -131,6 +143,7 @@ public final class MainActivity extends Activity {
         });
     }
     @Override protected void onDestroy() {
+        if (updateManager != null) { updateManager.shutdown(); updateManager = null; }
         if (game != null) { game.resumeTimers(); game.stopLoading(); game.destroy(); game = null; }
         super.onDestroy();
     }
