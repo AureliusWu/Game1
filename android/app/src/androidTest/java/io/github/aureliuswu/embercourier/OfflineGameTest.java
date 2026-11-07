@@ -47,11 +47,14 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        android.graphics.Bitmap bitmap = getInstrumentation().getUiAutomation().takeScreenshot();
-        assertNotNull("Missing UI screenshot", bitmap);
-        try (java.io.FileOutputStream out = new java.io.FileOutputStream(new java.io.File(getInstrumentation().getTargetContext().getFilesDir(), name))) {
-            assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
-        } finally { bitmap.recycle(); }
+        assertTrue("Unexpected screenshot name", name.matches("draft-(portrait|landscape)\\.png"));
+        // Gradle uninstalls the test target after connected tests. Shell-owned captures survive it.
+        android.os.ParcelFileDescriptor output = getInstrumentation().getUiAutomation()
+            .executeShellCommand("screencap -p /sdcard/Download/ember-" + name);
+        try (java.io.InputStream in = new android.os.ParcelFileDescriptor.AutoCloseInputStream(output)) {
+            byte[] buffer = new byte[1024];
+            while (in.read(buffer) != -1) { /* Wait for the real screen capture to finish. */ }
+        }
     }
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);

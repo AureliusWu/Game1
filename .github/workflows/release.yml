@@ -16,7 +16,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   release:
-    if: github.ref == 'refs/heads/main'
+    # QA-only follow-ups preserve the immutable published version and use visual-qa.yml.
+    if: github.ref == 'refs/heads/main' && !contains(github.event.head_commit.message, '[qa-only]')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -89,8 +90,9 @@ jobs:
       - name: Preserve actual compact draft screenshots
         run: |
           mkdir -p artifacts/qa
-          adb exec-out run-as io.github.aureliuswu.embercourier cat files/draft-portrait.png > artifacts/qa/draft-portrait.png
-          adb exec-out run-as io.github.aureliuswu.embercourier cat files/draft-landscape.png > artifacts/qa/draft-landscape.png
+          adb pull /sdcard/Download/ember-draft-portrait.png artifacts/qa/draft-portrait.png
+          adb pull /sdcard/Download/ember-draft-landscape.png artifacts/qa/draft-landscape.png
+          python3 scripts/check_draft_screenshots.py artifacts/qa
       - name: Verify signature and identical packaged assets
         run: python3 scripts/package_release.py android/app/build/outputs/apk/release/app-release.apk
       - uses: actions/upload-artifact@v4
