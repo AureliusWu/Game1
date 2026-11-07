@@ -1,0 +1,115 @@
+{
+  "version": "1.6.0",
+  "status": "released",
+  "runtime_commit": "3acb689edfd4b8ccd08b90cfac6212dc0c393646",
+  "release_source_commit": "94c730609337b0446fddcbb62545eafe39e27c30",
+  "node_tests": {
+    "passed": 174,
+    "failed": 0
+  },
+  "static_assets": 27,
+  "action_probes": {
+    "total": 52,
+    "active_completed_10_floors": 48,
+    "idle_lost": 2,
+    "idle_time_limited": 2
+  },
+  "android": {
+    "run_id": 42367276712,
+    "visual_run_id": 42367276721,
+    "status": "success",
+    "tests_each": 6,
+    "failed": 0,
+    "skipped": 0,
+    "artifact_id": 13572382727,
+    "visual_artifact_id": 13572371597,
+    "application_id": "io.github.aureliuswu.embercourier",
+    "version_code": 10600,
+    "certificate_sha256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7",
+    "earlier_attempts": "Two seeded UI-profile attempts failed because page lifecycle autosave retained the real profile. Final native test earns stamps through real combat and verifies relative purchase/refund. One early visual run also needed a foreground-window wait for touch injection. No game-rule changes."
+  },
+  "site": {
+    "project_id": "appgprj_6aeda9efaf088191ae1711329f052d72",
+    "audience": "public",
+    "source_commit": "953bb5ae0cfb7dc17edc4735e2018604a7dafc7a",
+    "saved_version": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_c16304d5a5588191877e6ec5d17a990c",
+    "version_number": 10,
+    "archive_content_hash": "sha256:e4d9b65f7baf7dc4fc57d9571bd5cccf439f664b4ce1fc5b5953ea352d29c027",
+    "status": "succeeded",
+    "url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site",
+    "deployment_id": "appgdep_6aef0961129481918c0a75efa22da39b",
+    "browser_verified_version": "1.6.0",
+    "browser_verified_star_chart": true
+  },
+  "release_url": "https://github.com/AureliusWu/Game1/releases/tag/v1.6.0",
+  "assets": {
+    "Ember-Courier-v1.6.0.apk": {
+      "sha256": "cd30b9c9c91a52e7042768af3e0f17d8bc4fbfcefd18cb7fa9bfd0e66c606d85",
+      "bytes": 1106410
+    },
+    "Ember-Courier-web-v1.6.0.zip": {
+      "sha256": "4b03c38ae187efbeed4d2b9d1f6cc40451d55ebcfccec01273591873c732cb1f",
+      "bytes": 168456
+    },
+    "Ember-Courier-v1.6.0-provenance.json": {
+      "sha256": "bf0d8e199d49be2731402ccf0f76202a8dff679a5c0a7c1149f86cc97c1c72f1",
+      "bytes": 2629
+    }
+  },
+  "runtime_sha256": {
+    "app.mjs": "ca23a088912f08dcb944f22d65d33f68abe1f8bdcc5cd8d7665a6e8fac050366",
+    "audio.mjs": "8c0c7202487574d8d925b9bb276711097b3189cc128c5c9137bfd558d71bc7be",
+    "battle.css": "ad7421c1492d892b66bbe52078a439962e8422ffb7fbd4a5f1efa408d78b3ece",
+    "battlefx.mjs": "561a096a0569a56f9a0f56d7e4f00ab4d7e0ad7a19821c49d91bb1f9d2d3b51b",
+    "combat.mjs": "52fe6ea46f71d19a4a738bd31ec88140d5e3548856b7d5879ecbf0a97fa652f2",
+    "content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+    "core.mjs": "f2f2dc6cf85ce9afd1a860533dc04edaec4f2c781b14d399fff3700f0f555221",
+    "draft.mjs": "b516d5c8cd47ea23456613317acd026d2261897d552a1904954bd6efbd3b0e2a",
+    "endless.mjs": "6964d65bce21b109de20da4b1f7173533bdc49be52cdcafd1824cf9e8ff432a6",
+    "expedition.mjs": "1bf0df412ebe3deb348fd8d986fca4cc5dda505dedc430d7870607eb9aa9df8a",
+    "growth-view.mjs": "5ce99be4c8c9e83ae98399f26b8ba082cf297070a31bf1b238800f2a4787465e",
+    "growth.css": "76a90d6f3416f6923ebf318dc809a32ef7f77e360cc25b68ad8bc587156a81a0",
+    "growth.mjs": "3fced9f21f955281a229155f6024046287da502a27e0b6fe353d9fb2c733b3be",
+    "hub.mjs": "9a44f536cbab979e34912de7cdd42a9e4ff082e99d831359a351dad2ea2bb96f",
+    "icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+    "icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+    "icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+    "index.html": "5ce402753d373731920d117e456d5938383ec56fe19f2f7580637a823798f731",
+    "manifest.webmanifest": "8c88419661786cb0e8f48f8d79090208c212b611b996db4bc41a087062057757",
+    "narrative.mjs": "6cb679790753edb10c7f8c4dfe0057c2b1fca22e231e6ce615baf647e2d37ac3",
+    "progress.mjs": "eeafcbfaf60f6e07849b150defdde4c214b83526ebd0ffd838801f19f4a73638",
+    "render.mjs": "c85609aeacae11fa1c2b40bb3b02787afdad7d2d5c291277cc041b0a411851f0",
+    "routes.mjs": "1389638c7856d961d7522b75f73e2455604c93b109d9b9f73c54f8d407b7ef16",
+    "style.css": "b22e4ec22418c143377bee38d34fa870c6917233522b510fd911d7c068cddb64",
+    "sw.js": "58f4c35f47cd6836ef9ac7e8b477a6cd64d80a2fc7761851e2fbf2dfb46e795c",
+    "systems.mjs": "9a2d00d141d73dd4736776bea42ee969bbf41bf26b101d0d43592debfef14d71",
+    "tactics.mjs": "1936db6c8fe0fab6de989835512eaa0e05ab7121fd63683235f36c53e1bb62a8"
+  },
+  "screenshots": [
+    {
+      "name": "draft-landscape.png",
+      "width": 640,
+      "height": 320,
+      "sha256": "5b9b98ae0b25ce3522b91562842133bc3d2651583a41665d6b93acc5f8a3a003"
+    },
+    {
+      "name": "draft-portrait.png",
+      "width": 320,
+      "height": 640,
+      "sha256": "a58c877ae36f82811379a80f0b0d58bc6498d6a2d115d1a799b65f5ea29962fe"
+    },
+    {
+      "name": "star-landscape.png",
+      "width": 640,
+      "height": 320,
+      "sha256": "dd9c13de4afb75b98127c4ddbd97a91610c1ab2082ce16c522cdc44c654069f9"
+    },
+    {
+      "name": "star-portrait.png",
+      "width": 320,
+      "height": 640,
+      "sha256": "49e701022aff285a79fe996db1d35df3476fcbd701416c67d88a7a8575dd391a"
+    }
+  ],
+  "visual_followup": "Post-release inspection of short-landscape star screenshots found the inherited hub header left too little content height. v1.6.1 is being prepared with a compact header and stronger visible-button assertions."
+}

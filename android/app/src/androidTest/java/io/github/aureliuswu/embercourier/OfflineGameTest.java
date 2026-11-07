@@ -90,10 +90,15 @@ public final class OfflineGameTest {
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
             await("innerHeight > innerWidth");
             assertEquals("true", js("(()=>{const r=document.querySelector('.star-paths').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1})()"));
+            js("document.querySelector('[data-action=tree][data-id=light-step]').scrollIntoView({block:'center'})");
+            await("(()=>{const p=document.getElementById('hub-panel').getBoundingClientRect(),b=document.querySelector('[data-action=tree][data-id=light-step]').getBoundingClientRect();return b.height>=30&&b.left>=p.left&&b.right<=p.right&&b.top>=p.top&&b.bottom<=p.bottom-1})()");
             capture("star-portrait.png");
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
             assertEquals("true", js("document.documentElement.scrollWidth<=innerWidth+1 && document.querySelectorAll('.star-path').length===3"));
+            assertEquals("true", js("document.getElementById('hub-panel').getBoundingClientRect().height>=innerHeight*.5"));
+            js("document.querySelector('[data-action=tree][data-id=light-step]').scrollIntoView({block:'center'})");
+            await("(()=>{const p=document.getElementById('hub-panel').getBoundingClientRect(),b=document.querySelector('[data-action=tree][data-id=light-step]').getBoundingClientRect();return b.height>=30&&b.left>=p.left&&b.right<=p.right&&b.top>=p.top&&b.bottom<=p.bottom-1})()");
             capture("star-landscape.png");
             js("document.querySelector('[data-action=reset-tree]').click()");
             assertEquals(Integer.toString(before), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));

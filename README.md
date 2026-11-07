@@ -4,9 +4,9 @@
 
 一款原创俯视角无尽肉鸽。你是猫头鹰信使 **烛羽**：清开敌潮、拾光升级、搭配武器进化与奇物，每五层迎战首领，再选择更深一层的路线。原有三章送信冒险作为剧情模式完整保留。
 
-**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.6.0.md) · [部署说明](docs/DEPLOYMENT.md)
+**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.6.1.md) · [部署说明](docs/DEPLOYMENT.md)
 
-当前版本：**v1.6.0「星图来信」** · [升级说明](docs/releases/v1.6.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
+当前版本：**v1.6.1「星图来信」** · [升级说明](docs/releases/v1.6.1.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
 
 网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
