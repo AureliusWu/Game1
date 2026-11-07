@@ -245,9 +245,10 @@ public final class OfflineGameTest {
             await("innerWidth > innerHeight");
             js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
             // Real kills and collected room XP open this panel; no actor or reward edits.
+            // New v1.8 live-draft rail lives at top-right; assert it leaves the lower-right action buttons unobstructed.
             await("document.getElementById('upgrade-dialog').open", 600);
             js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
-            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect();return d.open && !d.matches(':modal') && r.top>innerHeight*.48 && r.height<=innerHeight*.49 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return d.open && !d.matches(':modal') && document.body.dataset.liveDraft==='true' && r.top>=20 && r.top<innerHeight*.48 && r.height<=innerHeight*.69 && r.bottom<=Math.min(p.top,dash.top)+2 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape-reverse.png");
             String remaining = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining");
@@ -256,7 +257,7 @@ public final class OfflineGameTest {
             assertEquals(remaining, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining"));
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
-            assertEquals("true", js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect();return r.top>innerHeight*.48 && r.height<=innerHeight*.49 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            assertEquals("true", js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return r.top>=20 && r.top<innerHeight*.48 && r.height<=innerHeight*.69 && r.bottom<=Math.min(p.top,dash.top)+2 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape.png");
             js("document.getElementById('upgrade-exit').click(); document.getElementById('continue').click()");

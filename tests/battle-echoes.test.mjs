@@ -8,8 +8,8 @@ import {advanceEndlessChoices,rerollEndless} from '../dist/endless.mjs';
 const game=()=>createGame({seed:1503,mode:'endless'});
 const draft=()=>{const s=game();s.endless.pending=1;advanceEndlessChoices(s);ensureDraft(s);return s;};
 const actor=(s,kind='runner',extra={})=>{const e={id:999,kind,x:1040,y:690,r:18,hp:1000,maxHp:1000,speed:80,damage:15,stun:0,warning:0,attack:0,shotCd:2,angle:0,...extra};prepareEnemy(s,e);return e;};
-test('a visible draft expires after eight seconds and produces exactly one legal choice',()=>{
- const s=draft();let auto=null;for(let i=0;i<31;i++)assert.equal(stepDraft(s,.25),null);
+test('a live draft expires after four seconds and produces exactly one legal choice',()=>{
+ const s=draft();let auto=null;for(let i=0;i<15;i++)assert.equal(stepDraft(s,.25),null);
  auto=stepDraft(s,.25);assert.ok(auto);assert.ok(s.offered.includes(auto.id));assert.equal(stepDraft(s,.25),null);
  assert.ok(chooseUpgrade(s,auto.id));assert.equal(s.selection,undefined);assert.equal(s.endless.pending,0);
 });
@@ -20,12 +20,12 @@ test('held or obscured draft clocks do not advance or spend game time',()=>{
 });
 test('draft save/resume preserves the remaining time, recommendation and explicit hold',()=>{
  const s=draft();for(let i=0;i<12;i++)stepDraft(s,.25);toggleDraft(s);const copy=restore(serialize(s));
- assert.ok(copy);assert.equal(ensureDraft(copy).remaining,5);assert.equal(copy.selection.held,true);assert.equal(recommendedChoice(copy),recommendedChoice(s));
+ assert.ok(copy);assert.equal(ensureDraft(copy).remaining,1);assert.equal(copy.selection.held,true);assert.equal(recommendedChoice(copy),recommendedChoice(s));
 });
-test('automatic route selection waits twelve seconds and never spends coins on rest',()=>{
+test('automatic route selection waits six seconds and never spends coins on rest',()=>{
  const s=game();s.endless.remaining=0;s.endless.clearedRoom=true;s.endless.cleared=1;s.endless.pending=0;s.endless.rewardPending=false;
- advanceEndlessChoices(s);s.offered=['rest','hunt','elite'];s.journal.coins=0;assert.equal(ensureDraft(s).duration,12);assert.equal(recommendedChoice(s),'hunt');
- for(let i=0;i<47;i++)assert.equal(stepDraft(s,.25),null);assert.equal(stepDraft(s,.25).id,'hunt');assert.equal(s.journal.coins,0);
+ advanceEndlessChoices(s);s.offered=['rest','hunt','elite'];s.journal.coins=0;assert.equal(ensureDraft(s).duration,6);assert.equal(recommendedChoice(s),'hunt');
+ for(let i=0;i<23;i++)assert.equal(stepDraft(s,.25),null);assert.equal(stepDraft(s,.25).id,'hunt');assert.equal(s.journal.coins,0);
 });
 test('recommendation prefers immediate evolution, then a needed survival choice, and avoids glass relic',()=>{
  const s=draft();s.endless.ranks={cinder:4,haste:2};s.offered=['cinder','might','wing'];delete s.selection;assert.equal(recommendedChoice(s),'cinder');
@@ -33,8 +33,8 @@ test('recommendation prefers immediate evolution, then a needed survival choice,
  s.endless.choice='relic';s.offered=['glass','moon','coin'];assert.equal(recommendedChoice(s),'moon');
 });
 test('paid reroll resets only its draft countdown and the spent charge remains spent after reload',()=>{
- const s=draft();stepDraft(s,.25);const rolls=s.endless.rerolls;assert.ok(rerollEndless(s));assert.equal(ensureDraft(s).remaining,8);
- const c=restore(serialize(s));assert.ok(c);assert.equal(c.endless.rerolls,rolls-1);assert.equal(c.selection.remaining,8);
+ const s=draft();stepDraft(s,.25);const rolls=s.endless.rerolls;assert.ok(rerollEndless(s));assert.equal(ensureDraft(s).remaining,4);
+ const c=restore(serialize(s));assert.ok(c);assert.equal(c.endless.rerolls,rolls-1);assert.equal(c.selection.remaining,4);
 });
 test('invalid timer state is rejected without discarding a valid old run with no timer',()=>{
  for(const change of [c=>c.remaining=999,c=>c.remaining=-1,c=>c.duration=3,c=>c.key='unrelated',c=>c.held=1]){const s=draft();change(s.selection);assert.equal(restore(serialize(s)),null);}

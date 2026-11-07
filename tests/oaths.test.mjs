@@ -10,7 +10,7 @@ test('floor three offers exactly one safe, persistent oath before next route',()
  const s=game();cleared(s,3);assert.equal(s.endless.oaths.offerPending,true);
  assert.equal(s.endless.choice,'skill');assert.equal(s.offered.length,3);
  let guard=0;while(s.endless.choice==='skill'&&guard++<20)assert.ok(chooseUpgrade(s,s.offered[0]));
- assert.equal(s.endless.choice,'oath');assert.deepEqual(s.offered,OATHS.map(o=>o.id));
+ assert.equal(s.endless.choice,'oath');assert.equal(s.offered.length,3);assert.ok(s.offered.includes('ember'));
  assert.equal(recommendedChoice(s),'ember');assert.equal(rerollEndless(s),false);
  const copy=restore(serialize(s));assert.ok(copy);assert.equal(copy.endless.choice,'oath');
  assert.ok(chooseUpgrade(copy,'ember'));assert.equal(oathRank(copy,'ember'),1);assert.equal(copy.endless.choice,'route');
@@ -18,7 +18,7 @@ test('floor three offers exactly one safe, persistent oath before next route',()
 });
 test('oaths unlock only once per three floors, repeat ranks and stop at 3',()=>{
  const s=game('orbit');assert.equal(oathRank(s,'gale'),0);
- s.endless.oaths.ranks={ember:3,gale:2,storm:3};
+ s.endless.oaths.ranks={ember:3,gale:2,storm:3,frost:3,ward:3};
  cleared(s,3);while(s.endless.choice==='skill')chooseUpgrade(s,s.offered[0]);
  assert.deepEqual(s.offered,['gale']);assert.equal(recommendedChoice(s),'gale');
  assert.ok(chooseUpgrade(s,'gale'));assert.equal(oathRank(s,'gale'),3);

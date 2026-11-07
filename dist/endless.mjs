@@ -1,5 +1,6 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
+import {ENDLESS_MAPS,nextEndlessMap} from './endless-maps.mjs';
 import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
 import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
 import {growthOn,growthPower,growthXP} from './growth.mjs';
@@ -7,6 +8,7 @@ const TAU=Math.PI*2;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const emit=(s,type,data={})=>s.events.push({type,...data});
 export const isEndless=s=>s?.endless?.version===1;
+export const liveDraft=s=>isEndless(s)&&Number.isInteger(s.endless.draftSerial)&&s.phase==='upgrade'&&s.endless.choice==='skill';
 export const SKILLS=[
  {id:'cinder',kind:'weapon',name:'爆焰行灯',symbol:'flame',color:'#ffb36b',desc:'光弹命中后爆炸，灼伤周围敌人。',detail:'每级增加爆炸范围与伤害。三级：冲刺留下火径。',partner:'haste',evolution:'不灭凤凰',evo:'爆炸连成火海，光弹额外锁定一个目标。'},
  {id:'frost',kind:'weapon',name:'霜降邮戳',symbol:'sun',color:'#9ddde1',desc:'每 3.4 秒释放冰环，伤害并减速附近敌人。',detail:'每级增加范围、伤害并缩短间隔。光环也会施加寒霜。',partner:'focus',evolution:'永冬回信',evo:'冰环冻结敌人，受寒霜的敌人承受更多光弹伤害。'},
@@ -36,7 +38,9 @@ export const RELICS=[
 export const OATHS=[
  {id:'ember',name:'焚烬刻印',symbol:'flame',desc:'连续击败敌人后在目标处触发范围爆炸；阶级越高，触发越快。',detail:'爆焰行灯 Lv.3 后，爆炸留下火径。'},
  {id:'gale',name:'疾风刻印',symbol:'wind',desc:'冲刺释放羽风震荡，缩短本次冲刺冷却；阶级越高，伤害和范围越大。',detail:'回旋护羽 Lv.3 后，羽风伤害再提高 35%。'},
- {id:'storm',name:'雷鸣刻印',symbol:'star',desc:'光环额外触发连锁雷；阶级越高，跳跃次数和伤害越多。',detail:'连锁雷笺 Lv.3 后，雷电额外跳跃 2 次。'}
+ {id:'storm',name:'雷鸣刻印',symbol:'star',desc:'光环额外触发连锁雷；阶级越高，跳跃次数和伤害越多。',detail:'连锁雷笺 Lv.3 后，雷电额外跳跃 2 次。'},
+ {id:'frost',name:'寒潮刻印',symbol:'sun',desc:'光环追加冰伤与减速，阶级越高范围和伤害越高。',detail:'霜降邮戳 Lv.3 后，寒潮伤害提高 40%。'},
+ {id:'ward',name:'守望刻印',symbol:'shield',desc:'光环给予一次限时格挡，阶级越高持续越久。',detail:'长明灯芯 Lv.2 后，每次释放光环还回复少量生命。'}
 ];
 export const oathRank=(s,id)=>s.endless?.oaths?.ranks[id]||0;
 export const oathTotal=s=>s.endless?.oaths?Object.values(s.endless.oaths.ranks).reduce((a,b)=>a+b,0):0;
@@ -59,7 +63,7 @@ export function initEndless(s,starter='cinder'){
  s.endless={version:1,floor:1,cleared:0,route:'hunt',rng:seedMix(s.seed,130),ranks:{[starter]:1},relics:[],starter,
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
-  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false}};
+  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0};
  initCombat(s);
  initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
@@ -87,21 +91,30 @@ export function configureEndlessRoom(s){
  if(r.route==='cache')r.total=Math.ceil(r.total*.85);
  r.remaining=r.total;r.roomKills=0;r.spawnIn=.6;r.bossMade=false;r.clearedRoom=false;r.rewardPending=false;r.choice='';r.roomDamage=s.damageTaken;r.pools=[];r.zones=[];r.zoneCd=4;r.weather=weatherFor(s);r.market=[];
  s.player.x=940;s.player.y=690;s.player.embers=Math.min(15,s.player.embers);s.player.invincible=2;
- s.beacons=[{x:650,y:430},{x:1230,y:430},{x:940,y:1040}].map((p,id)=>({...p,id,lit:false,progress:0,cost:5,r:38}));
- const k=seedMix(s.seed,n+130)%3;s.v12.layout=k;
- const covers=[[[490,590,100,100],[1290,800,110,90]],[[750,430,105,75],[1040,910,110,80]],[[520,910,120,75],[1260,430,100,80]]];
- s.obstacles=covers[k].map(([x,y,w,h])=>({x,y,w,h}));s.pois=[];
+ let k,map;
+ if(r.draftSerial!==undefined){
+  k=nextEndlessMap(s.seed,n,r.mapIndex);map=ENDLESS_MAPS[k];r.mapIndex=k;s.v12.layout=k%3;
+  s.beacons=map.lamps.map(([x,y],id)=>({x,y,id,lit:false,progress:0,cost:5,r:38}));
+  s.obstacles=map.covers.map(([x,y,w,h])=>({x,y,w,h}));
+ }else{
+  // Old saved runs must replay byte-for-byte with their original three arenas.
+  k=seedMix(s.seed,n+130)%3;s.v12.layout=k;
+  s.beacons=[{x:650,y:430},{x:1230,y:430},{x:940,y:1040}].map((p,id)=>({...p,id,lit:false,progress:0,cost:5,r:38}));
+  const legacy=[[[490,590,100,100],[1290,800,110,90]],[[750,430,105,75],[1040,910,110,80]],[[520,910,120,75],[1260,430,100,80]]];
+  s.obstacles=legacy[k].map(([x,y,w,h])=>({x,y,w,h}));
+ }
+ s.pois=[];
  s.exit={x:1740,y:690,r:58,open:false};s.embers=[];
  s.v12.patrolLeft=0;s.v12.goldLeft=0;s.v12.xpLeft=0;
  if(hasRelic(s,'moon')){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+3600;}
- emit(s,'floor',{floor:n,boss,route:r.route});
+ emit(s,'floor',map?{floor:n,boss,route:r.route,map:k,mapName:map.name}:{floor:n,boss,route:r.route});
 }
 export function endlessEnemy(s,kind,stats){
- const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&r.remaining%11===0);
+ const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
  return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
-  patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%3};
+  patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
 function hit(s,e,amount,slow=0){
  if(isCombat(s)){damageEnemy(s,e,amount,{slow});return;}
@@ -145,6 +158,8 @@ export function onEndlessPulse(s,hits){
  if(rankOf(s,'frost'))for(const e of s.enemies)if(dist(s.player,e)<s.player.pulseRadius+e.r)e.slowUntil=s.totalTime+3;
  if(rankOf(s,'thunder'))s.endless.thunderCd=0;
  const storm=oathRank(s,'storm');if(hasRelic(s,'ink')||storm){chain(s,true,storm+(storm&&rankOf(s,'thunder')>=3?2:0));if(storm)emit(s,'oath-proc',{id:'storm'});}
+ const frost=oathRank(s,'frost');if(frost){area(s,s.player,140+frost*35,(14+frost*10)*power(s)*(rankOf(s,'frost')>=3?1.4:1),'frost',1.2+frost*.5);emit(s,'oath-proc',{id:'frost'});}
+ const ward=oathRank(s,'ward');if(ward){const until=s.totalTime+.6+ward*.55;if(!s.v12.barrier||s.v12.barrierUntil<until){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=until;}if(rankOf(s,'vitality')>=2)s.player.hp=Math.min(s.player.maxHp,s.player.hp+ward*2);emit(s,'oath-proc',{id:'ward'});}
  if(evolved(s,'orbit'))area(s,s.player,270,50*power(s),'feather');
  if(rankOf(s,'pulsecraft')&&hits>=3){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+2;}
 }
@@ -157,6 +172,9 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
+   else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
+   else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
+   else if(r.draftSerial!==undefined&&r.floor>=5&&roll<.38)kind='charger';
    else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
@@ -191,6 +209,7 @@ export function onEndlessKill(s,e){
  }
 }
 function shuffle(s,items){for(let i=items.length-1;i>0;i--){const j=Math.floor(endlessRandom(s)*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;}
+function draftOaths(s){const pool=shuffle(s,OATHS.filter(u=>oathRank(s,u.id)<3).map(u=>u.id)),picks=[];const linked=({cinder:'ember',frost:'frost',orbit:'gale',thunder:'storm'})[s.endless.starter];if(pool.includes(linked))picks.push(linked);const owned=pool.find(id=>oathRank(s,id)>0&&!picks.includes(id));if(owned)picks.push(owned);for(const id of pool)if(picks.length<3&&!picks.includes(id))picks.push(id);return picks;}
 function draftSkills(s){
  const r=s.endless,owned=Object.keys(r.ranks),weapons=owned.filter(id=>SKILL_BY_ID[id].kind==='weapon').length,passives=owned.length-weapons;
  const pool=SKILLS.filter(u=>!s.growth?.banished.includes(u.id)&&rankOf(s,u.id)<5&&(rankOf(s,u.id)|| (u.kind==='weapon'?weapons<3:passives<4)));
@@ -201,7 +220,7 @@ function draftSkills(s){
  for(const u of shuffled)if(picks.length<3&&!picks.includes(u.id))picks.push(u.id);
  if(picks.length===0)return ['ash','mend','supplies'];return picks;
 }
-function setChoice(s,kind,offered){s.endless.choice=kind;s.offered=offered;s.phase='upgrade';emit(s,'upgrade');}
+function setChoice(s,kind,offered){if(Number.isInteger(s.endless.draftSerial))s.endless.draftSerial++;s.endless.choice=kind;s.offered=offered;s.phase='upgrade';emit(s,'upgrade');}
 export function advanceEndlessChoices(s){
  const r=s.endless;if(s.player.hp<=0)return;
  if(!r.clearedRoom&&r.remaining===0&&s.enemies.length===0){
@@ -215,7 +234,7 @@ export function advanceEndlessChoices(s){
  }
  if(r.pending>0){setChoice(s,'skill',draftSkills(s));return;}
  if(r.clearedRoom&&r.rewardPending){const pool=shuffle(s,RELICS.filter(x=>!r.relics.includes(x.id)));setChoice(s,'relic',pool.length?pool.slice(0,3).map(x=>x.id):['ash','mend','supplies']);return;}
- if(r.clearedRoom&&r.oaths?.offerPending){const available=OATHS.filter(x=>oathRank(s,x.id)<3).map(x=>x.id);if(available.length){setChoice(s,'oath',available);return;}r.oaths.offerPending=false;}
+ if(r.clearedRoom&&r.oaths?.offerPending){const available=draftOaths(s);if(available.length){setChoice(s,'oath',available);return;}r.oaths.offerPending=false;}
  if(r.clearedRoom){const rest=shuffle(s,['elite','cache','rest','curse']).slice(0,2);setChoice(s,'route',['hunt',...rest]);}
 }
 export function choiceInfo(s,id){
@@ -301,9 +320,11 @@ export function validateEndless(s){
  if(!Object.hasOwn(WEATHERS,r.weather)||!Array.isArray(r.zones)||r.zones.length>4||r.zones.some(z=>['x','y','r','warning'].some(k=>!Number.isFinite(z[k]))||z.r!==85||z.warning<=0||z.warning>1.25))return false;
  if(!Array.isArray(r.market)||r.market.length>3||new Set(r.market).size!==r.market.length||r.market.some(id=>!['tea','potion','reroll'].includes(id)))return false;
  if(!Array.isArray(r.pools)||r.pools.length>14||r.pools.some(p=>['x','y','until'].some(k=>!Number.isFinite(p[k]))))return false;
+ if(r.draftSerial!==undefined&&(!Number.isSafeInteger(r.draftSerial)||r.draftSerial<0))return false;
+ if(r.mapIndex!==undefined&&(!Number.isInteger(r.mapIndex)||r.mapIndex<0||r.mapIndex>=ENDLESS_MAPS.length))return false;
  if(r.oaths!==undefined){
   const o=r.oaths;if(!o||o.version!==1||typeof o.offerPending!=='boolean'||!o.ranks||Array.isArray(o.ranks)||typeof o.ranks!=='object')return false;
-  if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>9)return false;
+  if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>OATHS.length*3)return false;
  }
  if(!['','skill','relic','route','oath'].includes(r.choice)||r.choice==='oath'&&!r.oaths)return false;
  if(s.phase==='upgrade'){
