@@ -44,7 +44,7 @@ body[data-draft] .skill-controls,body[data-draft] .touch-controls,body[data-draf
 body[data-live-draft=true] .skill-controls,body[data-live-draft=true] .touch-controls,body[data-live-draft=true] .potion-button,body[data-live-draft=true] .toast{visibility:visible}
 body[data-live-draft=true] #upgrade-dialog.upgrade-modal{
  inset:calc(78px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) auto auto;
- margin:0;width:min(360px,calc(100vw - 250px));max-height:calc(100dvh - 111px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+ margin:0;width:min(360px,calc(100vw - 250px));max-height:min(56dvh,calc(100dvh - 111px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
  padding:9px 11px 10px;box-shadow:0 8px 30px #061a21bb;background:#102d34ef;border-radius:12px;
 }
 body[data-live-draft=true] #upgrade-dialog .draft-heading h2{font-size:16px;letter-spacing:1px}
@@ -66,7 +66,7 @@ body[data-live-draft=true] #upgrade-dialog .draft-bottom p{font-size:9px;line-he
 body[data-live-draft=true] #upgrade-dialog .draft-footer{gap:4px}
 body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{font-size:9px;min-height:24px;padding:3px 7px}
 @media (orientation:landscape) and (max-height:430px){
- body[data-live-draft=true] #upgrade-dialog.upgrade-modal{top:calc(65px + env(safe-area-inset-top));max-height:calc(100dvh - 170px - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:min(315px,calc(100vw - 220px));padding:7px 8px}
+ body[data-live-draft=true] #upgrade-dialog.upgrade-modal{top:calc(65px + env(safe-area-inset-top));max-height:calc(100dvh - 205px - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:min(315px,calc(100vw - 220px));padding:7px 8px}
  body[data-live-draft=true] #upgrade-dialog .draft-heading p{display:none}
  body[data-live-draft=true] #upgrade-dialog .upgrade-card{padding:3px 7px;grid-template-rows:auto auto;gap:1px 5px}
  body[data-live-draft=true] #upgrade-dialog .draft-tag{display:none}
