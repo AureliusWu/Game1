@@ -133,14 +133,17 @@ body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-li
 }
 @media (orientation:landscape) and (max-height:430px){
  body[data-live-draft=true] #upgrade-dialog.upgrade-modal{
-  top:calc(62px + env(safe-area-inset-top));
+  top:calc(50px + env(safe-area-inset-top));
   width:min(320px,calc(100vw - 255px));
-  max-height:calc(100dvh - 196px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  max-height:calc(100dvh - 175px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   padding:6px 8px;
  }
- body[data-live-draft=true] #upgrade-dialog .upgrade-options{gap:3px}
+ body[data-live-draft=true] #upgrade-dialog .upgrade-options{gap:2px}
+ body[data-live-draft=true] #upgrade-dialog .draft-heading{min-height:17px;max-height:22px}
+ body[data-live-draft=true] #upgrade-dialog .draft-time-track{margin:2px 0}
+ body[data-live-draft=true] #upgrade-dialog .draft-footer{padding-top:3px}
  body[data-live-draft=true] #upgrade-dialog .upgrade-card{
-  height:42px;min-height:42px;max-height:42px;padding:3px 7px;
+  height:35px;min-height:35px;max-height:35px;padding:2px 7px;
   grid-template-rows:15px 12px;row-gap:1px;
  }
  body[data-live-draft=true] #upgrade-dialog .upgrade-card strong{font-size:11px;line-height:15px}

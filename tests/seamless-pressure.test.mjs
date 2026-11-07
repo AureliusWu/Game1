@@ -72,6 +72,8 @@ test('landscape skill rail has nonoverlapping fixed rows and footer, combat noti
  assert.match(css,/v1\.8\.2: fixed-height non-modal right rail/);
  assert.match(css,/grid-template-rows:16px 14px/);
  assert.match(css,/height:46px;min-height:46px;max-height:46px/);
+ assert.match(css,/height:35px;min-height:35px;max-height:35px/);
+ assert.match(css,/max-height:calc\(100dvh - 175px/);
  assert.match(css,/draft-footer[\s\S]*?flex-wrap:nowrap/);
  assert.match(css,/\.game-view \.toast\{left:50%;bottom:/);
 });
