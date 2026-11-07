@@ -29,6 +29,7 @@ jobs:
         run: python3 scripts/assemble_release.py
       - uses: actions/upload-artifact@v7.0.2
         with:
+          overwrite: true
           name: Ember-Courier-release
           path: artifacts/release/
           if-no-files-found: error

@@ -60,6 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         if: inputs.sign_release
         with:
+          overwrite: true
           name: Android-package
           path: artifacts/android/
           if-no-files-found: error
@@ -67,6 +68,7 @@ jobs:
       - uses: actions/upload-artifact@v7.0.2
         if: ${{ !inputs.sign_release }}
         with:
+          overwrite: true
           name: Android-debug
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
@@ -75,6 +77,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7.0.2
         with:
+          overwrite: true
           name: Android-device-QA
           path: |
             artifacts/android-qa/

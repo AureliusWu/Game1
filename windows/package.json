@@ -33,7 +33,7 @@
         "portable"
       ],
       "icon": "../dist/icon-512.png",
-      "signAndEditExecutable": false
+      "signExecutable": false
     },
     "portable": {
       "artifactName": "Ember-Courier-v${version}-Windows-x64.exe",

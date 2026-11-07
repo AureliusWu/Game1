@@ -95,7 +95,7 @@ function updateMenu(){
 function formatTime(time){const n=Math.floor(time);return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}
 function clearInput(){keys.clear();joystickId=null;joy={x:0,y:0};destination=null;renderer.destination=null;stuckFor=0;$('joystick-thumb').style.transform='translate(0,0)';}
 function showDialog(id){const d=$(id);if(!d.open)d.showModal();clearInput();}
-function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))d.close();renderer.selection=false;delete document.body.dataset.draft;}
+function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))if(d.id!=='orientation-dialog')d.close();renderer.selection=false;delete document.body.dataset.draft;}
 function checkpoint(){if(run&&!ended){syncProgress();const data=serialize(run);if(data)storage.set(STORE.save,data);}persistProfile();}
 function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);}}
 function announceChapter(){
@@ -349,6 +349,7 @@ updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAni
 window.emberCourierNative=Object.freeze({
   pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
   back(){
+    if(landscapeGate.check())return true;
     const modal=[...document.querySelectorAll('dialog[open]')].at(-1);
     if(modal){const cancel=new Event('cancel',{cancelable:true});if(modal.dispatchEvent(cancel))modal.close();checkpoint();return true;}
     if(screen==='game'){pauseGame();return true;}
