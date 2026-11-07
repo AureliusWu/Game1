@@ -1,0 +1,343 @@
+{
+  "version": "1.7.0",
+  "status": "released",
+  "generated_at": "2026-11-07T12:35:00.359251+00:00",
+  "github": {
+    "repository": "AureliusWu/Game1",
+    "release_source_commit": "d9efec2da0686e0f596d324f086a945e4f8d97c1",
+    "release_tree": "0fd7ec647380730c95c3573017681f8d38d737ce",
+    "run_id": 42372231795,
+    "run_url": "https://github.com/AureliusWu/Game1/actions/runs/42372231795",
+    "release_url": "https://github.com/AureliusWu/Game1/releases/tag/v1.7.0",
+    "release_id": 437562804,
+    "published_at": "2026-11-07T12:28:10Z",
+    "tag": "v1.7.0",
+    "workflow_conclusion": "success",
+    "immutable_assets_preserved": true
+  },
+  "checks": {
+    "node_tests": {
+      "passed": 188,
+      "failed": 0,
+      "skipped": 0
+    },
+    "static_assets": 29,
+    "actionlint": "1.7.12; verified SHA-256 official Linux binary; workflow semantics passed",
+    "simulation_identity": "v1.6.1 rules, combat, growth, narrative and progress byte-identical; core VERSION excluded.",
+    "workflow_jobs": [
+      {
+        "id": 128402544009,
+        "name": "quality",
+        "conclusion": "success"
+      },
+      {
+        "id": 128402592429,
+        "name": "windows / build",
+        "conclusion": "success"
+      },
+      {
+        "id": 128402592504,
+        "name": "android / build",
+        "conclusion": "success"
+      },
+      {
+        "id": 128403590035,
+        "name": "publish / publish",
+        "conclusion": "success"
+      },
+      {
+        "id": 128403676619,
+        "name": "pages / deploy",
+        "conclusion": "success"
+      }
+    ],
+    "android_instrumentation": {
+      "tests": 6,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "time": 79.743
+    },
+    "windows_exe": {
+      "status": "passed",
+      "version": "1.7.0",
+      "origin": "ember://game",
+      "landscape": true,
+      "portraitGate": true,
+      "saveResume": true,
+      "sandboxed": true,
+      "electron": "45.2.3"
+    },
+    "png_review": "PASS: actual Android landscape draft/tree controls and Windows portrait guard/landscape pause screenshots inspected.",
+    "screenshots": {
+      "draft-landscape-reverse.png": {
+        "width": 640,
+        "height": 320,
+        "sha256": "b3b2cba8858a5cc6879eaa447c7000821ea9308b8857668c820ab7c0a1ff370e"
+      },
+      "draft-landscape.png": {
+        "width": 640,
+        "height": 320,
+        "sha256": "f315e062d816e3c8305ba314b7db4d25c242e8b4936d83ce120c39937720812e"
+      },
+      "star-landscape-reverse.png": {
+        "width": 640,
+        "height": 320,
+        "sha256": "0eb898a5fa269ade728f22ae55537492c50bd4f643f391051d766c6ff0ceac28"
+      },
+      "star-landscape.png": {
+        "width": 640,
+        "height": 320,
+        "sha256": "0eb898a5fa269ade728f22ae55537492c50bd4f643f391051d766c6ff0ceac28"
+      },
+      "windows-portrait-guard.png": {
+        "width": 480,
+        "height": 800,
+        "sha256": "d773d728841060bfc6cb5e0fe6bcda88f10c75bbfe20273a993a883ad3d7c314"
+      },
+      "windows-smoke.png": {
+        "width": 1024,
+        "height": 640,
+        "sha256": "851bf3d7115605412a41e9864bd7c0361ae4907bf917d16ed25b6075fe6c46c7"
+      }
+    },
+    "public_downloads": "All 8 public Release assets downloaded; GitHub SHA-256, SHA256SUMS, 29 APK/ZIP/source assets and EXE digest independently verified.",
+    "network_note": "Deployment-side live hash/MIME/HTTPS checks and cloud-browser inspection passed. An additional local-container HTTP probe encountered proxy CONNECT timeouts; it is not used as live-site evidence."
+  },
+  "orientation": {
+    "android": "sensorLandscape",
+    "pwa_manifest": "landscape",
+    "browser": "portrait modal freezes game and draft visible time; fullscreen/orientation lock on supported browsers",
+    "native_back": "portrait gate consumes back without altering underlying pause or hold"
+  },
+  "ci": {
+    "entrypoint": ".github/workflows/ci.yml",
+    "common_checks_once": true,
+    "conditional_native_jobs": true,
+    "node24_actions": true,
+    "release_assets_never_overwritten": true,
+    "pages_artifact_names_include_run_attempt": true,
+    "desktop_tool_cache_saved_on_failure": true
+  },
+  "runtime_sha256": {
+    "app.mjs": "8996b63548b0c3864ed5f8480be79d142d31feb7cb9b2ae7a6270357646b4159",
+    "audio.mjs": "8c0c7202487574d8d925b9bb276711097b3189cc128c5c9137bfd558d71bc7be",
+    "battle.css": "ad7421c1492d892b66bbe52078a439962e8422ffb7fbd4a5f1efa408d78b3ece",
+    "battlefx.mjs": "561a096a0569a56f9a0f56d7e4f00ab4d7e0ad7a19821c49d91bb1f9d2d3b51b",
+    "combat.mjs": "52fe6ea46f71d19a4a738bd31ec88140d5e3548856b7d5879ecbf0a97fa652f2",
+    "content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+    "core.mjs": "951d980fe3752620c24dea988552d04b498f5f9ca1b7e01b88a701d06b52135d",
+    "draft.mjs": "b516d5c8cd47ea23456613317acd026d2261897d552a1904954bd6efbd3b0e2a",
+    "endless.mjs": "6964d65bce21b109de20da4b1f7173533bdc49be52cdcafd1824cf9e8ff432a6",
+    "expedition.mjs": "1bf0df412ebe3deb348fd8d986fca4cc5dda505dedc430d7870607eb9aa9df8a",
+    "growth-view.mjs": "5ce99be4c8c9e83ae98399f26b8ba082cf297070a31bf1b238800f2a4787465e",
+    "growth.css": "f9d7292ecf9195f26f0a0d64230be59c19aeae2b9ba0218742372fbfd62e3344",
+    "growth.mjs": "3fced9f21f955281a229155f6024046287da502a27e0b6fe353d9fb2c733b3be",
+    "hub.mjs": "9a44f536cbab979e34912de7cdd42a9e4ff082e99d831359a351dad2ea2bb96f",
+    "icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+    "icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+    "icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+    "index.html": "282f6121d0cf111294291a833d19211b76de517a71b65defe4a8236f21543bef",
+    "manifest.webmanifest": "090dd6eb19a38b344800c40ad7b4bad7842e829e788abeaaada459d83d4a7cf0",
+    "narrative.mjs": "6cb679790753edb10c7f8c4dfe0057c2b1fca22e231e6ce615baf647e2d37ac3",
+    "orientation.css": "84b35446663c2b96922ae8a27cb0b5458e9977dd50a65e3df5606842f7b6dbda",
+    "orientation.mjs": "8ac32c0893057a9296007975ae7f436835c2f84ffec6e2f1bcc1918b773d5970",
+    "progress.mjs": "eeafcbfaf60f6e07849b150defdde4c214b83526ebd0ffd838801f19f4a73638",
+    "render.mjs": "c85609aeacae11fa1c2b40bb3b02787afdad7d2d5c291277cc041b0a411851f0",
+    "routes.mjs": "1389638c7856d961d7522b75f73e2455604c93b109d9b9f73c54f8d407b7ef16",
+    "style.css": "b22e4ec22418c143377bee38d34fa870c6917233522b510fd911d7c068cddb64",
+    "sw.js": "8e70092f2bbea2938724fb247b1bf9df066c0489512a890c6653b1f00471b5a9",
+    "systems.mjs": "9a2d00d141d73dd4736776bea42ee969bbf41bf26b101d0d43592debfef14d71",
+    "tactics.mjs": "1936db6c8fe0fab6de989835512eaa0e05ab7121fd63683235f36c53e1bb62a8"
+  },
+  "android": {
+    "version": "1.7.0",
+    "commit": "d9efec2da0686e0f596d324f086a945e4f8d97c1",
+    "application_id": "io.github.aureliuswu.embercourier",
+    "min_android_api": 26,
+    "signing_certificate_sha256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7",
+    "web_asset_sha256": {
+      "app.mjs": "8996b63548b0c3864ed5f8480be79d142d31feb7cb9b2ae7a6270357646b4159",
+      "audio.mjs": "8c0c7202487574d8d925b9bb276711097b3189cc128c5c9137bfd558d71bc7be",
+      "battle.css": "ad7421c1492d892b66bbe52078a439962e8422ffb7fbd4a5f1efa408d78b3ece",
+      "battlefx.mjs": "561a096a0569a56f9a0f56d7e4f00ab4d7e0ad7a19821c49d91bb1f9d2d3b51b",
+      "combat.mjs": "52fe6ea46f71d19a4a738bd31ec88140d5e3548856b7d5879ecbf0a97fa652f2",
+      "content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+      "core.mjs": "951d980fe3752620c24dea988552d04b498f5f9ca1b7e01b88a701d06b52135d",
+      "draft.mjs": "b516d5c8cd47ea23456613317acd026d2261897d552a1904954bd6efbd3b0e2a",
+      "endless.mjs": "6964d65bce21b109de20da4b1f7173533bdc49be52cdcafd1824cf9e8ff432a6",
+      "expedition.mjs": "1bf0df412ebe3deb348fd8d986fca4cc5dda505dedc430d7870607eb9aa9df8a",
+      "growth-view.mjs": "5ce99be4c8c9e83ae98399f26b8ba082cf297070a31bf1b238800f2a4787465e",
+      "growth.css": "f9d7292ecf9195f26f0a0d64230be59c19aeae2b9ba0218742372fbfd62e3344",
+      "growth.mjs": "3fced9f21f955281a229155f6024046287da502a27e0b6fe353d9fb2c733b3be",
+      "hub.mjs": "9a44f536cbab979e34912de7cdd42a9e4ff082e99d831359a351dad2ea2bb96f",
+      "icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+      "icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+      "icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+      "index.html": "282f6121d0cf111294291a833d19211b76de517a71b65defe4a8236f21543bef",
+      "manifest.webmanifest": "090dd6eb19a38b344800c40ad7b4bad7842e829e788abeaaada459d83d4a7cf0",
+      "narrative.mjs": "6cb679790753edb10c7f8c4dfe0057c2b1fca22e231e6ce615baf647e2d37ac3",
+      "orientation.css": "84b35446663c2b96922ae8a27cb0b5458e9977dd50a65e3df5606842f7b6dbda",
+      "orientation.mjs": "8ac32c0893057a9296007975ae7f436835c2f84ffec6e2f1bcc1918b773d5970",
+      "progress.mjs": "eeafcbfaf60f6e07849b150defdde4c214b83526ebd0ffd838801f19f4a73638",
+      "render.mjs": "c85609aeacae11fa1c2b40bb3b02787afdad7d2d5c291277cc041b0a411851f0",
+      "routes.mjs": "1389638c7856d961d7522b75f73e2455604c93b109d9b9f73c54f8d407b7ef16",
+      "style.css": "b22e4ec22418c143377bee38d34fa870c6917233522b510fd911d7c068cddb64",
+      "sw.js": "8e70092f2bbea2938724fb247b1bf9df066c0489512a890c6653b1f00471b5a9",
+      "systems.mjs": "9a2d00d141d73dd4736776bea42ee969bbf41bf26b101d0d43592debfef14d71",
+      "tactics.mjs": "1936db6c8fe0fab6de989835512eaa0e05ab7121fd63683235f36c53e1bb62a8"
+    },
+    "version_code": 10700,
+    "debuggable": false,
+    "orientation": "sensorLandscape"
+  },
+  "windows": {
+    "platform": "windows-x64",
+    "electron": "45.2.3",
+    "smoke_test": {
+      "landscape": true,
+      "portraitGate": true,
+      "saveResume": true,
+      "sandboxed": true
+    },
+    "code_signed": false,
+    "exe_sha256": "99caf72f2911033f36fd205aea541951f1da5de06e72a7441faf60178ca40a71"
+  },
+  "pages": {
+    "status": "passed",
+    "version": "1.7.0",
+    "commit": "d9efec2da0686e0f596d324f086a945e4f8d97c1",
+    "url": "https://aureliuswu.github.io/Game1/",
+    "verified_assets": [
+      "app.mjs",
+      "audio.mjs",
+      "battle.css",
+      "battlefx.mjs",
+      "combat.mjs",
+      "content.mjs",
+      "core.mjs",
+      "draft.mjs",
+      "endless.mjs",
+      "expedition.mjs",
+      "growth-view.mjs",
+      "growth.css",
+      "growth.mjs",
+      "hub.mjs",
+      "icon-192.png",
+      "icon-512.png",
+      "icon.svg",
+      "index.html",
+      "manifest.webmanifest",
+      "narrative.mjs",
+      "orientation.css",
+      "orientation.mjs",
+      "progress.mjs",
+      "render.mjs",
+      "routes.mjs",
+      "style.css",
+      "sw.js",
+      "systems.mjs",
+      "tactics.mjs"
+    ],
+    "https": true,
+    "module_mime": true,
+    "relative_subpath": true,
+    "browser_verified_version": "1.7.0",
+    "browser_starter_buttons": 4,
+    "browser_orientation": "landscape",
+    "browser_portrait_guard_open": false,
+    "save_origin_note": "Pages, previous preview, APK and desktop have independent storage origins."
+  },
+  "assets": {
+    "Ember-Courier-Android-v1.7.0-provenance.json": {
+      "sha256": "306c422dacfc016520939582a16c16acec1d71647cabfa36627507c12b2a4749",
+      "bytes": 2811
+    },
+    "Ember-Courier-v1.7.0-provenance.json": {
+      "sha256": "477e499811f76cb250914c0de1639a998eded67ab76d409689c4439e1b8a1b52",
+      "bytes": 11502
+    },
+    "Ember-Courier-v1.7.0-Windows-x64.exe": {
+      "sha256": "99caf72f2911033f36fd205aea541951f1da5de06e72a7441faf60178ca40a71",
+      "bytes": 110496190
+    },
+    "Ember-Courier-v1.7.0.apk": {
+      "sha256": "cd3d82472e2815602a99a2612dc1d497ac897325bd168a732a9ee688ae09cdd0",
+      "bytes": 1108410
+    },
+    "Ember-Courier-Web-v1.7.0-provenance.json": {
+      "sha256": "e9e91c3928c23c48f739b7667fbcf3c340b63b19af3c3bf0be1dd61126a4df6a",
+      "bytes": 2629
+    },
+    "Ember-Courier-web-v1.7.0.zip": {
+      "sha256": "3fb9ec52c43e29c7e984dcfb30979934aaa0a5ba4f17182162fc041d0d51fcba",
+      "bytes": 170399
+    },
+    "Ember-Courier-Windows-v1.7.0-provenance.json": {
+      "sha256": "98fef9e216a3f50dc370f2bb6b5e1b0dcd36b1ba17732f2f485236248b8a7cf7",
+      "bytes": 2908
+    },
+    "SHA256SUMS.txt": {
+      "sha256": "39680c92dde4946fa3606d16727c353689aecf2232476e58490c348c34687295",
+      "bytes": 721
+    }
+  },
+  "actions_artifacts": [
+    {
+      "id": 13574780650,
+      "name": "Ember-Courier-release",
+      "size_in_bytes": 111762692,
+      "digest": "sha256:10cb9002f0360dbb86f785b4019def29c9e4931cb1507e9bb7eceaa4ba4a2720",
+      "expires_at": "2026-12-07T12:28:00Z"
+    },
+    {
+      "id": 13574507103,
+      "name": "Android-device-QA",
+      "size_in_bytes": 568653,
+      "digest": "sha256:bd22926438c8a74b42a172cfa8a898d5263524456bcba179ffa424ebfb3e5c74",
+      "expires_at": "2026-11-21T12:27:38Z"
+    },
+    {
+      "id": 13574382370,
+      "name": "github-pages-1",
+      "size_in_bytes": 168069,
+      "digest": "sha256:7279a583e1db39e283bbc71ce00ce67f0ce5abb2b4c068183becf26a34d81f1b",
+      "expires_at": "2026-11-08T12:28:21Z"
+    },
+    {
+      "id": 13574346440,
+      "name": "Windows-package",
+      "size_in_bytes": 110509975,
+      "digest": "sha256:480073ef0c891972de85d9df894b718f1ad25a097c409208d4aa9de8ecd16d01",
+      "expires_at": "2026-11-21T12:26:21Z"
+    },
+    {
+      "id": 13574226972,
+      "name": "canonical-web",
+      "size_in_bytes": 171077,
+      "digest": "sha256:38f1b824b7755c44c0c6c3d7a117d163fe2f25fc9d4ea174c263fe30b6dd473c",
+      "expires_at": "2026-11-21T12:23:10Z"
+    },
+    {
+      "id": 13574186736,
+      "name": "Pages-live-verification",
+      "size_in_bytes": 502,
+      "digest": "sha256:8e8be6031e1639e9e84b23eef8def31f2ad08ddf74f84e320809dbafe331aa1c",
+      "expires_at": "2027-02-05T12:22:59Z"
+    },
+    {
+      "id": 13573978305,
+      "name": "Android-package",
+      "size_in_bytes": 1079186,
+      "digest": "sha256:9faeb96d907cb787c856894d8c4ec577df080c0628b7b17c39d4bff60dbc838a",
+      "expires_at": "2026-11-21T12:27:35Z"
+    },
+    {
+      "id": 13573803115,
+      "name": "Windows-desktop-QA",
+      "size_in_bytes": 283044,
+      "digest": "sha256:95914a8cbb321a0be366625a5549a95d029f03d6846f14ae5a0633952bc68872",
+      "expires_at": "2026-11-21T12:26:26Z"
+    }
+  ]
+}
