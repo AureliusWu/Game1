@@ -5,12 +5,14 @@ const path=require('node:path');
 const os=require('node:os');
 const crypto=require('node:crypto');
 const smoke=process.argv.includes('--smoke-test');
+const {createUpdater}=require('./update.cjs');
 const argument=name=>{const i=process.argv.indexOf(name);return i<0?null:process.argv[i+1];};
 const reportPath=smoke?argument('--smoke-result'):null;
 app.setName('Ember Courier');
 app.setPath('userData',smoke?fs.mkdtempSync(path.join(os.tmpdir(),'ember-courier-qa-')):path.join(app.getPath('appData'),'EmberCourier'));
 protocol.registerSchemesAsPrivileged([{scheme:'ember',privileges:{standard:true,secure:true,supportFetchAPI:true}}]);
 let win,closing=false;
+let updater;
 const root=path.join(__dirname,'game');
 const info=JSON.parse(fs.readFileSync(path.join(__dirname,'build-info.json'),'utf8'));
 const ownURL=value=>{try{const u=new URL(value);return u.protocol==='ember:'&&u.host==='game';}catch{return false;}};
@@ -82,7 +84,10 @@ async function boot(){
  win=new BrowserWindow({width,height,minWidth:Math.min(960,width),minHeight:Math.min(540,height),title:'余烬信使',backgroundColor:'#102d32',autoHideMenuBar:true,show:false,webPreferences:{sandbox:true,contextIsolation:true,nodeIntegration:false,webSecurity:true,devTools:!app.isPackaged}});
  win.setMenu(null);
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
- win.webContents.on('will-navigate',(event,url)=>{if(!ownURL(url))event.preventDefault();});
+ win.webContents.on('will-navigate',(event,url)=>{
+  if(url==='ember-update://check'){event.preventDefault();updater?.check(true);return;}
+  if(!ownURL(url))event.preventDefault();
+ });
  win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&(input.key==='F11'||input.key==='Enter'&&input.alt)){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});
  win.on('blur',()=>{if(!closing&&!smoke)win.webContents.executeJavaScript('window.emberCourierNative?.pause()').catch(()=>{});});
  win.on('close',event=>{
@@ -93,10 +98,14 @@ async function boot(){
  win.once('ready-to-show',()=>win.show());
  await win.loadURL('ember://game/index.html');
  if(smoke){await smokeTest();}
+ else {const timer=setTimeout(()=>updater?.check(false),8000);timer.unref();}
 }
 if(!app.requestSingleInstanceLock()){app.quit();}
 else{
  app.on('second-instance',()=>{if(win&&!win.isDestroyed()){if(win.isMinimized())win.restore();win.focus();}});
- app.whenReady().then(boot).catch(error=>{writeReport({status:'failed',error:String(error)});console.error(error);if(!smoke)dialog.showErrorBox('余烬信使未能启动','游戏文件未能完整载入，请重新下载完整安装包。');app.exit(1);});
+ app.whenReady().then(()=>{
+  updater=createUpdater({app,dialog,getWindow:()=>win,currentVersion:info.version,quit:()=>{closing=true;if(win&&!win.isDestroyed())win.destroy();app.quit();}});
+  return boot();
+ }).catch(error=>{writeReport({status:'failed',error:String(error)});console.error(error);if(!smoke)dialog.showErrorBox('余烬信使未能启动','游戏文件未能完整载入，请重新下载完整安装包。');app.exit(1);});
  app.on('window-all-closed',()=>app.quit());
 }

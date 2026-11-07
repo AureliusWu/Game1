@@ -4,7 +4,7 @@ import {spawnSync} from 'node:child_process';
 const root=path.resolve('dist');
 const files=fs.readdirSync(root);
 for(const name of files.filter(n=>/\.(mjs|js)$/.test(n))){const p=spawnSync(process.execPath,['--check',path.join(root,name)],{encoding:'utf8'});if(p.status!==0)throw new Error(p.stderr);}
-for(const file of ['windows/main.cjs',...fs.readdirSync('scripts').filter(n=>n.endsWith('.mjs')).map(n=>'scripts/'+n)]){const p=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});if(p.status!==0)throw new Error(p.stderr);}
+for(const file of ['windows/main.cjs','windows/update.cjs',...fs.readdirSync('scripts').filter(n=>n.endsWith('.mjs')).map(n=>'scripts/'+n)]){const p=spawnSync(process.execPath,['--check',file],{encoding:'utf8'});if(p.status!==0)throw new Error(p.stderr);}
 const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 if(new Set(ids).size!==ids.length)throw new Error('Duplicate HTML IDs');

@@ -23,6 +23,7 @@
     },
     "files": [
       "main.cjs",
+      "update.cjs",
       "game/**",
       "build-info.json",
       "package.json",
