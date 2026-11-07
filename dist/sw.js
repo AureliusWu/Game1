@@ -1,4 +1,4 @@
-const CACHE='ember-courier-v1.5.0-r1';
+const CACHE='ember-courier-v1.5.1-r1';
 const FILES=['./','./index.html','./style.css','./battle.css','./core.mjs','./routes.mjs','./expedition.mjs','./endless.mjs','./combat.mjs','./draft.mjs','./tactics.mjs','./battlefx.mjs','./content.mjs','./systems.mjs','./progress.mjs','./hub.mjs','./render.mjs','./audio.mjs','./app.mjs','./icon.svg','./icon-192.png','./icon-512.png','./manifest.webmanifest'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES))));
 // New versions wait for every old game tab to close, avoiding mixed runtime modules mid-run.

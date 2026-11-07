@@ -20,3 +20,5 @@
 
 - v1.5 new endless runs opt in through `endless.tactics.version=1`; preserve v1.4 fixture replays without this object. Enemy windups lock their target, resolve once, persist across saves and remain interruptible. Elite/Boss effects never grant unbudgeted extra actors or rewards.
 - `draft.mjs` keeps visible-time countdowns in optional `selection.version=1`. Freeze simulation during drafts; pause the timer on background/manual hold/another modal. Automatic selection must use normal legality and cost checks and may not buy rest. Preserve time across saves; guard clicks by draft identity. Keep the bottom dock small on portrait and landscape with the player above it.
+
+- Native visual QA must wait for a committed WebView frame, avoid system first-fullscreen overlays, and preserve real PNGs after test-target uninstall. Verify footer controls are fully inside the dock. `[qa-only]` commits may change tests/CI only; runtime changes must publish a new version and must not overwrite existing release assets.

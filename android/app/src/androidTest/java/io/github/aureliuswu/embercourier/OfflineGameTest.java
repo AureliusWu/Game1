@@ -190,6 +190,7 @@ public final class OfflineGameTest {
             await("document.getElementById('upgrade-dialog').open", 600);
             js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect();return d.open && !d.matches(':modal') && r.top>innerHeight*.50 && r.height<=innerHeight*.45 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-portrait.png");
             String remaining = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining");
             Thread.sleep(700);
@@ -198,6 +199,7 @@ public final class OfflineGameTest {
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
             await("innerWidth > innerHeight");
             assertEquals("true", js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect();return r.top>innerHeight*.48 && r.height<=innerHeight*.49 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape.png");
             js("document.getElementById('upgrade-exit').click(); document.getElementById('continue').click()");
             assertEquals(remaining, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining"));

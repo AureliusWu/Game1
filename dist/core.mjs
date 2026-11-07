@@ -9,7 +9,7 @@ import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from 
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.5.0';
+export const VERSION = '1.5.1';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
