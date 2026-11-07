@@ -146,6 +146,25 @@ public final class OfflineGameTest {
             await("document.getElementById('joystick').getBoundingClientRect().width > 70 && document.getElementById('run-time').textContent !== '00:00'");
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).v12.mode === 'challenge'"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).rulesVersion === 120"));
+            // Explicitly return this existing task to the foreground after earlier rotation tests.
+            // REORDER_TO_FRONT preserves the current Activity and WebView rather than creating a fixture.
+            boolean focused = false;
+            for (int attempt = 0; attempt < 100; attempt++) {
+                if (attempt % 30 == 0) getInstrumentation().runOnMainSync(() -> {
+                    Intent foreground = new Intent(activity, MainActivity.class);
+                    foreground.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    activity.startActivity(foreground);
+                });
+                AtomicReference<Boolean> hasFocus = new AtomicReference<>(false);
+                getInstrumentation().runOnMainSync(() -> hasFocus.set(activity.hasWindowFocus()));
+                if (hasFocus.get()) { focused = true; break; }
+                Thread.sleep(100);
+            }
+            assertTrue("Touch test activity never received window focus", focused);
+            getInstrumentation().waitForIdleSync();
+            js("if(document.getElementById('pause-dialog').open)window.emberCourierNative.back()");
+            // Measure coordinates only after the real window and portrait viewport are ready.
+            await("innerHeight > innerWidth && !document.getElementById('pause-dialog').open");
             double beforeX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
             JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,innerWidth,devicePixelRatio]})()"));
             final int[] origin = new int[2];
@@ -160,16 +179,6 @@ public final class OfflineGameTest {
                 coords[i].x = origin[0] + (float) points.getDouble(i * 2) * density;
                 coords[i].y = origin[1] + (float) points.getDouble(i * 2 + 1) * density;
             }
-            // Wait until this activity owns the window before Android 15 targeted touch injection.
-            boolean focused = false;
-            for (int attempt = 0; attempt < 100; attempt++) {
-                AtomicReference<Boolean> hasFocus = new AtomicReference<>(false);
-                getInstrumentation().runOnMainSync(() -> hasFocus.set(activity.hasWindowFocus()));
-                if (hasFocus.get()) { focused = true; break; }
-                Thread.sleep(100);
-            }
-            assertTrue("Touch test activity never received window focus", focused);
-            getInstrumentation().waitForIdleSync();
             long start = SystemClock.uptimeMillis();
             touch(start, MotionEvent.ACTION_DOWN, 1, props, coords);
             touch(start, MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT), 2, props, coords);
