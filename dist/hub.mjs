@@ -14,7 +14,7 @@ const button=(text,action,id='',disabled=false,subtle=false)=>`<button class="sm
 export class Hub {
   constructor({getRun,getProfile,commit,persist,onOpen,toast}){
     Object.assign(this,{getRun,getProfile,commit,persist,onOpen,toast});this.tab='inventory';this.encounter=null;this.page=0;this.notice='';
-    for(const b of document.querySelectorAll('[data-hub]'))b.addEventListener('click',()=>this.show(b.dataset.hub));
+    for(const b of document.querySelectorAll('[data-hub]'))b.addEventListener('click',()=>{const launcher=$('menu-systems');if(launcher?.open)launcher.close();this.show(b.dataset.hub);});
     for(const b of document.querySelectorAll('[data-hub-tab]'))b.addEventListener('click',()=>{this.tab=b.dataset.hubTab;this.notice='';this.render();});
     $('hub-panel').addEventListener('click',event=>{const b=event.target.closest('[data-action]');if(b&&!b.disabled)this.action(b.dataset.action,b.dataset.id);});
     $('encounter-body').addEventListener('click',event=>{const b=event.target.closest('[data-encounter]');if(b&&!b.disabled)this.encounterAction(b.dataset.encounter,b.dataset.id);});

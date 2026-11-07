@@ -61,7 +61,7 @@ function syncProgress(final=false){
 function saveSettings(){storage.set(STORE.settings,JSON.stringify(settings));}
 function updateSettings(){
   if(settings.mode==='endless')settings.daily=false;
-  $('story-prep').hidden=settings.mode!=='story';$('endless-prep').hidden=settings.mode!=='endless';
+  $('story-prep').hidden=settings.mode!=='story';$('story-config-open').hidden=settings.mode!=='story';$('endless-prep').hidden=settings.mode!=='endless';
   for(const b of document.querySelectorAll('[data-mode]')){b.classList.toggle('selected',b.dataset.mode===settings.mode);b.setAttribute('aria-pressed',String(b.dataset.mode===settings.mode));}
   for(const b of document.querySelectorAll('[data-starter]')){b.classList.toggle('selected',b.dataset.starter===settings.starter);b.setAttribute('aria-pressed',String(b.dataset.starter===settings.starter));}
   $('start').querySelector('span').innerHTML=settings.mode==='endless'?'开启无尽夜航<small>ONE MORE FLOOR</small>':'启程送信<small>BEGIN YOUR JOURNEY</small>';
@@ -268,6 +268,8 @@ $('build-open').addEventListener('click',showBuild);$('draft-reroll').addEventLi
 $('difficulty-info').addEventListener('click',()=>showDialog('guide'));
 $('contract-select').addEventListener('change',e=>{settings.contract=e.target.value;saveSettings();updateSettings();});$('daily-setting').addEventListener('change',e=>{settings.daily=e.target.checked;saveSettings();updateSettings();});
 $('settings-open').addEventListener('click',()=>showDialog('settings'));
+$('menu-systems-open').addEventListener('click',()=>{refreshOfficeLabels();showDialog('menu-systems');});
+$('story-config-open').addEventListener('click',()=>showDialog('story-config-dialog'));
 $('records-open').addEventListener('click',()=>{updateMenu();showDialog('records');});
 $('start').addEventListener('click',()=>begin());$('continue').addEventListener('click',()=>begin(true));$('restart').addEventListener('click',()=>begin());
 $('build-content').addEventListener('click',e=>{const b=e.target.closest('[data-action="specialize"]');if(!b||b.disabled)return;run.events=[];if(chooseSpecialization(run,b.dataset.id)){processEvents(run.events);checkpoint();updateHUD();showBuild();}});

@@ -27,3 +27,108 @@
 
 @media(min-width:700px){.build-open{top:calc(151px + env(safe-area-inset-top))}}
 @media(max-height:520px) and (orientation:landscape){.build-open{top:calc(120px + env(safe-area-inset-top))}}
+
+
+/* v1.7.1: The landscape menu is one viewport; optional systems live in second-level dialogs. */
+.menu-systems-trigger{min-height:36px;border:1px solid var(--line);border-radius:7px;padding:5px 10px;color:var(--cream);white-space:nowrap}
+.menu-systems-trigger svg{width:16px;height:16px}
+.menu-story-config{display:inline-flex;justify-content:space-between;align-items:center;gap:10px;min-height:38px;margin:0 0 12px;padding:9px 13px;border:1px solid var(--line);border-radius:7px;background:#204243;color:var(--cream);font-size:11px}
+.menu-story-config svg{width:15px;height:15px}
+.menu-systems-modal{width:min(92vw,890px);padding:27px 28px;max-height:90dvh}
+.menu-systems-modal .postoffice-hub{border:0;padding:0 0 20px}
+.menu-systems-modal .office-entry-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.menu-systems-modal .journey-strip{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:13px 0}
+.menu-systems-modal .journey-strip .strip-intro{display:none}
+.story-config-modal{width:min(92vw,660px)}
+.story-config-modal .journey-prep{margin-bottom:13px}
+.story-config-modal .route-options{margin:10px 0}
+.story-config-modal .primary{margin-top:14px}
+@media(max-width:650px){
+ .menu-systems-modal .office-entry-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .menu-systems-modal .journey-strip{grid-template-columns:1fr}
+}
+/* Phone landscape: keep every primary action visible without page scrolling. */
+@media (orientation:landscape) and (max-height:650px) and (max-width:1200px){
+ body[data-screen="menu"]{overflow:hidden}
+ #menu.menu-view{height:100dvh;max-width:none;margin:0;padding:max(2px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(2px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));display:grid;grid-template-rows:auto minmax(0,1fr) auto;overflow:hidden}
+ #menu .site-header{height:40px;min-height:40px;gap:9px}
+ #menu .site-header nav{gap:6px}
+ #menu .brand{gap:7px}
+ #menu .brand img{width:25px;height:25px}
+ #menu .brand>span{font-size:12px;letter-spacing:1px}
+ #menu .brand small{font-size:6px;letter-spacing:.7px;margin-top:1px}
+ #menu .site-header .text-button{width:auto;min-width:0;min-height:30px}
+ #menu .site-header .menu-systems-trigger{padding:4px 8px;gap:5px;font-size:10px}
+ #menu .site-header .menu-systems-trigger span{display:inline}
+ #menu .site-header .icon-button{width:30px;height:30px}
+ #menu .site-header .icon-button svg{width:15px;height:15px}
+ #menu .hero{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,.8fr);align-items:center;gap:clamp(10px,3vw,28px);min-height:0;overflow:hidden;padding:5px 0}
+ #menu .hero-copy{width:100%;min-width:0;max-height:100%;padding:0;display:flex;flex-direction:column;justify-content:center}
+ #menu .hero .eyebrow,#menu .hero .lead,#menu .game-tags,#menu .difficulty-desc{display:none}
+ #menu .hero-copy h1{font-size:clamp(27px,4.6vw,40px);margin:0;line-height:1.04;letter-spacing:3px}
+ #menu .hero-copy h1 span{display:inline;padding:0}
+ #menu .hero-copy h1 i{margin-left:0}
+ #menu .english-title{font-size:7px;letter-spacing:3px;margin:2px 0 0}
+ #menu .mode-select{margin:7px 0 5px;gap:6px}
+ #menu .mode-select button{min-width:0;padding:6px 8px;font-size:11px;line-height:1.15}
+ #menu .mode-select button small{display:none}
+ #menu .starter-label{font-size:10px;line-height:1.2;margin:3px 0 4px}
+ #menu .starter-label span{display:none}
+ #menu .starter-options{gap:5px}
+ #menu .starter-options button{min-height:42px;padding:4px 3px;gap:2px}
+ #menu .starter-options button svg{width:16px;height:16px}
+ #menu .starter-options button strong{font-size:10px}
+ #menu .starter-options button small,#menu .prep-note{display:none}
+ #menu .difficulty{gap:7px;margin:6px 0}
+ #menu .difficulty>span{font-size:9px}
+ #menu .difficulty>div{padding:2px;gap:1px}
+ #menu .difficulty [data-difficulty]{min-width:44px;padding:5px 6px;font-size:10px}
+ #menu .difficulty-info{width:20px;height:20px}
+ #menu .menu-story-config{min-height:29px;margin:3px 0;padding:5px 10px;font-size:10px}
+ #menu .start-button{width:100%;min-height:40px;padding:5px 12px;font-size:15px;margin-top:4px}
+ #menu .start-button small{font-size:7px;letter-spacing:1px;margin-top:1px}
+ #menu .start-button svg{width:19px;height:19px}
+ #menu .continue-button{min-height:25px;align-self:flex-start;justify-content:flex-start;padding:4px 0 0;gap:7px;font-size:11px}
+ #menu .continue-button span{font-size:9px}
+ #menu .hero-art{align-self:center;width:100%;min-width:0;min-height:0;margin:0;padding:0}
+ #menu .hero-art>canvas{width:100%;max-height:calc(100dvh - 105px);aspect-ratio:1.06;border-radius:9px;box-shadow:none}
+ #menu .art-top,#menu .art-caption,#menu .art-note{display:none}
+ #menu .menu-footer{min-height:25px;padding:1px 0;gap:8px;border-top:1px solid var(--line);letter-spacing:0}
+ #menu .menu-footer button{min-height:24px;gap:6px;font-size:9px}
+ #menu .menu-footer button span{font-size:8px}
+ #menu .footer-tip{display:none}
+ .menu-systems-modal,.story-config-modal{max-height:calc(100dvh - 12px);padding:14px 18px}
+ .menu-systems-modal .postoffice-hub{padding:0 0 11px}
+ .menu-systems-modal .office-entry-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+ .menu-systems-modal .office-entry-grid>button{min-height:48px;padding:8px;gap:7px}
+ .menu-systems-modal .office-entry-grid>button>span{font-size:11px;letter-spacing:0}
+ .menu-systems-modal .office-entry-grid small{font-size:7px;margin-top:3px}
+ .menu-systems-modal .journey-strip{padding:8px 0}
+ .menu-systems-modal .hub-section-heading{margin:0 35px 9px 0}
+ .story-config-modal h2{font-size:21px;margin-bottom:8px}
+ .story-config-modal .eyebrow{display:none}
+ .story-config-modal .journey-prep{gap:8px}
+}
+@media (orientation:landscape) and (max-height:385px) and (max-width:900px){
+ #menu .site-header{height:34px;min-height:34px}
+ #menu .hero{padding:1px 0}
+ #menu .hero-copy h1{font-size:26px}
+ #menu .english-title{display:none}
+ #menu .mode-select{margin:4px 0}
+ #menu .mode-select button{padding:5px 7px}
+ #menu .starter-label{margin:1px 0 3px}
+ #menu .starter-options button{min-height:35px;padding:2px;gap:0}
+ #menu .starter-options button svg{width:14px;height:14px}
+ #menu .difficulty{margin:4px 0}
+ #menu .difficulty [data-difficulty]{padding:4px 5px}
+ #menu .start-button{min-height:36px;margin-top:2px;padding:4px 10px}
+ #menu .continue-button{min-height:21px;padding-top:2px}
+ #menu .menu-footer{min-height:22px}
+}
+@media (orientation:landscape) and (max-height:350px) and (max-width:720px){
+ #menu .hero{grid-template-columns:1fr}
+ #menu .hero-art{display:none}
+ #menu .hero-copy{max-width:600px;margin:auto}
+ #menu .hero-copy h1{font-size:24px}
+ #menu .starter-label{display:none}
+}
