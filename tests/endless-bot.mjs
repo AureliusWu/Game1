@@ -1,13 +1,15 @@
 /** A player-action policy. Never edits health, actors, XP, positions or room completion. */
-import {createGame,tick,dash,pulse,chooseUpgrade,usePotion,collides,serialize,restore} from '../dist/core.mjs';
+import {createGame,tick,dash,pulse,chooseUpgrade,chooseSpecialization,usePotion,collides,serialize,restore} from '../dist/core.mjs';
 import {rankOf,SKILL_BY_ID,choiceInfo,retireEndless} from '../dist/endless.mjs';
 import {findPath,clearLine} from '../dist/routes.mjs';
+import {specializationPoints} from '../dist/growth.mjs';
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-export function playEndless({seed=1,starter='cinder',difficulty='normal',floors=10,maxTime=1500,resume=false,route='hunt',idle=false,observe=()=>{}}={}){
- let s=createGame({seed,mode:'endless',starter,difficulty,id:`endless-${seed}-${starter}-${difficulty}`});
+export function playEndless({seed=1,starter='cinder',difficulty='normal',floors=10,maxTime=1500,resume=false,route='hunt',idle=false,profile={},discipline='',observe=()=>{}}={}){
+ let s=createGame({seed,mode:'endless',starter,difficulty,profile,id:`endless-${seed}-${starter}-${difficulty}`});
  let resumed=false,frames=0,choices=0,maxEnemies=0,maxProjectiles=0,maxEffects=0;const milestones=[];let lastFloor=1;
  const partner=SKILL_BY_ID[starter].partner;
  while(['playing','upgrade'].includes(s.phase)&&s.totalTime<maxTime){
+  if(discipline&&specializationPoints(s)>0)chooseSpecialization(s,discipline);
   if(s.phase==='upgrade'){
    if(s.endless.choice==='route'){
     milestones.push({floor:s.endless.floor,time:s.totalTime,hp:s.player.hp,level:s.journal.level,damage:s.damageTaken,kills:s.kills});

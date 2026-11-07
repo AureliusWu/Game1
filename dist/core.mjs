@@ -8,8 +8,10 @@ import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCom
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
+import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
+import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.5.1';
+export const VERSION = '1.6.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -50,8 +52,11 @@ export function createGame({ seed = Date.now(), difficulty = 'normal',profile={}
   if(s.v12.mode==='challenge'){profile={collection:['brass-lamp'],heirloom:'brass-lamp'};s.difficulty='normal';}
   initSystems(s,profile,{contract,daily,id});s.player.hp=s.player.maxHp;s.v12.minHp=s.player.hp;
   if(mode==='endless'&&!daily){initEndless(s,starter);recalculate(s);s.player.hp=s.player.maxHp;}
+  if(s.v12.mode!=='challenge'){initGrowth(s,profile);if(!isEndless(s))initNarrative(s);recalculate(s);s.player.hp=s.player.maxHp;s.v12.minHp=s.player.hp;}
   loadChapter(s); return s;
 }
+export function chooseSpecialization(s,id){if(!specialize(s,id))return false;recalculate(s);return true;}
+export function chooseContinuation(s,poi,id){if(!chooseFollowup(s,poi,id))return false;recalculate(s);return true;}
 function loadChapter(s) {
   s.chapterTime = 0; s.spawnCd = s.chapter===0?5:3; s.bossSpawned = false; s.bossDefeated = false;
   s.player.x = 220; s.player.y = 690; s.player.invincible = 2;
@@ -108,7 +113,7 @@ export function dash(s) {
   const p=s.player;
   if(s.phase!=='playing'||p.dashCd>0) return false;
   p.dash=.2; p.dashCd=p.dashMax; p.invincible=Math.max(p.invincible,.42);
-  beginCombatDash(s);
+  beginCombatDash(s);growthDash(s);
   if(modern(s)&&has(s,'express'))s.v12.dashChargeUntil=s.totalTime+2;
   s.metrics.dashes++;event(s,'dash'); return true;
 }
@@ -136,6 +141,7 @@ export function pulse(s) {
     if(['hearth-lamp','sentry-cape','herb-bag'].every(id=>Object.values(s.gear.slots).includes(id))){s.v12.barrier=1;s.v12.barrierSource='warden';s.v12.barrierUntil=s.totalTime+3;}
   }
   if(isCombat(s))s.projectiles=s.projectiles.filter(b=>!b.enemy||distance(p,b)>p.pulseRadius+b.r);
+  growthPulse(s,hits);
   if(isEndless(s))onEndlessPulse(s,hits);s.metrics.pulses++;event(s,'pulse'); return true;
 }
 function spawnEnemy(s,kind) {
@@ -255,10 +261,10 @@ export function tick(s,input={},dt=1/60) {
       for(const e of targets) {
         const d=Math.max(1,distance(p,e));
         const critical=p.crit>0&&random(s)<p.crit;
-        const bonus=modern(s)?(has(s,'focus')&&eligible.length===1?1.25:1)*(s.v12.dashChargeUntil>s.totalTime?1.25:1):1;
+        const bonus=(modern(s)?(has(s,'focus')&&eligible.length===1?1.25:1)*(s.v12.dashChargeUntil>s.totalTime?1.25:1):1)*growthBoltBonus(s);
         s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?(isEndless(s)?2.1:1.75):1)*bonus*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1),r:critical?7:5,critical});
       }
-      if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate/(overdriving(s)?1.65:1);event(s,'shoot',{x:p.x,y:p.y,weapon:s.endless?.starter});
+      consumeGrowthBolt(s);if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate/(overdriving(s)?1.65:1);event(s,'shoot',{x:p.x,y:p.y,weapon:s.endless?.starter});
     }
   }
   if(!isEndless(s)&&!s.exit.open && !(s.chapter===2&&allLit)) {
@@ -377,6 +383,7 @@ export function restore(raw) {
     else if(!validateSystems(s))return null;
     s.version=SAVE_VERSION;
     if(![111,120].includes(s.rulesVersion)||modern(s)&&!validateExpedition(s))return null;
+    if(!validateGrowth(s)||!validateNarrative(s))return null;
     if(['damage','armor','crit','potionHeal'].some(k=>!Number.isFinite(p[k])))return null;
     s.events=[];s.effects=[];s.player.invincible=Math.max(2,s.player.invincible);return s;
   } catch {return null;}

@@ -1,3 +1,4 @@
+import {followupAvailable} from './narrative.mjs';
 import {drawWeapons,drawProjectile,drawBattleEffect,drawEnemyIntent,drawFirePool} from './battlefx.mjs';
 import {isTactical,AFFIXES} from './tactics.mjs';
 import { WORLD, CHAPTERS, distance, clamp } from './core.mjs';
@@ -48,9 +49,9 @@ function drawResident(c,index,x,y,t=0,scale=1){
 export function drawResidentPortrait(canvas,index){
   const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#294d43';c.fillRect(0,0,canvas.width,canvas.height);glow(c,72,70,73,'#d1bb7c33');drawResident(c,index,72,88,0,1.55);
 }
-function drawPOI(c,p,t){
+function drawPOI(c,p,t,s){
   c.save();if(p.used&&p.kind!=='npc')c.globalAlpha=.5;
-  if(!p.used)glow(c,p.x,p.y,55,p.kind==='event'?'#b5a7d422':'#c6ca9622');
+  if(!p.used||followupAvailable(s,p))glow(c,p.x,p.y,55,p.kind==='event'?'#b5a7d422':'#c6ca9622');
   if(p.kind==='npc')drawResident(c,p.npc,p.x,p.y,t,.95);
   if(p.kind==='chest'){
     c.translate(p.x,p.y);c.fillStyle='#0d282b88';c.beginPath();c.ellipse(0,15,32,12,0,0,TAU);c.fill();round(c,-25,-12,50,31,5,'#8b7651','#c1b27d');
@@ -69,7 +70,7 @@ function drawPOI(c,p,t){
     else{round(c,-16,-39,32,42,6,'#789a87','#c3bf8c');round(c,-20,-43,40,9,4,'#a9b58c');round(c,-10,-31,20,5,2,'#233f42');line(c,[[0,3],[0,24]],'#668571',8);}
   }
   c.restore();c.save();c.textAlign='center';c.font='10px sans-serif';
-  const label=p.kind==='npc'?NPCS[p.npc].name+(p.used?' · 已托付':''):p.kind==='shop'?'夜路杂货铺':p.kind==='chest'?(p.used?'空的失物箱':'失物箱'):p.kind==='risk'?(p.used?'侧巷 · 已进入':'风险支路 · 精英与行装'):EVENTS[p.event].name;
+  const label=p.kind==='npc'?NPCS[p.npc].name+(followupAvailable(s,p)?' · 后续来信':p.used?' · 已托付':''):p.kind==='shop'?'夜路杂货铺':p.kind==='chest'?(p.used?'空的失物箱':'失物箱'):p.kind==='risk'?(p.used?'侧巷 · 已进入':'风险支路 · 精英与行装'):EVENTS[p.event].name;
   c.fillStyle=p.used?'#89a18c':'#c4d0ac';c.fillText(label,p.x,p.y+46);c.restore();
 }
 export function drawBeacon(c,b,t=0,clock=t){
@@ -210,7 +211,7 @@ export class Renderer{
     for(const e of s.embers){const bob=Math.sin(t*3+e.wobble)*3;glow(c,e.x,e.y+bob,20,'#eac67a44');
       c.save();c.translate(e.x,e.y+bob);c.rotate(Math.PI/4);round(c,-4,-4,8,8,2,'#ffdc92');c.restore();circle(c,e.x-1,e.y+bob-2,1.5,'#fff1c6');}
     const actors=s.obstacles.map(o=>({y:o.y+o.h,draw:()=>drawBuilding(c,o,s.chapter)}));
-    for(const poi of s.pois||[])actors.push({y:poi.y,draw:()=>drawPOI(c,poi,t)});
+    for(const poi of s.pois||[])actors.push({y:poi.y,draw:()=>drawPOI(c,poi,t,s)});
     for(const b of s.beacons)actors.push({y:b.y,draw:()=>drawBeacon(c,b,t,s.totalTime)});
     for(const e of s.enemies)actors.push({y:e.y,draw:()=>drawEnemy(c,e,t,this.lowMotion?0:this.flashes?.get(e.id)||0)});
     actors.push({y:p.y,draw:()=>{
@@ -270,7 +271,7 @@ export class Renderer{
     if(!this.mini)return;const c=this.mini.getContext('2d'),w=this.mini.width,h=this.mini.height;c.clearRect(0,0,w,h);c.fillStyle='#0c242b';c.fillRect(0,0,w,h);const sx=w/WORLD.width,sy=h/WORLD.height;
     for(const o of s.obstacles){c.fillStyle='#43605b';c.fillRect(o.x*sx,o.y*sy,o.w*sx,o.h*sy);}
     for(const b of s.beacons)circle(c,b.x*sx,b.y*sy,b.lit?4:3,b.lit?gold:'#78928a');
-    for(const poi of s.pois||[])if(!poi.used||poi.kind==='shop')circle(c,poi.x*sx,poi.y*sy,2.2,poi.kind==='event'?'#b4a5c9':poi.kind==='chest'?'#d5bb83':'#a3c8ba');
+    for(const poi of s.pois||[])if(!poi.used||poi.kind==='shop'||followupAvailable(s,poi))circle(c,poi.x*sx,poi.y*sy,2.2,poi.kind==='event'?'#b4a5c9':poi.kind==='chest'?'#d5bb83':'#a3c8ba');
     if(s.exit.open)circle(c,s.exit.x*sx,s.exit.y*sy,4,'#f8e5ad');
     const boss=s.enemies.find(e=>e.kind==='boss');if(boss)circle(c,boss.x*sx,boss.y*sy,4,'#d098b6');
     circle(c,s.player.x*sx,s.player.y*sy,3,'#fff4d5');

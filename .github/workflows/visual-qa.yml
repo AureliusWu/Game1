@@ -79,6 +79,8 @@ jobs:
           mkdir -p artifacts/qa
           adb pull /sdcard/Download/ember-draft-portrait.png artifacts/qa/draft-portrait.png
           adb pull /sdcard/Download/ember-draft-landscape.png artifacts/qa/draft-landscape.png
+          adb pull /sdcard/Download/ember-star-portrait.png artifacts/qa/star-portrait.png
+          adb pull /sdcard/Download/ember-star-landscape.png artifacts/qa/star-landscape.png
           python3 scripts/check_draft_screenshots.py artifacts/qa
       - uses: actions/upload-artifact@v4
         with:

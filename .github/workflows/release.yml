@@ -93,6 +93,8 @@ jobs:
           mkdir -p artifacts/qa
           adb pull /sdcard/Download/ember-draft-portrait.png artifacts/qa/draft-portrait.png
           adb pull /sdcard/Download/ember-draft-landscape.png artifacts/qa/draft-landscape.png
+          adb pull /sdcard/Download/ember-star-portrait.png artifacts/qa/star-portrait.png
+          adb pull /sdcard/Download/ember-star-landscape.png artifacts/qa/star-landscape.png
           python3 scripts/check_draft_screenshots.py artifacts/qa
       - name: Verify signature and identical packaged assets
         run: python3 scripts/package_release.py android/app/build/outputs/apk/release/app-release.apk

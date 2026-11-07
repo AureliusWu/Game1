@@ -47,7 +47,7 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        assertTrue("Unexpected screenshot name", name.matches("draft-(portrait|landscape)\\.png"));
+        assertTrue("Unexpected screenshot name", name.matches("(draft|star)-(portrait|landscape)\\.png"));
         CountDownLatch rendered = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> {
             WebView web = activity.findViewById(R.id.game_webview);
@@ -71,6 +71,45 @@ public final class OfflineGameTest {
             while (in.read(buffer) != -1) { /* Wait for the real screen capture to finish. */ }
         }
     }
+    @Test public void testStarChartPurchaseRefundAndRotation() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        String original = null;
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            original = js("localStorage.getItem('ember-courier.profile.v1')");
+            // Seeded UI fixture only; action-only Node journeys verify the earned economy separately.
+            String pageStart = js("performance.timeOrigin");
+            js("localStorage.setItem('ember-courier.profile.v1',JSON.stringify({version:1,stamps:20,earned:20,spent:0,growth:{version:1,tree:{},claims:[],arcs:[]}})); location.reload()");
+            await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
+            js("document.querySelector('[data-hub=tree]').click()");
+            await("document.querySelectorAll('.star-node').length===15");
+            js("document.querySelector('[data-action=tree][data-id=light-step]').click()");
+            assertEquals("18", js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertEquals("true", js("!document.querySelector('[data-action=tree][data-id=wide-bag]').disabled"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            await("innerHeight > innerWidth");
+            assertEquals("true", js("(()=>{const r=document.querySelector('.star-paths').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1})()"));
+            capture("star-portrait.png");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight");
+            assertEquals("true", js("document.documentElement.scrollWidth<=innerWidth+1 && document.querySelectorAll('.star-path').length===3"));
+            capture("star-landscape.png");
+            js("document.querySelector('[data-action=reset-tree]').click()");
+            assertEquals("20", js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertEquals("true", js("document.querySelector('[data-action=reset-tree]').disabled"));
+            assertEquals("true", js("window.emberCourierNative.back();!document.getElementById('hub-dialog').open"));
+        } finally {
+            if (original != null) {
+                String pageStart = js("performance.timeOrigin");
+                js("localStorage.setItem('ember-courier.profile.v1'," + original + ");location.reload()");
+                await("performance.timeOrigin > " + pageStart + " && typeof window.emberCourierNative === 'object'");
+            }
+            getInstrumentation().runOnMainSync(() -> activity.finish());
+        }
+    }
+
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -222,6 +261,12 @@ public final class OfflineGameTest {
             // The real auto-attacks and enemies produce this draft. No simulation state is edited.
             await("document.getElementById('upgrade-dialog').open", 600);
             assertEquals("true", js("document.querySelectorAll('#upgrade-options button').length === 3"));
+            // The same real earned draft exercises the new banish modal and its saved charge.
+            assertEquals("false", js("document.getElementById('draft-banish').disabled"));
+            js("document.getElementById('draft-banish').click()");
+            assertEquals("true", js("document.getElementById('banish-dialog').open && document.querySelectorAll('#banish-panel button').length>0"));
+            js("document.querySelector('#banish-panel button').click()");
+            assertEquals("true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return !document.getElementById('banish-dialog').open&&s.growth.banishes===1&&s.growth.banished.length===1&&!s.offered.includes(s.growth.banished[0])})()"));
             String before = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls");
             js("document.getElementById('draft-reroll').click()");
             assertTrue(Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls")) < Integer.parseInt(before));
@@ -233,7 +278,10 @@ public final class OfflineGameTest {
             assertEquals("true", js("document.getElementById('upgrade-dialog').open"));
             assertEquals(offered, js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered)"));
             assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
-            js("document.querySelector('#upgrade-options button').click()");
+            assertEquals("1", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).growth.banishes"));
+            js("document.getElementById('build-open').click()");
+            assertEquals("true", js("document.getElementById('build-dialog').open && document.querySelectorAll('#build-content [data-action=specialize]').length===3"));
+            js("window.emberCourierNative.back();document.querySelector('#upgrade-options button').click()");
             await("!document.getElementById('upgrade-dialog').open || document.querySelectorAll('#upgrade-options button').length > 0");
             assertEquals("true", js("document.documentElement.scrollWidth <= innerWidth + 1"));
             js("window.emberCourierNative.pause()");

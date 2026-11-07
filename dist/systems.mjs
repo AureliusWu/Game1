@@ -3,6 +3,8 @@ import {GEAR,GEAR_BY_ID,NPCS,EVENTS,CONTRACTS,TALENTS} from './content.mjs';
 import {modern,has,condition,randomStream,heal} from './expedition.mjs';
 import {safePoint} from './routes.mjs';
 import {isEndless,applyEndlessStats,gainEndlessXP} from './endless.mjs';
+import {applyGrowthStats,growthXP} from './growth.mjs';
+import {applyNarrativeStats,followupAvailable} from './narrative.mjs';
 const emit=(s,type,data={})=>s.events.push({type,...data});
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const cap=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -46,14 +48,14 @@ export function recalculate(s){
     const mult=1+(item.level-1)*(modern(s)?.25:.4);for(const [key,value]of Object.entries(def.stats))st[key]+=value*mult;
   }
   if(s.gear){const sets=equippedSets(s);if(sets.courier>=2)st.speed+=12;if(sets.warden>=2)st.armor+=.08;if(sets.warden===3&&!modern(s)){st.maxHp+=20;st.heal+=3;}if(sets.dawn>=2)st.crit+=.12;if(sets.dawn===3&&!modern(s))st.pulseMax-=1.2;}
-  applyEndlessStats(s,st);
+  applyNarrativeStats(s,st);applyGrowthStats(s,st);applyEndlessStats(s,st);
   st.dashMax=Math.max(1.05,st.dashMax);st.pulseMax=Math.max(2.2,st.pulseMax);st.attackRate=Math.max(s.endless?.combat?.version===1?.22:.5,st.attackRate);st.armor=cap(st.armor,0,.5);st.crit=cap(st.crit,0,.65);
   Object.assign(p,st);p.hp=Math.min(hp,st.maxHp);p.dashCd=Math.min(p.dashCd,p.dashMax);p.pulseCd=Math.min(p.pulseCd,p.pulseMax);
 }
 export function addCoins(s,amount){if(amount<=0)return;s.journal.coins+=amount;s.metrics.coinsEarned+=amount;}
 export function addXP(s,amount){
   if(isEndless(s)){gainEndlessXP(s,amount);return;}
-  s.journal.xp+=amount;let level=1;while(level<XP_THRESHOLDS.length&&s.journal.xp>=XP_THRESHOLDS[level])level++;
+  s.journal.xp+=amount*growthXP(s);let level=1;while(level<XP_THRESHOLDS.length&&s.journal.xp>=XP_THRESHOLDS[level])level++;
   if(level>s.journal.level){const delta=level-s.journal.level;s.journal.level=level;recalculate(s);heal(s,12*delta);emit(s,'level',{level});}
 }
 function rollGear(s){const pool=GEAR.filter(g=>g.tier>0&&(s.chapter>0||g.tier===1));const fresh=pool.filter(g=>!s.gear.inventory.some(item=>item.id===g.id));const pick=fresh.length?fresh:pool;return pick[Math.floor(roll(s)*pick.length)].id;}
@@ -103,11 +105,12 @@ export function setupDistrict(s){
 }
 export function nearestPOI(s){
   if(!s?.pois||s.phase!=='playing')return null;
-  return s.pois.filter(p=>(!p.used||p.kind==='shop')&&dist(s.player,p)<112).sort((a,b)=>dist(s.player,a)-dist(s.player,b))[0]||null;
+  return s.pois.filter(p=>(!p.used||p.kind==='shop'||followupAvailable(s,p))&&dist(s.player,p)<112).sort((a,b)=>dist(s.player,a)-dist(s.player,b))[0]||null;
 }
 export function poiLabel(p){if(!p)return '';return p.kind==='risk'?'进入风险支路':p.kind==='npc'?`与${NPCS[p.npc].name}交谈`:p.kind==='chest'?'打开失物箱':p.kind==='shop'?'流动商店':EVENTS[p.event].name;}
 export function openPOI(s,id){
-  const p=s.pois.find(p=>p.id===id);if(s.phase!=='playing'||!p||dist(s.player,p)>112||(p.used&&p.kind!=='shop'))return null;
+  const p=s.pois.find(p=>p.id===id);if(s.phase!=='playing'||!p||dist(s.player,p)>112||(p.used&&p.kind!=='shop'&&!followupAvailable(s,p)))return null;
+  if(followupAvailable(s,p))return {kind:'continuation',id:p.id,npc:p.npc};
   if(p.kind==='chest'){p.used=true;s.metrics.chests++;addCoins(s,10);addXP(s,8);const gear=rollGear(s);grantGear(s,gear);emit(s,'chest',{id,gear});return {kind:'chest',gear};}
   if(p.kind==='risk'){
     const spawn=safePoint(s,{x:p.x,y:p.y+110},30);if(!spawn)return null;p.used=true;s.v12.riskVisits++;

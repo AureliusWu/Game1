@@ -4,8 +4,8 @@ import struct
 import sys
 
 root = Path(sys.argv[1])
-for orientation in ('portrait', 'landscape'):
-    path = root / f'draft-{orientation}.png'
+for name, orientation in [(n, o) for n in ('draft', 'star') for o in ('portrait', 'landscape')]:
+    path = root / f'{name}-{orientation}.png'
     data = path.read_bytes()
     if len(data) < 1000 or data[:8] != b'\x89PNG\r\n\x1a\n' or data[12:16] != b'IHDR':
         raise SystemExit(f'Not an actual PNG screenshot: {path}')

@@ -2,6 +2,7 @@
 import {seedMix,safePoint} from './routes.mjs';
 import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
 import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
+import {growthOn,growthPower,growthXP} from './growth.mjs';
 const TAU=Math.PI*2;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const emit=(s,type,data={})=>s.events.push({type,...data});
@@ -68,7 +69,7 @@ export function applyEndlessStats(s,st){
  combatStats(s,st);
 }
 export function gainEndlessXP(s,amount){
- if(!(amount>0))return;const j=s.journal,r=s.endless;j.xp+=amount;
+ if(!(amount>0))return;const j=s.journal,r=s.endless;j.xp+=amount*growthXP(s);
  while(j.xp>=xpThreshold(j.level+1)&&j.level<100000){j.level++;r.pending++;emit(s,'level',{level:j.level});}
 }
 export function configureEndlessRoom(s){
@@ -100,7 +101,7 @@ function hit(s,e,amount,slow=0){
  if(slow)e.slowUntil=Math.max(e.slowUntil||0,s.totalTime+slow);
  e.stun=Math.max(e.stun,.07);emit(s,'damage-number',{x:e.x,y:e.y,damage:Math.round(amount)});
 }
-function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1);}
+function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1)*growthPower(s);}
 function area(s,point,radius,damage,type='blast',slow=0){
  for(const e of s.enemies)if(e.hp>0&&dist(e,point)<radius+e.r)hit(s,e,damage,slow);
  s.effects.push({type,x:point.x,y:point.y,r:radius,life:.45,maxLife:.45});
@@ -173,7 +174,7 @@ export function onEndlessKill(s,e){
 function shuffle(s,items){for(let i=items.length-1;i>0;i--){const j=Math.floor(endlessRandom(s)*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;}
 function draftSkills(s){
  const r=s.endless,owned=Object.keys(r.ranks),weapons=owned.filter(id=>SKILL_BY_ID[id].kind==='weapon').length,passives=owned.length-weapons;
- const pool=SKILLS.filter(u=>rankOf(s,u.id)<5&&(rankOf(s,u.id)|| (u.kind==='weapon'?weapons<3:passives<4)));
+ const pool=SKILLS.filter(u=>!s.growth?.banished.includes(u.id)&&rankOf(s,u.id)<5&&(rankOf(s,u.id)|| (u.kind==='weapon'?weapons<3:passives<4)));
  const shuffled=shuffle(s,[...pool]),picks=[];
  // One owned upgrade always appears; a nearly mature weapon can find its partner.
  const own=shuffled.find(u=>rankOf(s,u.id)>0);if(own)picks.push(own.id);
@@ -235,6 +236,10 @@ export function pickEndless(s,id){
 }
 export function checkEvolutions(s){for(const u of SKILLS.filter(u=>u.kind==='weapon'))if(evolved(s,u.id)&&!s.endless.evolutions.includes(u.id)){s.endless.evolutions.push(u.id);emit(s,'evolution',{id:u.id,name:u.evolution});}}
 export function rerollEndless(s){const r=s.endless;if(!r||s.phase!=='upgrade'||r.choice==='route'||r.rerolls<=0)return false;r.rerolls--;r.rerollsUsed++;delete s.selection;s.offered=r.choice==='skill'?draftSkills(s):shuffle(s,RELICS.filter(u=>!r.relics.includes(u.id))).slice(0,3).map(u=>u.id);if(!s.offered.length)s.offered=['ash','mend','supplies'];return true;}
+export function banishEndless(s,id){
+ const g=s.growth,r=s.endless;if(!growthOn(s)||!r||s.phase!=='upgrade'||r.choice!=='skill'||g.banishes<=0||!s.offered.includes(id)||!Object.hasOwn(SKILL_BY_ID,id)||rankOf(s,id)>0)return false;
+ g.banishes--;g.banished.push(id);delete s.selection;s.offered=draftSkills(s);emit(s,'banish',{id});return true;
+}
 export function retireEndless(s){if(!isEndless(s)||s.phase!=='upgrade'||s.endless.choice!=='route')return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
 export function reviveEndless(s){const r=s.endless;if(s.player.hp>0||!hasRelic(s,'dawn')||r.revived)return false;r.revived=true;s.player.hp=s.player.maxHp*.5;s.player.invincible=3;s.projectiles=s.projectiles.filter(p=>!p.enemy);area(s,s.player,300,80*power(s),'blast');emit(s,'revive');return true;}
 /** Three boss patterns: clock beam, charging courier, and radial rain. Telegraphs lock before damage. */

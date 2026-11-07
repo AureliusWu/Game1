@@ -2,6 +2,7 @@
 import {ACHIEVEMENTS,GEAR_BY_ID,GEAR,TALENTS,TALENT_COST,NPCS,ENDINGS,BESTIARY,CONTRACTS} from './content.mjs';
 import {isEndless} from './endless.mjs';
 import {equippedSets} from './systems.mjs';
+import {emptyGrowth,readGrowth} from './growth.mjs';
 const numeric=['kills','collected','beacons','deliveries','chests','purchases','forges','events','coinsEarned','runs','wins','contracts','endlessBosses'];
 const finite=n=>Number.isFinite(n)&&n>=0?n:0;
 const known=(values,allowed)=>[...new Set(Array.isArray(values)?values.filter(v=>allowed.includes(v)):[])];
@@ -9,12 +10,12 @@ const newFlags=['courier-route','warden-block','dawn-echo','mixed-route','side-r
 export function challengeKey(s){return `1.2.0:${s.daily||s.seed}:${[...(s.v12?.conditions||[])].sort().join('+')||'plain'}`;}
 export function createProfile(legacy={}){
   const totals=Object.fromEntries(numeric.map(k=>[k,0]));for(const k of ['beacons','runs','wins'])totals[k]=finite(legacy[k]);
-  return {version:1,endless:{bestFloor:0,bestScore:0,runs:0,bosses:0},stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false,...Object.fromEntries(newFlags.map(id=>[id,false]))},bestCombo:0,bestLevel:1,ledger:{},dailies:[],challengeClaims:[],challengeBests:{},lastRewards:null};
+  return {version:1,growth:emptyGrowth(),endless:{bestFloor:0,bestScore:0,runs:0,bosses:0},stamps:0,earned:0,spent:0,talents:Object.fromEntries(TALENTS.map(t=>[t.id,0])),achievements:[],collection:['paper-lamp','worn-cape','canvas-bag'],letters:[],endings:[],bestiary:[],choices:[],heirloom:'',totals,flags:{fullSet:false,night:false,flawless:false,swift:false,...Object.fromEntries(newFlags.map(id=>[id,false]))},bestCombo:0,bestLevel:1,ledger:{},dailies:[],challengeClaims:[],challengeBests:{},lastRewards:null};
 }
 export function readProfile(raw,legacy={}){
   try{
     const data=typeof raw==='string'?JSON.parse(raw):raw;if(!data||data.version!==1)return createProfile(legacy);
-    const p=createProfile();for(const k of Object.keys(p.endless))p.endless[k]=finite(data.endless?.[k]);for(const k of ['stamps','earned','spent','bestCombo','bestLevel'])p[k]=finite(data[k]);
+    const p=createProfile();p.growth=readGrowth(data.growth);for(const k of Object.keys(p.endless))p.endless[k]=finite(data.endless?.[k]);for(const k of ['stamps','earned','spent','bestCombo','bestLevel'])p[k]=finite(data[k]);
     p.stamps=Math.floor(p.stamps);p.earned=Math.floor(p.earned);p.spent=Math.floor(p.spent);
     for(const t of TALENTS)p.talents[t.id]=Math.min(t.max,Math.floor(finite(data.talents?.[t.id])));
     for(const k of numeric)p.totals[k]=finite(data.totals?.[k]);
@@ -56,6 +57,7 @@ export function recordProgress(p,s,{final=false}={}){
   for(const letter of s.story.delivered)if(!p.letters.includes(letter))p.letters.push(letter);
   for(const enemy of s.encountered)if(!p.bestiary.includes(enemy))p.bestiary.push(enemy);
   for(const c of s.story.choices){const key=c.npc+':'+c.choice;if(!p.choices.includes(key))p.choices.push(key);}
+  for(const a of s.narrative?.followups||[]){const key=a.npc+':'+a.choice;if(!p.growth.arcs.includes(key))p.growth.arcs.push(key);}
   p.bestCombo=Math.max(p.bestCombo,s.journal.bestCombo);p.bestLevel=Math.max(p.bestLevel,s.journal.level);
   if(Object.values(equippedSets(s)).some(n=>n>=3))p.flags.fullSet=true;
   if(s.rulesVersion===120){const v=s.v12;
@@ -83,6 +85,7 @@ export function recordProgress(p,s,{final=false}={}){
   return unlocked;
 }
 export function buyTalent(p,id){const t=TALENTS.find(t=>t.id===id);if(!t)return false;const level=p.talents[id],cost=TALENT_COST(level);if(level>=t.max||p.stamps<cost)return false;p.stamps-=cost;p.spent+=cost;p.talents[id]++;return true;}
+export function resetTalents(p){let amount=0;for(const t of TALENTS){for(let i=0;i<p.talents[t.id];i++)amount+=TALENT_COST(i);p.talents[t.id]=0;}if(!amount)return false;p.stamps+=amount;p.spent=Math.max(0,p.spent-amount);return amount;}
 export function chooseHeirloom(p,id){if(id===''){p.heirloom='';return true;}if(!p.collection.includes(id)||!GEAR_BY_ID[id]||GEAR_BY_ID[id].tier===0)return false;p.heirloom=id;return true;}
 export function rank(p){const n=p.totals.wins;return n>=10?'黎明邮政官':n>=5?'暮色领航员':n>=2?'正式信使':n>=1?'点灯信使':'见习信使';}
 export function dailySeed(day){let h=2166136261;for(const char of day)h=Math.imul(h^char.charCodeAt(0),16777619);return h>>>0;}

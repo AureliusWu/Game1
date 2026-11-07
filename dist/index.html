@@ -7,6 +7,7 @@
 <title>余烬信使 · EMBER COURIER</title>
 <link rel="icon" href="./icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="./icon-192.png"><link rel="manifest" href="./manifest.webmanifest"><link rel="stylesheet" href="./style.css">
 <link rel="stylesheet" href="./battle.css">
+  <link rel="stylesheet" href="./growth.css">
 </head>
 <body>
 <svg class="sprite" aria-hidden="true"><defs>
@@ -37,10 +38,10 @@
   </header>
   <section class="hero">
     <div class="hero-copy">
-      <div class="eyebrow"><span class="tiny-spark">✦</span> 无尽夜航 · 战场回响 · 破阵而行 <span class="line"></span></div>
+      <div class="eyebrow"><span class="tiny-spark">✦</span> 星图来信 · 技能树与专精 · 每程都有回音 <span class="line"></span></div>
       <h1>余烬<span>信使<i>。</i></span></h1>
       <div class="english-title">EMBER COURIER</div>
-      <p class="lead">武器现形，首领破限，战场始终在眼前。<br>清开敌潮，把这一局打成你的样子。<br><em>下一层，会有什么？</em></p>
+      <p class="lead">点亮夜航星图，把每一段路走成自己的故事。<br>清开敌潮，把这一局打成你的样子。<br><em>下一层，会有什么？</em></p>
       <div class="mode-select" role="group" aria-label="选择游戏模式"><button data-mode="endless" aria-pressed="true">无尽夜航 <small>清怪 · 构筑 · 首领</small></button><button data-mode="story" aria-pressed="false">剧情送信 <small>三章旅途 · 三种结局</small></button></div>
       <div id="endless-prep"><p class="starter-label">选一件起始武器 <span>其余武器可在局内获得</span></p><div id="starter-options" class="starter-options"></div><p class="prep-note" id="endless-record">第 5 层迎战首领 · 3 武器 / 4 被动 · 组合进化</p></div>
       <div class="difficulty" role="group" aria-label="旅途难度"><span>旅途难度</span><div><button data-difficulty="wander" aria-pressed="false">漫游</button><button class="selected" data-difficulty="normal" aria-pressed="true">标准</button><button data-difficulty="night" aria-pressed="false">长夜</button></div><button class="difficulty-info" id="difficulty-info" aria-label="了解难度">?</button></div>
@@ -59,8 +60,8 @@
     </div>
   </section>
   <section class="postoffice-hub" aria-label="暮色百事扩展系统">
-    <div class="hub-section-heading"><span>暮色百事 <b>BATTLE ECHOES 1.5</b></span><small id="office-rank">见习信使</small><span class="stamp-wallet"><svg><use href="#i-letter"/></svg><strong id="menu-stamps">0</strong> 邮票</span></div>
-    <div class="office-entry-grid"><button data-hub="inventory"><svg><use href="#i-bag"/></svg><span>行装工坊<small>装备 · 套装 · 锻造</small></span><b>→</b></button><button data-hub="journal"><svg><use href="#i-letter"/></svg><span>旅途手札<small>委托 · 居民 · 回信</small></span><b>→</b></button><button data-hub="office"><svg><use href="#i-sun"/></svg><span>暮色邮局<small>永久成长 · 启程藏品</small></span><b>→</b></button><button data-hub="achievements"><svg><use href="#i-star"/></svg><span>成就与收藏<small id="achievement-summary">0 / 28 成就</small></span><b>→</b></button></div>
+    <div class="hub-section-heading"><span>暮色百事 <b>STAR LETTERS 1.6</b></span><small id="office-rank">见习信使</small><span class="stamp-wallet"><svg><use href="#i-letter"/></svg><strong id="menu-stamps">0</strong> 邮票</span></div>
+    <div class="office-entry-grid"><button data-hub="inventory"><svg><use href="#i-bag"/></svg><span>行装工坊<small>装备 · 套装 · 锻造</small></span><b>→</b></button><button data-hub="journal"><svg><use href="#i-letter"/></svg><span>旅途手札<small>委托 · 居民 · 回信</small></span><b>→</b></button><button data-hub="tree"><svg><use href="#i-star"/></svg><span>夜航星图<small>技能树 · 熟练度 · 成长目标</small></span><b>→</b></button><button data-hub="office"><svg><use href="#i-sun"/></svg><span>暮色邮局<small>永久成长 · 启程藏品</small></span><b>→</b></button><button data-hub="achievements"><svg><use href="#i-star"/></svg><span>成就与收藏<small id="achievement-summary">0 / 28 成就</small></span><b>→</b></button></div>
   </section>
   <section class="journey-strip" aria-label="旅途概览">
     <div class="strip-intro"><span>你的任务</span><strong>把这局打成你的样子</strong></div>
@@ -68,7 +69,7 @@
     <div><span class="strip-number">02</span><p>组合进化<small>武器与被动搭配，变化看得见</small></p></div>
     <div><span class="strip-number">03</span><p>挑战更深层<small>每五层首领，路由你来选</small></p></div>
   </section>
-  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.5.1</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
+  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.6.0</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
 </main>
 <section id="game" class="view game-view" hidden aria-label="余烬信使游戏区域">
   <canvas id="world" tabindex="0" aria-label="游戏画面。使用 WASD 或方向键移动，空格冲刺，E 释放光环，P 暂停。手机使用左侧摇杆和右侧技能键。"></canvas>
@@ -107,10 +108,11 @@
   <div class="draft-time-track"><i id="draft-timer-bar"></i></div>
   <div class="upgrade-options" id="upgrade-options"></div>
   <div class="draft-bottom"><p id="draft-suggestion"></p><small id="upgrade-note"></small></div>
-  <div class="draft-footer"><button class="secondary" id="draft-hold" aria-pressed="false">暂缓 · P</button><button class="secondary" id="draft-reroll" hidden>重抽</button><div id="endless-market" class="endless-market" hidden></div><button class="secondary" id="endless-retire" hidden>封存结算</button><button class="text-button" id="upgrade-exit">保存退出</button></div>
+  <div class="draft-footer"><button class="secondary" id="draft-hold" aria-pressed="false">暂缓 · P</button><button class="secondary" id="draft-reroll" hidden>重抽</button><button class="secondary" id="draft-banish" hidden>放逐</button><div id="endless-market" class="endless-market" hidden></div><button class="secondary" id="endless-retire" hidden>封存结算</button><button class="text-button" id="upgrade-exit">保存退出</button></div>
 </dialog>
+<dialog id="banish-dialog" class="modal" aria-label="放逐强化"><button class="dialog-close icon-button" data-close aria-label="取消放逐"><svg><use href="#i-close"/></svg></button><h2>留出下一束光</h2><p class="modal-intro">放逐一张尚未拥有的强化，本局不会再出现。取消不消耗次数，选择期间自动倒计时暂停。</p><div id="banish-panel" class="banish-options"></div></dialog>
 <dialog id="result-dialog" class="modal result-modal"><div class="result-symbol"><svg><use id="result-icon" href="#i-sun"/></svg></div><div class="eyebrow" id="result-eyebrow">DELIVERED AT DAYBREAK</div><h2 id="result-title">黎明，签收了。</h2><p class="modal-intro" id="result-story"></p><div class="result-stats"><div><strong id="result-score">0</strong><span>旅途得分</span></div><div><strong id="result-beacons">0/9</strong><span>点亮灯塔</span></div><div><strong id="result-time">0:00</strong><span>旅途时长</span></div></div><p class="record-note" id="result-best" hidden>新的旅途纪录</p><p class="settlement-note" id="settlement-note"></p><div id="result-review" class="run-review"></div><button class="secondary full-width" id="result-office">查看邮局与成就</button><button class="primary full-width" id="restart">再送一封信 <svg><use href="#i-arrow"/></svg></button><button class="secondary full-width" id="result-menu">回到暮色邮局</button></dialog>
-<dialog id="hub-dialog" class="modal hub-modal"><button class="dialog-close icon-button" data-close aria-label="关闭邮局面板"><svg><use href="#i-close"/></svg></button><div class="hub-header"><div><div class="eyebrow">A THOUSAND LITTLE THINGS AT NIGHTFALL</div><h2>暮色百事</h2></div><div class="hub-wallet" id="hub-wallet"></div></div><nav class="hub-tabs" role="tablist" aria-label="游戏系统"><button role="tab" data-hub-tab="inventory" aria-controls="hub-panel">装备</button><button role="tab" data-hub-tab="journal" aria-controls="hub-panel">手札</button><button role="tab" data-hub-tab="office" aria-controls="hub-panel">邮局</button><button role="tab" data-hub-tab="achievements" aria-controls="hub-panel">成就</button><button role="tab" data-hub-tab="codex" aria-controls="hub-panel">图鉴</button></nav><div id="hub-panel" class="hub-panel" role="tabpanel" tabindex="0"></div></dialog>
+<dialog id="hub-dialog" class="modal hub-modal"><button class="dialog-close icon-button" data-close aria-label="关闭邮局面板"><svg><use href="#i-close"/></svg></button><div class="hub-header"><div><div class="eyebrow">A THOUSAND LITTLE THINGS AT NIGHTFALL</div><h2>暮色百事</h2></div><div class="hub-wallet" id="hub-wallet"></div></div><nav class="hub-tabs" role="tablist" aria-label="游戏系统"><button role="tab" data-hub-tab="inventory" aria-controls="hub-panel">装备</button><button role="tab" data-hub-tab="journal" aria-controls="hub-panel">手札</button><button role="tab" data-hub-tab="tree" aria-controls="hub-panel">星图</button><button role="tab" data-hub-tab="office" aria-controls="hub-panel">邮局</button><button role="tab" data-hub-tab="achievements" aria-controls="hub-panel">成就</button><button role="tab" data-hub-tab="codex" aria-controls="hub-panel">图鉴</button></nav><div id="hub-panel" class="hub-panel" role="tabpanel" tabindex="0"></div></dialog>
 <dialog id="encounter-dialog" class="modal encounter-modal"><button class="dialog-close icon-button" data-close aria-label="离开当前互动"><svg><use href="#i-close"/></svg></button><div class="encounter-heading"><canvas id="encounter-portrait" width="144" height="144" hidden aria-label="居民肖像" role="img"></canvas><div><div class="eyebrow" id="encounter-role"></div><h2 id="encounter-name"></h2></div></div><div id="encounter-body"></div></dialog>
 <div id="storage-warning" class="storage-warning" hidden role="status">浏览器暂时无法保存记录，本次旅途仍可正常游玩。</div>
 <noscript><div class="noscript">请开启 JavaScript，和烛羽一起出发送信。</div></noscript>

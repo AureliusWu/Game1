@@ -1,8 +1,9 @@
-import {createGame,tick,pulse,dash,chooseUpgrade,collides,distance,finalScore,WORLD,serialize,restore} from '../dist/core.mjs';
+import {createGame,tick,pulse,dash,chooseUpgrade,chooseContinuation,collides,distance,finalScore,WORLD,serialize,restore} from '../dist/core.mjs';
 import {openPOI,chooseStory,equip,forge,forgeCost,buy,chooseEvent,usePotion} from '../dist/systems.mjs';
 import {EVENTS,NPCS,GEAR_BY_ID} from '../dist/content.mjs';
 import {pointSegmentDistance} from '../dist/expedition.mjs';
 import {safePoint} from '../dist/routes.mjs';
+import {followupAvailable,ARCS} from '../dist/narrative.mjs';
 const CELL=40,COLS=Math.ceil(WORLD.width/CELL),ROWS=Math.ceil(WORLD.height/CELL);
 function route(s,goal){
   const start=[Math.floor(s.player.x/CELL),Math.floor(s.player.y/CELL)];
@@ -41,7 +42,8 @@ export function playJourney(seed,difficulty='normal',options={}){
       else if(!event.used){target=event;id=event.id;if(distance(p,event)<100){const e=EVENTS[event.event];const choice=e.id==='bell'&&options.challenge?e.choices[0]:e.choices[1];if(!chooseEvent(s,event.id,choice.id)&&e.choices[0])chooseEvent(s,event.id,e.choices[0].id);target=null;}}
       else if(s.story.tasks.some(t=>!t.complete)&&s.beacons.some(b=>b.lit)){target=s.beacons.filter(b=>b.lit).reduce((a,b)=>!a||distance(p,b)<distance(p,a)?b:a,null);id='delivery-'+target.id;}
       if(!target&&options.risk&&s.pois.some(p=>p.kind==='risk'&&!p.used)){target=s.pois.find(p=>p.kind==='risk'&&!p.used);id=target.id;if(distance(p,target)<100){openPOI(s,target.id);target=null;}}
-      for(const item of s.gear.inventory)if(item.level<3&&forgeCost(item,s)<=s.journal.coins-(shops.has(shop.id)?0:22)&&s.gear.slots.lamp===item.id)forge(s,item.id);
+      if(!target&&options.followups&&followupAvailable(s,npc)){target=npc;id='followup-'+npc.id;if(distance(p,npc)<100){const arc=ARCS[npc.npc],choice=arc.choices[options.followups==='paid'?1:0];chooseContinuation(s,npc.id,choice.id);target=null;}}
+      for(const item of s.gear.inventory)if(item.level<3&&forgeCost(item,s)<=s.journal.coins-(shops.has(shop.id)?0:22)-(options.followups==='paid'?8:0)&&s.gear.slots.lamp===item.id)forge(s,item.id);
       if(options.build)for(const item of s.gear.inventory)if(GEAR_BY_ID[item.id].set===options.build)wear(item.id);
     }
     if(options.camp&&s.litTotal>0){target=s.beacons.find(b=>b.lit);id='camp';}

@@ -8,6 +8,11 @@ import {AudioEngine} from './audio.mjs';
 import {GEAR_BY_ID,CONTRACTS,ACHIEVEMENTS,ENDINGS,CONDITIONS,SETS} from './content.mjs';
 import {XP_THRESHOLDS} from './systems.mjs';
 import {readProfile,recordProgress,rank,dailySeed,challengeKey} from './progress.mjs';
+import {specializationView} from './growth-view.mjs';
+import {specializationPoints,DISCIPLINES,mastery,GOALS} from './growth.mjs';
+import {epilogue,deliveryReply,CHAPTER_NOTES} from './narrative.mjs';
+import {chooseSpecialization} from './core.mjs';
+import {banishEndless} from './endless.mjs';
 import {Hub} from './hub.mjs';
 const $=id=>document.getElementById(id);
 const audio=new AudioEngine();
@@ -142,6 +147,7 @@ function appendDraftCards(infos){
   });
 }
 function showUpgrade(){
+  $('draft-banish').hidden=true;
   if(isEndless(run)){showEndlessDraft();return;}
   $('endless-market').hidden=true;$('upgrade-title').textContent='选一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;
   $('upgrade-copy').textContent=run.v12?.choiceKind==='field'?'街区强化 · 继续本章':'章节礼物 · 前往下一章';
@@ -152,6 +158,7 @@ function showEndlessDraft(){
   $('upgrade-title').textContent=route?'下一层路线':relic?'选择一件奇物':'选择强化';
   $('upgrade-copy').textContent=route?`第 ${r.floor} 层清场${isCombat(run)?' · '+r.combat.lastClearTime.toFixed(1)+'s'+(r.combat.lastPerfect?' · 无伤 +6 砂':''):''}`:relic?'本局生效 · 选择你的联动':`Lv.${run.journal.level} · 3 武器 / 4 被动${r.pending>1?' · 待选 '+r.pending+' 次':''}`;
   $('upgrade-note').textContent=route?`下层${(r.floor+1)%5===0?' · 首领':''} · ${WEATHERS[weatherFor(run,r.floor+1)].name}`:'1 / 2 / 3 选择 · P 暂缓';
+  $('draft-banish').hidden=!run.growth||r.choice!=='skill';$('draft-banish').disabled=!run.growth?.banishes||!run.offered.some(id=>SKILL_BY_ID[id]&&!rankOf(run,id));$('draft-banish').textContent=`放逐 ${run.growth?.banishes||0}`;
   $('draft-reroll').hidden=route;$('draft-reroll').disabled=r.rerolls<=0;$('draft-reroll').textContent=`重抽 ${r.rerolls}`;$('endless-retire').hidden=!route;
   const market=$('endless-market');market.hidden=!route;market.replaceChildren();
   if(route)for(const id of ['tea','potion','reroll']){const b=document.createElement('button'),cost=supplyCost(run,id);b.textContent=({tea:'热茶',potion:'补给',reroll:'重抽'})[id]+' '+cost+'砂';b.disabled=r.market.includes(id)||run.journal.coins<cost||(id==='tea'?run.player.hp>=run.player.maxHp:id==='potion'?run.journal.potions>=5:r.rerolls>=3);b.addEventListener('click',()=>{run.events=[];if(buyEndlessSupply(run,id)){processEvents(run.events);showEndlessDraft();updateHUD();}});market.append(b);}
@@ -159,6 +166,8 @@ function showEndlessDraft(){
 }
 function showBuild(){
  if(!isEndless(run))return;checkpoint();const r=run.endless,c=$('build-content');c.replaceChildren();
+ const spec=document.createElement('div');spec.innerHTML=specializationView(run);c.append(spec);
+ const target=SKILL_BY_ID[r.starter],plan=document.createElement('div');plan.className='build-plan';plan.innerHTML=`<strong>下一步 · ${target.evolution}</strong>${target.name} ${rankOf(run,target.id)}/5 + ${SKILL_BY_ID[target.partner].name} ${rankOf(run,target.partner)}/2${evolved(run,target.id)?' · 已进化，试试第二件武器':' · 优先补齐伙伴，再完成武器五级'}<br>放逐余 ${run.growth?.banishes??0} 次 · 已放逐 ${run.growth?.banished.map(id=>SKILL_BY_ID[id].name).join(' / ')||'无'}`;c.append(plan);
  for(const u of SKILLS){const level=rankOf(run,u.id);if(!level)continue;const card=document.createElement('article');card.className='build-entry';const evo=evolved(run,u.id);card.innerHTML=`<strong>${evo?'✦ '+u.evolution:u.name}<small>Lv.${level} / 5 · ${u.kind==='weapon'?'武器':'被动'}</small></strong><p>${evo?u.evo:u.desc}</p>${u.partner?`<small>进化：${u.name} 5 + ${SKILL_BY_ID[u.partner].name} 2（当前 ${rankOf(run,u.partner)}）</small>`:''}`;c.append(card);}
  const weather=document.createElement('p');weather.textContent=`本层天气 · ${WEATHERS[r.weather].name}：${WEATHERS[r.weather].desc}`;c.append(weather);
  const title=document.createElement('h3');title.textContent=`奇物 · ${r.relics.length} / 8`;c.append(title);
@@ -178,6 +187,8 @@ function finish(){
   $('result-story').textContent=won?ending.text:'你留下的灯火没有熄灭。整理好邮包，再一次出发。总有一封信，等你送到天亮。';
   $('result-review').replaceChildren();
   if(run.v12&&!isEndless(run)){const v=run.v12,sets=Object.entries(run.gear.slots).map(([,id])=>GEAR_BY_ID[id].set),build=Object.keys(SETS).filter(id=>id!=='plain'&&sets.filter(x=>x===id).length>=2).map(id=>SETS[id].name).join(' / ')||'自由混搭';const spent=12+(run.talentSnapshot.fund||0)*5+run.metrics.coinsEarned-run.journal.coins;const sources=Object.entries(v.damageSources).sort((a,b)=>b[1]-a[1]).map(([name,n])=>name+' '+Math.round(n)).join(' · ')||'未受攻击伤害';for(const text of [`${v.mode==='challenge'?'公平挑战':'故事旅途'} · ${build} · ${v.conditions.map(id=>CONDITIONS.find(c=>c.id===id).name).join(' / ')||'常规航线'}`,`星砂收入 ${run.metrics.coinsEarned} / 支出 ${spent} / 结余 ${run.journal.coins}`,`最低生命 ${Math.round(v.minHp)} · 危险时间 ${v.lowTime.toFixed(1)} 秒 · 实际恢复 ${Math.round(v.healed)}`,`受击来源：${sources}`,`抵挡 ${v.barriers} · 回响 ${v.echoes} · 打断 ${v.interrupts} · 支路 ${v.riskCleared}/3`,v.riskCleared?'下一局：换一套行装，或为航线加一个条件。':'下一局：寻找地图上的旗帜，试试风险支路的精英与行装。']){const line=document.createElement('p');line.textContent=text;$('result-review').append(line);}}
+  if(won&&epilogue(run)){const line=document.createElement('p');line.className='epilogue';line.textContent='天亮以后的回音\n\n'+epilogue(run);$('result-review').append(line);}
+  if(run.growth){for(const text of [`本局专精：${DISCIPLINES.map(d=>d.name+' '+run.growth.disciplines[d.id]).join(' · ')}`,`信使熟练度 ${mastery(profile).level} · ${GOALS.filter(q=>!profile.growth.claims.includes(q.id)&&q.current(profile)>=q.goal).length} 份成长奖励可在星图领取`]){const line=document.createElement('p');line.textContent=text;$('result-review').append(line);}}
   const reward=profile.lastRewards;$('settlement-note').textContent=`本次结算 ${reward?.journey===run.journeyId?reward.total:0} 枚邮票${run.contract.complete?' · 委托已完成':''}${reward?.daily?' · 每日航线首次送达':''}。成就奖励另计。`;
   $('result-score').textContent=score.toLocaleString('zh-CN');$('result-beacons').textContent=`${run.litTotal}/9`;$('result-time').textContent=formatTime(run.totalTime);$('result-best').hidden=!newBest;
   if(isEndless(run)){const r=run.endless;$('result-eyebrow').textContent=r.retired?'NIGHT FLIGHT LOGGED':'ONE MORE RUN';$('result-title').textContent=r.retired?'这段夜航，值得记住。':'微光暂歇，再来一局。';$('result-story').textContent=`抵达第 ${r.floor} 层，完成 ${r.cleared} 层，击破 ${r.bosses} 位首领。${r.retired?'本次航线已经封存。':'换个起手，试试另一种进化。'}`;$('result-beacons').textContent=r.cleared;$('result-beacons').nextElementSibling.textContent='完成层数';for(const text of [`${Object.keys(r.ranks).map(id=>(evolved(run,id)?SKILL_BY_ID[id].evolution:SKILL_BY_ID[id].name)+' '+rankOf(run,id)).join(' · ')}`,`武器进化 ${r.evolutions.length} · 奇物 ${r.relics.length} · 击杀 ${run.kills}`,`最深纪录 ${profile.endless.bestFloor} 层 · 最低生命 ${Math.round(run.v12.minHp)} · 用药 ${run.metrics.potionsUsed}`,`本局邮票 ${reward?.journey===run.journeyId?reward.total:0} · 重抽 ${r.rerollsUsed} 次`]){const p=document.createElement('p');p.textContent=text;$('result-review').append(p);}}else $('result-beacons').nextElementSibling.textContent='点亮灯塔';
@@ -207,7 +218,9 @@ function processEvents(events){
     if(e.type==='fever')toast('20 连击 · 狂热 5 秒！',3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);
     if(e.type==='duplicate')toast('相同的装备已转为 8 星砂。',3);
-    if(e.type==='delivery')toast(`「${e.name}」已经送达 · +15 星砂。`,5);
+    if(e.type==='delivery')toast(`「${e.name}」已经送达 · +15 星砂。${deliveryReply(run,e.id)}${run.narrative?'三灯亮起后，回访居民看看后来的故事。':''}`,7);
+    if(e.type==='followup')toast('这段回音已收藏，新的本局效果已经生效。',4);
+    if(e.type==='specialize')toast(DISCIPLINES.find(d=>d.id===e.id).name+'提升，新的本局效果已生效。',3);
     if(e.type==='contract')toast('邮局委托已达成，结算时领取邮票。',4);
     if(e.type==='elite')toast('钟声唤醒了一只精英影兽，击败它取回行装。',5);
     if(e.type==='potion')toast('喝下一口热补给，继续赶路。',2);
@@ -215,7 +228,7 @@ function processEvents(events){
     if(e.type==='won'||e.type==='lost')finish();
   }
   renderer.react(events);
-  if(events.some(e=>['collect','death','beacon','delivery','gear','equip','forge','purchase','contract','level','story'].includes(e.type)))syncProgress();
+  if(events.some(e=>['collect','death','beacon','delivery','gear','equip','forge','purchase','contract','level','story','followup','specialize'].includes(e.type)))syncProgress();
 }
 function updateHUD(){
   if(!run)return;const p=run.player;
@@ -241,7 +254,7 @@ function updateHUD(){
   const weaponKey=isEndless(run)?Object.entries(run.endless.ranks).filter(([id])=>SKILL_BY_ID[id].kind==='weapon').map(([id,lv])=>id+':'+lv+':'+evolved(run,id)).join('|'):'';
   if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`<svg><use href="#i-${u.symbol}"/></svg><b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
   if(boss&&isTactical(run))$('boss-subtitle').textContent=boss.enraged?'第二阶段 · 招式加速 · 光环可打断':'招式轮换 · 留意粉色预警';
-  $('build-open').hidden=!isEndless(run);document.body.dataset.phase=run.phase;
+  $('build-open').hidden=!isEndless(run);$('game-hub').title=specializationPoints(run)>0?'可用 '+specializationPoints(run)+' 点本局专精':'背包与成长';if(isEndless(run))$('build-count').textContent=specializationPoints(run)>0?'专精 +'+specializationPoints(run):Object.keys(run.endless.ranks).length+' / 7';document.body.dataset.phase=run.phase;
 }
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>{settings.mode=b.dataset.mode;saveSettings();updateSettings();});
 for(const b of document.querySelectorAll('[data-difficulty]'))b.addEventListener('click',()=>{settings.difficulty=b.dataset.difficulty;audio.play('click');saveSettings();updateSettings();});
@@ -255,6 +268,8 @@ $('contract-select').addEventListener('change',e=>{settings.contract=e.target.va
 $('settings-open').addEventListener('click',()=>showDialog('settings'));
 $('records-open').addEventListener('click',()=>{updateMenu();showDialog('records');});
 $('start').addEventListener('click',()=>begin());$('continue').addEventListener('click',()=>begin(true));$('restart').addEventListener('click',()=>begin());
+$('build-content').addEventListener('click',e=>{const b=e.target.closest('[data-action="specialize"]');if(!b||b.disabled)return;run.events=[];if(chooseSpecialization(run,b.dataset.id)){processEvents(run.events);checkpoint();updateHUD();showBuild();}});
+$('draft-banish').addEventListener('click',()=>{const panel=$('banish-panel');panel.replaceChildren();const key=ensureDraft(run)?.key;showDialog('banish-dialog');checkpoint();for(const id of run.offered.filter(id=>SKILL_BY_ID[id]&&!rankOf(run,id))){const b=document.createElement('button');b.className='secondary';b.textContent='放逐 '+SKILL_BY_ID[id].name;b.addEventListener('click',()=>{if(ensureDraft(run)?.key!==key)return;run.events=[];if(banishEndless(run,id)){$('banish-dialog').close();processEvents(run.events);showEndlessDraft();checkpoint();}});panel.append(b);}});
 $('game-hub').addEventListener('click',()=>isEndless(run)?showBuild():hub.show('inventory'));$('result-office').addEventListener('click',()=>hub.show('office'));$('interact').addEventListener('click',()=>hub.interact());$('potion').addEventListener('click',doPotion);
 $('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);$('save-exit').addEventListener('click',returnToMenu);$('upgrade-exit').addEventListener('click',returnToMenu);$('result-menu').addEventListener('click',returnToMenu);$('game-settings').addEventListener('click',()=>showDialog('settings'));
 $('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>{e.preventDefault();toggleDraft(run);updateDraftClock();checkpoint();});$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
