@@ -111,9 +111,9 @@ export function configureEndlessRoom(s){
 }
 export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
- const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
+ const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:r.draftSerial!==undefined?.94:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
- return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
+ return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(195,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)*(r.draftSerial!==undefined?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1)*(r.draftSerial!==undefined?1.18:1),
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
 function hit(s,e,amount,slow=0){
@@ -174,17 +174,17 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    if(r.floor%5===0&&!r.bossMade)kind='boss';
    else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
    else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
-   else if(r.draftSerial!==undefined&&r.floor>=5&&roll<.38)kind='charger';
+   else if(r.draftSerial!==undefined&&r.floor>=2&&roll<.36)kind='charger';
    else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
-   else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
+   else if(r.floor>=2&&roll>.83)kind='brute';else if(r.draftSerial!==undefined&&roll>.64)kind='runner';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?Math.max(1.1,1.95-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?Math.max(.82,(r.draftSerial!==undefined?1.45:1.95)-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  r.zoneCd-=dt;
- if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}
- for(const z of r.zones){z.warning-=dt;if(z.warning<=0){if(dist(z,p)<z.r+p.r)hurt(s,(18+r.floor*.8),'雷雨·落雷');s.effects.push({type:'lightning-burst',x:z.x,y:z.y,r:z.r,life:.35,maxLife:.35});}}r.zones=r.zones.filter(z=>z.warning>0).slice(-4);
+ if((r.weather==='storm'||r.draftSerial!==undefined)&&r.zoneCd<=0){r.zoneCd=r.weather==='storm'?5.2:Math.max(5.5,8.5-r.floor*.15);r.zones.push({x:p.x,y:p.y,r:r.weather==='storm'?85:74,warning:1.4});emit(s,'storm-warning');}
+ for(const z of r.zones){z.warning-=dt;if(z.warning<=0){if(dist(z,p)<z.r+p.r)hurt(s,(18+r.floor*.8),r.weather==='storm'?'雷雨·落雷':'夜影·追踪落雷');s.effects.push({type:'lightning-burst',x:z.x,y:z.y,r:z.r,life:.35,maxLife:.35});}}r.zones=r.zones.filter(z=>z.warning>0).slice(-4);
  const haste=Math.pow(.9,rankOf(s,'haste'));
  const weaponDt=dt*(overdriving(s)?1.65:1);r.frostCd-=weaponDt;r.thunderCd-=weaponDt;r.fireCd-=dt;
  if(rankOf(s,'frost')&&r.frostCd<=0){const lv=rankOf(s,'frost');r.frostCd=(3.7-lv*.3)*haste;area(s,p,115+lv*24,(18+lv*10)*power(s),'frost',evolved(s,'frost')?3:1.8);if(evolved(s,'frost'))for(const e of s.enemies)if(dist(p,e)<235)e.stun=Math.max(e.stun,.7);emit(s,'frost');}
