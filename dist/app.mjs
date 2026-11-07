@@ -152,7 +152,22 @@ function appendDraftCards(infos){
     b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
   });
 }
+// Ordinary floor completion must not chain blocking route/reward panels.
+function autoResolveOrdinaryRoom(){
+ if(!isEndless(run)||!Number.isInteger(run.endless.draftSerial)||!run.endless.clearedRoom||run.endless.floor%5===0)return false;
+ const from=run.endless.floor;
+ for(let i=0;i<64&&run.endless.floor===from&&run.phase==='upgrade';i++){
+  const kind=run.endless.choice;
+  const id=kind==='route'?'hunt':recommendedChoice(run);
+  if(!id||!chooseUpgrade(run,id))break;
+ }
+ if(run.endless.floor===from)return false;
+ renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;
+ $('upgrade-dialog').close();announceChapter();updateHUD();checkpoint();
+ return true;
+}
 function showUpgrade(){
+  if(autoResolveOrdinaryRoom())return;
   $('draft-banish').hidden=true;
   if(isEndless(run)){showEndlessDraft();return;}
   $('endless-market').hidden=true;$('upgrade-title').textContent='选一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;

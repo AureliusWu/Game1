@@ -4,7 +4,7 @@ import {UPGRADES as UPGRADE_DATA} from './content.mjs';
 import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
-import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,choiceInfo,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
+import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
@@ -194,30 +194,6 @@ export function chooseUpgrade(s,id) {
   if(modern(s))s.v12.choiceKind='';s.chapter++;s.phase='playing';
   loadChapter(s);return true;
 }
-/**
- * Normal endless rooms should flow into the next map without a chain of
- * blocking skill / route dialogs. Keep boss milestones interactive.
- * Uses existing pure choice rules and does not change legacy save behavior.
- */
-export function autoAdvanceEndlessRoom(s){
- if(!isEndless(s)||!Number.isInteger(s.endless.draftSerial)||!s.endless.clearedRoom||s.endless.floor%5===0)return false;
- const startFloor=s.endless.floor;
- for(let tries=0;tries<64&&s.endless.floor===startFloor;tries++){
-  if(s.phase==='playing')advanceEndlessChoices(s);
-  if(s.phase!=='upgrade')break;
-  const kind=s.endless.choice;
-  const id=kind==='route'?'hunt':s.offered.find(id=>!choiceInfo(s,id).disabled);
-  if(!id)break;
-  const result=pickEndless(s,id);
-  if(!result)break;
-  delete s.selection;
-  recalculate(s);checkEvolutions(s);
-  if(result.advance){loadChapter(s);break;}
- }
- // Intermediate decisions were auto-resolved; don't open stale UI dialogs.
- s.events=s.events.filter(e=>e.type!=='upgrade');
- return s.endless.floor!==startFloor;
-}
 export function tick(s,input={},dt=1/60) {
   s.events=[];
   if(s.phase!=='playing'&&!liveDraft(s)) return s.events;
@@ -371,7 +347,7 @@ export function tick(s,input={},dt=1/60) {
   if(!isEndless(s)&&modern(s)&&s.phase==='playing'&&s.chapter===0&&!s.v12.buildTaken&&s.beacons.filter(b=>b.lit).length>=2){s.v12.buildTaken=true;s.v12.choiceKind='field';s.phase='upgrade';offerUpgrades(s);event(s,'upgrade');}
   for(const fx of s.effects) fx.life-=dt;
   s.effects=s.effects.filter(fx=>fx.life>0);
-  if(isEndless(s)){reviveEndless(s);if(s.phase==='playing')advanceEndlessChoices(s);autoAdvanceEndlessRoom(s);s.effects=s.effects.slice(-120);s.projectiles=s.projectiles.slice(-250);}
+  if(isEndless(s)){reviveEndless(s);if(s.phase==='playing')advanceEndlessChoices(s);s.effects=s.effects.slice(-120);s.projectiles=s.projectiles.slice(-250);}
   if(p.hp<=0&&(s.phase==='playing'||liveDraft(s))){p.hp=0;s.phase='lost';event(s,'lost');}
   return s.events;
 }
