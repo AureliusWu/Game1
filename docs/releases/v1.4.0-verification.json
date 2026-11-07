@@ -1,0 +1,62 @@
+{
+  "version": "1.4.0",
+  "verifiedAt": "2026-11-07T01:29:38.403Z",
+  "sourceCommit": "d376c98ff2a96de215ad24c9cb2ca7ba89726fdd",
+  "sourceTree": "04ccf833349d0c0812a554944a777d9596ebf36b",
+  "localEquivalentCommit": "d53f2cb",
+  "releaseURL": "https://github.com/AureliusWu/Game1/releases/tag/v1.4.0",
+  "workflowRun": 42323818976,
+  "workflowJob": 128254328993,
+  "workflowConclusion": "success",
+  "qualityRun": 42323818920,
+  "qualityConclusion": "success",
+  "unitTests": 136,
+  "androidIntegrationTests": 4,
+  "androidIntegrationFailed": 0,
+  "androidIntegrationSkipped": 0,
+  "actionOnlyBalanceProbes": 144,
+  "matchedSeedPacingProbes": 12,
+  "apk": {
+    "applicationId": "io.github.aureliuswu.embercourier",
+    "versionCode": 10400,
+    "versionName": "1.4.0",
+    "debuggable": false,
+    "internetPermission": false,
+    "signingCertificateSHA256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7"
+  },
+  "files": {
+    "Ember-Courier-v1.4.0-provenance.json": {
+      "bytes": 1931,
+      "sha256": "777b58b734ba516ae269333a9c70fd0364a2db1dc09134b9bd3d45a3ff54e113"
+    },
+    "Ember-Courier-v1.4.0.apk": {
+      "bytes": 1081472,
+      "sha256": "e7e6ae622369a03a785bfaf9000dd74ce29c19ec1c9cb61e6c1852543e590d28"
+    },
+    "Ember-Courier-web-v1.4.0.zip": {
+      "bytes": 143629,
+      "sha256": "a332ac8f1a61d066c87459e551ecf7bf9d6f4c9971b1d0141b56358f6475c90a"
+    },
+    "SHA256SUMS.txt": {
+      "bytes": 289,
+      "sha256": "4dfce885e9a36c01292f4d19faef3dcfc245e0cd8a7087f78cc55b59df92df45"
+    }
+  },
+  "runtimeResourceCount": 19,
+  "runtimeIdentity": "All 19 APK assets / web ZIP / Sites source / GitHub source / provenance digests identical",
+  "verificationScope": "Downloaded CI release archive. All files match public Release digests. All 19 APK/web/Sites/source resources match; Android signing verified by successful CI package_release.py against the original certificate. No second local APK signature verification performed.",
+  "web": {
+    "url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site",
+    "projectId": "appgprj_6aeda9efaf088191ae1711329f052d72",
+    "audience": "public",
+    "sourceCommit": "474c8080dd02b94a42c0ad6d8fd645aa60eea089",
+    "savedVersion": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_6ff354de1a848191aa788bcb7dfaa09f",
+    "versionNumber": 6,
+    "deploymentId": "appgdep_6aee7de51c488191a171351bd1ea72b2",
+    "status": "succeeded",
+    "deployedAt": "2026-11-07T01:25:05.407943+00:00",
+    "archiveSHA256": "77062327a74730e21a5360f6364ed654e2e15d5fd633ecf391a836636d141889",
+    "savedArchiveContentHash": "sha256:696604db7e888012b86f7d9642955d8565ec7fe464a6aa78d209aa0e68f1089d",
+    "observed": "Public homepage shows v1.4.0 and dash/chain/overdrive copy; local real-play verified skill inputs, 22 combo, overdrive countdown, persisted drafts, safe cache update and HUD separation."
+  }
+}
