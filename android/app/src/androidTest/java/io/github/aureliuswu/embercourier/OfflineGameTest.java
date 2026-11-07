@@ -118,8 +118,12 @@ public final class OfflineGameTest {
             assertEquals("Native app must lock both landscape directions", ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE, declared.screenOrientation);
             await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
             PackageInfo info = activity.getPackageManager().getPackageInfo(activity.getPackageName(), PackageManager.GET_PERMISSIONS);
-            if (info.requestedPermissions != null) for (String permission : info.requestedPermissions)
-                assertFalse("Game must work with no network permission", "android.permission.INTERNET".equals(permission));
+            assertNotNull(info.requestedPermissions);
+            assertTrue("Native update checks use HTTPS", java.util.Arrays.asList(info.requestedPermissions).contains("android.permission.INTERNET"));
+            for (String permission : info.requestedPermissions) {
+                assertFalse("No external-storage permissions are needed", permission.startsWith("android.permission.READ_EXTERNAL_STORAGE") || permission.startsWith("android.permission.WRITE_EXTERNAL_STORAGE"));
+            }
+            assertEquals("Offline assets still run inside the WebView sandbox", "true", js("!navigator.serviceWorker.controller && location.hostname==='appassets.androidplatform.net'"));
             assertEquals("true", js("document.querySelector('[data-mode=endless]').click(); document.getElementById('start').click(); !document.getElementById('game').hidden"));
             assertEquals("true", js("window.emberCourierNative.pause(); document.getElementById('pause-dialog').open"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')) !== null"));
