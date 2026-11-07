@@ -422,6 +422,7 @@ if(updatePlatform==='web'&&'serviceWorker' in navigator){
  });
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){webRegistration?.update().catch(()=>{});applyWebUpdateIfSafe();}});
  window.addEventListener('online',()=>webRegistration?.update().catch(()=>{}));
+ document.addEventListener('close',()=>queueMicrotask(applyWebUpdateIfSafe),true);
  window.setInterval(()=>{if(!document.hidden)webRegistration?.update().catch(()=>{});},20*60*1000);
 }else{
  updateStatus(updatePlatform==='android'?'Android：支持同签名覆盖安装并保留数据':updatePlatform==='windows'?'Windows：支持校验后原位置覆盖更新':'本地文件模式：请获取新版安装包');

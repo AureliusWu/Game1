@@ -12,7 +12,7 @@ test('native and web version comparisons accept only strict numeric releases',()
  }
  assert.deepEqual(parseVersion('v1.8.1'),[1,8,1]);
 });
-test('web worker updates only while the last game client is at its safe menu',()=>{
+test('web worker updates only while the last game client is at its safe menu',async()=>{
  assert.equal(nativePlatform('ember:','game'),'windows');
  assert.equal(nativePlatform('https:','appassets.androidplatform.net'),'android');
  assert.equal(nativePlatform('https:','aureliuswu.github.io'),'web');
@@ -40,7 +40,7 @@ test('native updater is pinned to GitHub HTTPS and exact immutable release artif
  assert.equal(win.checksumFor(hash+'  '+name+'\n',name),hash);
  assert.throws(()=>win.checksumFor(hash+'  wrong.exe\n',name));
 });
-test('Windows updater waits for original process, compares staged hash, rolls back on failure',()=>{
+test('Windows updater waits for original process, compares staged hash, rolls back on failure',async()=>{
  assert.match(win.REPLACE_SCRIPT,/Get-Process -Id \$ParentPid/);
  assert.match(win.REPLACE_SCRIPT,/Get-FileHash -LiteralPath \$Source -Algorithm SHA256/);
  assert.match(win.REPLACE_SCRIPT,/Move-Item -LiteralPath \$Backup -Destination \$Target/);

@@ -82,7 +82,7 @@ async function downloadVerified(release,directory){
   }
   output.end();await once(output,'finish');
   if(length!==release.size||sha.digest('hex')!==expected)throw Error('EXE failed SHA256/size verification');
-  fs.renameSync(part,destination);return {file:destination,sha256:expected};
+  fs.rmSync(destination,{force:true});fs.renameSync(part,destination);return {file:destination,sha256:expected};
  }catch(error){output?.destroy();try{fs.rmSync(part,{force:true});}catch{}throw error;}
 }
 /** Script is fixed local source; paths and hash are passed separately, never interpolated. */

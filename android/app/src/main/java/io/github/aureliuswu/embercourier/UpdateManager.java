@@ -70,10 +70,18 @@ final class UpdateManager {
                 ui.post(() -> {
                     if (closed || activity.isFinishing()) return;
                     if (release == null) { if (manual) toast("已是最新版本 v" + BuildConfig.VERSION_NAME); return; }
-                    new AlertDialog.Builder(activity).setTitle("新版本 v" + release.version)
+                    Runnable present = () -> new AlertDialog.Builder(activity).setTitle("新版本 v" + release.version)
                         .setMessage("从官方 GitHub Release 下载、校验签名后覆盖安装。旧存档与设置会保留；Android 仍会要求你确认安装。")
                         .setNegativeButton("稍后", null)
                         .setPositiveButton("下载并更新", (d, which) -> download(release)).show();
+                    if (manual) present.run();
+                    else {
+                        // Do not cover an active fight with a native update prompt.
+                        android.webkit.WebView view = activity.findViewById(R.id.game_webview);
+                        if (view != null) view.evaluateJavascript(
+                            "document.body.dataset.screen==='menu' && !document.querySelector('dialog[open]')",
+                            idle -> { if ("true".equals(idle) && !closed) present.run(); });
+                    }
                 });
             } catch (Exception error) {
                 if (manual && !closed) ui.post(() -> toast("无法连接更新服务，离线游戏不受影响"));
@@ -185,9 +193,10 @@ final class UpdateManager {
                     out.getFD().sync();
                 } finally { conn.disconnect(); }
                 if (received != release.size || !expected.equalsIgnoreCase(hex(sha.digest()))) throw new SecurityException("APK checksum mismatch");
-                verifySignature(temp, release.version);
                 if (finalFile.exists() && !finalFile.delete()) throw new IllegalStateException("Old update locked");
                 if (!temp.renameTo(finalFile)) throw new IllegalStateException("Cannot stage APK");
+                try { verifySignature(finalFile, release.version); }
+                catch (Exception error) { finalFile.delete(); throw error; }
                 if (!closed) ui.post(() -> { if (!activity.isFinishing()) confirmInstall(finalFile); });
             } catch (Exception error) {
                 if (temp != null) temp.delete();

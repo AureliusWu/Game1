@@ -123,7 +123,7 @@ public final class OfflineGameTest {
             for (String permission : info.requestedPermissions) {
                 assertFalse("No external-storage permissions are needed", permission.startsWith("android.permission.READ_EXTERNAL_STORAGE") || permission.startsWith("android.permission.WRITE_EXTERNAL_STORAGE"));
             }
-            assertEquals("Offline assets still run inside the WebView sandbox", "true", js("!navigator.serviceWorker.controller && location.hostname==='appassets.androidplatform.net'"));
+            assertEquals("Offline assets still run inside the WebView sandbox", "true", js("(!('serviceWorker' in navigator)||!navigator.serviceWorker.controller) && location.hostname==='appassets.androidplatform.net'"));
             assertEquals("true", js("document.querySelector('[data-mode=endless]').click(); document.getElementById('start').click(); !document.getElementById('game').hidden"));
             assertEquals("true", js("window.emberCourierNative.pause(); document.getElementById('pause-dialog').open"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')) !== null"));
