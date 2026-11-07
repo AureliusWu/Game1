@@ -1,14 +1,14 @@
 /** v1.5 telegraphed enemy actions, elite affixes and earned kill milestones. */
 import {seedMix} from './routes.mjs';
 export const isTactical=s=>s?.endless?.tactics?.version===1;
-export const AFFIXES=['迅袭','震地','散射'];
+export const AFFIXES=['迅袭','震地','散射','震爆','追光'];
 const emit=(s,type,data={})=>s.events.push({type,...data});
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 export function initTactics(s){s.endless.tactics={version:1,eliteKills:0,milestones:0,phaseChanges:0};}
 export function prepareEnemy(s,e){
  if(!isTactical(s))return;
  e.aiCd=e.kind==='boss'?.6:1.4+(e.id%4)*.22;e.aiSeq=0;e.enraged=false;e.shieldBrokenUntil=0;
- if(e.patrolElite){e.affix=seedMix(s.seed,e.id+s.endless.floor)%3;e.damage*=1.12;if(e.affix===0)e.speed=Math.min(170,e.speed*1.16);}
+ if(e.patrolElite){e.affix=seedMix(s.seed,e.id+s.endless.floor)%(s.endless.draftSerial!==undefined?5:3);e.damage*=1.12;if(e.affix===0)e.speed=Math.min(170,e.speed*1.16);}
 }
 export function interruptEnemy(s,e){
  if(!isTactical(s))return false;
@@ -52,9 +52,12 @@ export function tickEnemy(s,e,dt,hurt,move){
  e.aiCd=(e.aiCd??1.6)-dt;if(e.aiCd>0)return false;
  const d=distance(e,s.player);let type='';
  if(e.kind==='boss'){
-  const patterns=[['beam','nova','volley'],['charge','volley','nova'],['rain','beam','nova']][e.bossType||0];
+  const patterns=[['beam','nova','volley'],['charge','volley','nova'],['rain','beam','nova'],['nova','rain','charge'],['volley','beam','nova']][e.bossType||0];
   type=patterns[(e.aiSeq||0)%patterns.length];e.aiSeq=(e.aiSeq||0)+1;
- }else if(e.patrolElite){type=e.affix===0?'lunge':e.affix===1?'slam':'volley';if(type==='slam'&&d>300)return false;}
+ }else if(e.patrolElite){type=({0:'lunge',1:'slam',2:'volley',3:'nova',4:'beam'})[e.affix]||'volley';if(['slam','nova'].includes(type)&&d>360)return false;}
+ else if(e.kind==='charger'&&d<470)type='lunge';
+ else if(e.kind==='sniper'&&d<930)type='volley';
+ else if(e.kind==='bulwark'&&d<350)type='nova';
  else if(e.kind==='runner'&&d<330)type='lunge';
  else if(e.kind==='brute'&&d<285)type='slam';
  else if(e.kind==='caster'&&d<600)type='volley';
@@ -79,7 +82,7 @@ export function validateTactics(s){
   for(const k of ['aiCd','aiSeq','shieldBrokenUntil'])if(e[k]!==undefined&&!Number.isFinite(e[k]))return false;
   if(e.aiSeq!==undefined&&(!Number.isSafeInteger(e.aiSeq)||e.aiSeq<0))return false;
   if(e.cast>0&&!['charge','lunge','slam','nova','volley','rain','beam'].includes(e.castType))return false;
-  if(e.affix!==undefined&&![0,1,2].includes(e.affix)||e.enraged!==undefined&&typeof e.enraged!=='boolean')return false;
+  if(e.affix!==undefined&&![0,1,2,3,4].includes(e.affix)||e.enraged!==undefined&&typeof e.enraged!=='boolean')return false;
  }
  return true;
 }

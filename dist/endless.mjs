@@ -1,5 +1,6 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
+import {ENDLESS_MAPS,nextEndlessMap} from './endless-maps.mjs';
 import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
 import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
 import {growthOn,growthPower,growthXP} from './growth.mjs';
@@ -7,6 +8,7 @@ const TAU=Math.PI*2;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const emit=(s,type,data={})=>s.events.push({type,...data});
 export const isEndless=s=>s?.endless?.version===1;
+export const liveDraft=s=>isEndless(s)&&Number.isInteger(s.endless.draftSerial)&&s.phase==='upgrade'&&s.endless.choice==='skill';
 export const SKILLS=[
  {id:'cinder',kind:'weapon',name:'爆焰行灯',symbol:'flame',color:'#ffb36b',desc:'光弹命中后爆炸，灼伤周围敌人。',detail:'每级增加爆炸范围与伤害。三级：冲刺留下火径。',partner:'haste',evolution:'不灭凤凰',evo:'爆炸连成火海，光弹额外锁定一个目标。'},
  {id:'frost',kind:'weapon',name:'霜降邮戳',symbol:'sun',color:'#9ddde1',desc:'每 3.4 秒释放冰环，伤害并减速附近敌人。',detail:'每级增加范围、伤害并缩短间隔。光环也会施加寒霜。',partner:'focus',evolution:'永冬回信',evo:'冰环冻结敌人，受寒霜的敌人承受更多光弹伤害。'},
@@ -59,7 +61,7 @@ export function initEndless(s,starter='cinder'){
  s.endless={version:1,floor:1,cleared:0,route:'hunt',rng:seedMix(s.seed,130),ranks:{[starter]:1},relics:[],starter,
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
-  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false}};
+  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0};
  initCombat(s);
  initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
@@ -87,21 +89,20 @@ export function configureEndlessRoom(s){
  if(r.route==='cache')r.total=Math.ceil(r.total*.85);
  r.remaining=r.total;r.roomKills=0;r.spawnIn=.6;r.bossMade=false;r.clearedRoom=false;r.rewardPending=false;r.choice='';r.roomDamage=s.damageTaken;r.pools=[];r.zones=[];r.zoneCd=4;r.weather=weatherFor(s);r.market=[];
  s.player.x=940;s.player.y=690;s.player.embers=Math.min(15,s.player.embers);s.player.invincible=2;
- s.beacons=[{x:650,y:430},{x:1230,y:430},{x:940,y:1040}].map((p,id)=>({...p,id,lit:false,progress:0,cost:5,r:38}));
- const k=seedMix(s.seed,n+130)%3;s.v12.layout=k;
- const covers=[[[490,590,100,100],[1290,800,110,90]],[[750,430,105,75],[1040,910,110,80]],[[520,910,120,75],[1260,430,100,80]]];
- s.obstacles=covers[k].map(([x,y,w,h])=>({x,y,w,h}));s.pois=[];
+ const k=nextEndlessMap(s.seed,n,r.mapIndex),map=ENDLESS_MAPS[k];r.mapIndex=k;s.v12.layout=k%3;
+ s.beacons=map.lamps.map(([x,y],id)=>({x,y,id,lit:false,progress:0,cost:5,r:38}));
+ s.obstacles=map.covers.map(([x,y,w,h])=>({x,y,w,h}));s.pois=[];
  s.exit={x:1740,y:690,r:58,open:false};s.embers=[];
  s.v12.patrolLeft=0;s.v12.goldLeft=0;s.v12.xpLeft=0;
  if(hasRelic(s,'moon')){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+3600;}
- emit(s,'floor',{floor:n,boss,route:r.route});
+ emit(s,'floor',{floor:n,boss,route:r.route,map:k,mapName:map.name});
 }
 export function endlessEnemy(s,kind,stats){
- const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&r.remaining%11===0);
+ const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
  return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
-  patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%3};
+  patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
 function hit(s,e,amount,slow=0){
  if(isCombat(s)){damageEnemy(s,e,amount,{slow});return;}
@@ -157,6 +158,9 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
+   else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
+   else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
+   else if(r.draftSerial!==undefined&&r.floor>=5&&roll<.38)kind='charger';
    else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
@@ -201,7 +205,7 @@ function draftSkills(s){
  for(const u of shuffled)if(picks.length<3&&!picks.includes(u.id))picks.push(u.id);
  if(picks.length===0)return ['ash','mend','supplies'];return picks;
 }
-function setChoice(s,kind,offered){s.endless.choice=kind;s.offered=offered;s.phase='upgrade';emit(s,'upgrade');}
+function setChoice(s,kind,offered){if(Number.isInteger(s.endless.draftSerial))s.endless.draftSerial++;s.endless.choice=kind;s.offered=offered;s.phase='upgrade';emit(s,'upgrade');}
 export function advanceEndlessChoices(s){
  const r=s.endless;if(s.player.hp<=0)return;
  if(!r.clearedRoom&&r.remaining===0&&s.enemies.length===0){
@@ -301,6 +305,8 @@ export function validateEndless(s){
  if(!Object.hasOwn(WEATHERS,r.weather)||!Array.isArray(r.zones)||r.zones.length>4||r.zones.some(z=>['x','y','r','warning'].some(k=>!Number.isFinite(z[k]))||z.r!==85||z.warning<=0||z.warning>1.25))return false;
  if(!Array.isArray(r.market)||r.market.length>3||new Set(r.market).size!==r.market.length||r.market.some(id=>!['tea','potion','reroll'].includes(id)))return false;
  if(!Array.isArray(r.pools)||r.pools.length>14||r.pools.some(p=>['x','y','until'].some(k=>!Number.isFinite(p[k]))))return false;
+ if(r.draftSerial!==undefined&&(!Number.isSafeInteger(r.draftSerial)||r.draftSerial<0))return false;
+ if(r.mapIndex!==undefined&&(!Number.isInteger(r.mapIndex)||r.mapIndex<0||r.mapIndex>=ENDLESS_MAPS.length))return false;
  if(r.oaths!==undefined){
   const o=r.oaths;if(!o||o.version!==1||typeof o.offerPending!=='boolean'||!o.ranks||Array.isArray(o.ranks)||typeof o.ranks!=='object')return false;
   if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>9)return false;
