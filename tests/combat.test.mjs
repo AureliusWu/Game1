@@ -41,7 +41,7 @@ test('overdrive blast resolves before death accounting and a killed enemy is rew
  const copy=restore(serialize(s));assert.ok(copy);chooseUpgrade(copy,copy.offered[0]);tick(copy,{},.01);assert.equal(copy.kills,kills);
 });
 test('overdrive, pending blast and dash identities persist across save/resume and freeze in a draft',()=>{
- const s=game();for(let i=0;i<10;i++)chargeCombat(s,{kind:'shade'});dash(s);s.endless.pending=1;advanceEndlessChoices(s);
+ const s=game();delete s.endless.draftSerial;for(let i=0;i<10;i++)chargeCombat(s,{kind:'shade'});dash(s);s.endless.pending=1;advanceEndlessChoices(s);
  const copy=restore(serialize(s));assert.ok(copy);assert.equal(copy.endless.combat.burstPending,true);assert.equal(copy.endless.combat.dashSerial,1);
  const until=copy.endless.combat.overdriveUntil;for(let i=0;i<20;i++)tick(copy,{},.05);assert.equal(copy.totalTime,0);assert.equal(copy.endless.combat.overdriveUntil,until);
 });

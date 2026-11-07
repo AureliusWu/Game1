@@ -3,7 +3,7 @@ import {SKILLS,SKILL_BY_ID,choiceInfo,rankOf,oathRank} from './endless.mjs';
 const keyFor=s=>`${s.endless?.floor??s.chapter}:${s.endless?.choice||s.v12?.choiceKind||'story'}:${s.endless?.draftSerial!==undefined?s.endless.draftSerial:s.endless?.pending||0}:${s.offered.join(',')}`;
 export function ensureDraft(s){
  if(s?.phase!=='upgrade'||!s.offered?.length)return null;
- const key=keyFor(s),duration=s.endless?.draftSerial!==undefined?(s.endless.choice==='route'?6:4):s.endless?8:6;
+ const key=keyFor(s),duration=s.endless?.draftSerial!==undefined?(s.endless.choice==='route'?6:4):s.endless?.choice==='route'||!s.endless?12:8;
  if(s.selection?.key!==key)s.selection={version:1,key,duration,remaining:duration,held:false,fired:false};
  return s.selection;
 }
