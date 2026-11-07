@@ -1,0 +1,98 @@
+{
+  "version": "1.5.1",
+  "verifiedAt": "2026-11-07T03:12:21.986Z",
+  "sourceCommit": "27870e3352f52d7042116db03d2249eef45a14cb",
+  "sourceTree": "63313a1969d2df01fece6d76b14d150bfb9f11e9",
+  "releaseURL": "https://github.com/AureliusWu/Game1/releases/tag/v1.5.1",
+  "workflowRun": 42332287428,
+  "workflowJob": 128281295497,
+  "workflowConclusion": "success",
+  "qualityRun": 42332287429,
+  "qualityConclusion": "success",
+  "unitTests": 152,
+  "unitFailed": 0,
+  "unitSkipped": 0,
+  "androidIntegrationTests": 5,
+  "androidIntegrationFailed": 0,
+  "androidIntegrationSkipped": 0,
+  "apk": {
+    "applicationId": "io.github.aureliuswu.embercourier",
+    "versionCode": 10501,
+    "versionName": "1.5.1",
+    "debuggable": false,
+    "internetPermission": false,
+    "signingCertificateSHA256": "d4f25dd8e0c470583dee2bd82944551b575b6e585addcc55b5242480fd3d5aa7"
+  },
+  "files": {
+    "Ember-Courier-v1.5.1-provenance.json": {
+      "bytes": 2277,
+      "sha256": "5a90f6e400e06de8ee5962c526b873641a829f141d440d39ebeddaf945b40376"
+    },
+    "Ember-Courier-v1.5.1.apk": {
+      "bytes": 1092718,
+      "sha256": "b03b68d4bb48db05e4931b404c253a4a9edccc89d66287d2de832efa181c7c9d"
+    },
+    "Ember-Courier-web-v1.5.1.zip": {
+      "bytes": 154823,
+      "sha256": "3d7bb61a2a5a5f3e200b74db74da44c341d75ee1238c37eb78d5390015829972"
+    },
+    "SHA256SUMS.txt": {
+      "bytes": 289,
+      "sha256": "c5e53008bfcb9b07db68b5324fe298ca138b0229cca0730295d0c6a1275697e9"
+    }
+  },
+  "runtimeResourceCount": 23,
+  "runtimeIdentity": "All 23 APK assets / web ZIP / GitHub source / Sites source / deployment archive / provenance digests identical",
+  "verificationScope": "Downloaded CI artifact ZIP and matched all four public Release asset digests. Signature, manifest and version verified by successful CI package_release.py against the original certificate. No second local APK signature verification performed.",
+  "balanceEvidence": {
+    "reusedFromVersion": "1.5.0",
+    "sourceCommit": "e12207db64666355e993279475dcd3cd84061ea6",
+    "summary": "docs/balance/v1.5.0-endless-summary.json",
+    "cases": 144,
+    "simulationChange": "None. Every hashed source other than battle.css matches v1.5.0 after normalizing 1.5.1 version markers to 1.5.0. These are reused samples, not a new experiment.",
+    "limitations": "Action-only fast bots with full map information are not human win-rate or subjective fun evidence."
+  },
+  "nativeVisualAcceptance": {
+    "run": 42332287380,
+    "job": 128281294938,
+    "sourceCommit": "27870e3352f52d7042116db03d2249eef45a14cb",
+    "conclusion": "success",
+    "testCount": 5,
+    "artifactId": 13558187473,
+    "artifactDigest": "sha256:e9ec7a60c5a24f19b15b2d3588aa113a7c09dcd9794270f4250bd303c0c54039",
+    "screenshots": {
+      "draft-portrait.png": {
+        "bytes": 154615,
+        "sha256": "33d6066098ef07149a7c19edf3bd9e5cb2456cd86a8ebccfc43711445ecba310",
+        "size": [
+          320,
+          640
+        ]
+      },
+      "draft-landscape.png": {
+        "bytes": 145014,
+        "sha256": "d95a28e95c1eb5e3cece48f3d5af6d752c9f8b9484e82da9d8ec7a7f8caea4fd",
+        "size": [
+          640,
+          320
+        ]
+      }
+    },
+    "observed": "Portrait courier and entire footer visible. Landscape footer stays fixed; shallow card region scrolls internally. Nonmodal bounds, all footer controls inside dock, saved held timer and actual auto-pick passed.",
+    "capture": "Wait for WebView visual state and committed frame; system fullscreen onboarding handled on ephemeral emulator; real PNG/orientation validated after test-target uninstall."
+  },
+  "web": {
+    "url": "https://ember-courier-game1.dazzlingmodel.chatgpt.site/",
+    "projectId": "appgprj_6aeda9efaf088191ae1711329f052d72",
+    "audience": "public",
+    "sourceCommit": "fb87f137f401d2bb026d20e16a2f6226bbbbe3e6",
+    "savedVersion": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_d27e418413f08191a683c6b0e2d8603d",
+    "versionNumber": 8,
+    "deploymentId": "appgdep_6aee9689f2b8819197a7c25358741ead",
+    "status": "succeeded",
+    "deployedAt": "2026-11-07T03:10:15.131566+00:00",
+    "archiveSHA256": "9783bd6007c5b155362783d41447340b9f4ca924dc025f0aac65ab490088b4fe",
+    "savedArchiveContentHash": "sha256:847a0744e6926d216dc58bda4011ea50d104559cdce37dbce8fc0c5757c1af50",
+    "observed": "Public browser homepage visibly shows v1.5.1; tab retained for review."
+  }
+}

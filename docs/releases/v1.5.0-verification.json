@@ -1,0 +1,45 @@
+{
+  "version": "1.5.0",
+  "verifiedAt": "2026-11-07T03:12:21.986Z",
+  "sourceCommit": "e12207db64666355e993279475dcd3cd84061ea6",
+  "sourceTree": "8ba0d3436d612c6ceb5ae9c3f020a08f4550557e",
+  "releaseURL": "https://github.com/AureliusWu/Game1/releases/tag/v1.5.0",
+  "workflowRun": 42330693527,
+  "workflowJob": 128276289247,
+  "workflowConclusion": "success",
+  "qualityRun": 42330693482,
+  "unitTests": 152,
+  "androidIntegrationTests": 5,
+  "files": {
+    "Ember-Courier-v1.5.0-provenance.json": {
+      "bytes": 2277,
+      "sha256": "77c109bd2f088e3644031b07c6e4c6c282304da5caccf67d4f8e5fdb92c5eb1c"
+    },
+    "Ember-Courier-v1.5.0.apk": {
+      "bytes": 1092642,
+      "sha256": "61652a0e3f5332ce35097ab2cb0ad98ff3d5983766e1356b5cbd880e4b9b3211"
+    },
+    "Ember-Courier-web-v1.5.0.zip": {
+      "bytes": 154746,
+      "sha256": "53df16e30979c9bc8d3147bcf660bf5ff660123e4678df66d48e5ad500360e86"
+    },
+    "SHA256SUMS.txt": {
+      "bytes": 289,
+      "sha256": "32a1700b82b7bde01034b7ef299015f03ff918d86641f7275fbe985dce1cfff1"
+    }
+  },
+  "runtimeResourceCount": 23,
+  "actionOnlyBalanceProbes": 144,
+  "web": {
+    "savedVersion": "appgprj_6aeda9efaf088191ae1711329f052d72~appgver_daf98e2f5218819180a4141185fb7020",
+    "versionNumber": 7,
+    "deploymentStatus": "superseded_before_deploy",
+    "supersededBy": "1.5.1"
+  },
+  "nativeVisualFollowup": {
+    "sourceCommit": "197ccb32eb1175ca983fd54d09693cbd6490aae3",
+    "run": 42331745088,
+    "findings": "Initial screenshot archive contained error text after test-target uninstall. Corrected captures then exposed a system first-fullscreen overlay/stale frames, and subsequently portrait achievement overlap/footer clipping. Test capture fixes and final v1.5.1 CSS fixes were verified in separate native runs. Original release assets were never overwritten."
+  },
+  "supersededBy": "1.5.1"
+}
