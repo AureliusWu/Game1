@@ -15,3 +15,5 @@
 - v1.2.0 adds radius-aware bounded navigation in routes.mjs and pure expedition hooks in expedition.mjs. Map, combat and loot random streams remain separate. Preserve finite patrol reward reservations and atomic claim state across saves.
 - Field upgrade choices stay in the current chapter; chapter choices advance once. Persist offers and their choice kind.
 - Fair challenges normalize the starting loadout and talents; the rule/date/condition key owns first rewards and personal bests. Keep eight new achievement rewards as commemorative letters.
+
+- v1.4 new endless runs add `endless.combat.version=1` in combat.mjs. Keep runs without it on v1.3 behavior; real compatibility fixtures must replay identically. Dash hits are once per dash identity and require an unobstructed movement segment. Process queued overdrive damage before death accounting so all kills receive rewards. Charge stops during overdrive; perfect-room rewards use the existing clear latch.

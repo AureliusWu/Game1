@@ -1,0 +1,78 @@
+{
+  "version": "1.4.0",
+  "generatedAt": "2026-11-07T01:21:40.850Z",
+  "cases": 144,
+  "method": "Actual movement, skills, pickups, enemy damage and seeded choices. No teleport, actor/HP edits or forced room completion. Active probes voluntarily stop after 15 floors; route probes after 10. Not human playtest evidence.",
+  "sourceHashes": {
+    "dist/app.mjs": "e6117692bd396792f440b454d6dbdcd5a44e763c075c11c61f03b635f57a37fa",
+    "dist/audio.mjs": "44ccd3f3a2b677011049792d5dced7e44f7cfdfd2cec6a6a49c055db98212a8f",
+    "dist/combat.mjs": "52fe6ea46f71d19a4a738bd31ec88140d5e3548856b7d5879ecbf0a97fa652f2",
+    "dist/content.mjs": "aa64517a5c54d54800230e8c053a028f83d53500569241ce6ee02076920855f8",
+    "dist/core.mjs": "458328cb0d79c232ee54e45bcae542ed6a498387c51fd28cb77b7b1ab8aaaa0f",
+    "dist/endless.mjs": "fd8a9c1c5a833b4710481c0a726a21bd3d2846f2265e9dec711063dce4b23c2d",
+    "dist/expedition.mjs": "1bf0df412ebe3deb348fd8d986fca4cc5dda505dedc430d7870607eb9aa9df8a",
+    "dist/hub.mjs": "a27542040a06931007c03295cbb46534f7af9d2a53c74cabe1ee153b5ab70d0e",
+    "dist/icon-192.png": "31ae022d351e98868fca3db1f144d75bd1924d7e61479a31893cf9d2a2ffd004",
+    "dist/icon-512.png": "e7a723baceab5929a5d16a8a77a4c4ddd325e62886c5886f540fd9ef9e7df740",
+    "dist/icon.svg": "828af51a3cf7987f2b5c5363002d4e8b28d71dfd5b6277e3378fbd66bcf94c27",
+    "dist/index.html": "5386cdddc2b5483485c844feced754036519475a95bb632837d2ae50e5b01a43",
+    "dist/manifest.webmanifest": "8c88419661786cb0e8f48f8d79090208c212b611b996db4bc41a087062057757",
+    "dist/progress.mjs": "bb3869b4dca69e8027395c641f9d0544011a3fa8fd85feff039052568b85b767",
+    "dist/render.mjs": "2f2b0852170dae5ba428dd85bda46da4d0308c201fdcbab2f9af990fd1eb18de",
+    "dist/routes.mjs": "1389638c7856d961d7522b75f73e2455604c93b109d9b9f73c54f8d407b7ef16",
+    "dist/style.css": "b22e4ec22418c143377bee38d34fa870c6917233522b510fd911d7c068cddb64",
+    "dist/sw.js": "5964827543ba628a09ca55a0aa0793ff66936c86fb83e24eb7ccd1944518a521",
+    "dist/systems.mjs": "2c30292c900a3909e3c89a3104ce3cef2286b1cd03b3d678e4ad4baa6b42591b",
+    "tests/endless-bot.mjs": "abcd2d20a777ca22c0a7d67590122adce0ae38a208bf4aac96e00841ec98ca5e",
+    "scripts/endless-audit.mjs": "d91dbaed9cb0c1c01e52ad1dc9406f354f6e472f65b4dd25d065e2e0f266c622"
+  },
+  "groups": {
+    "active": {
+      "count": 72,
+      "settled": 72,
+      "lost": 0,
+      "timeLimited": 0,
+      "floor": {
+        "min": 15,
+        "median": 15,
+        "max": 15
+      },
+      "durationMedian": 243.85,
+      "damageMedian": 11.7,
+      "evolutionRuns": 72
+    },
+    "route": {
+      "count": 48,
+      "settled": 48,
+      "lost": 0,
+      "timeLimited": 0,
+      "floor": {
+        "min": 10,
+        "median": 10,
+        "max": 10
+      },
+      "durationMedian": 150.75,
+      "damageMedian": 0,
+      "evolutionRuns": 48
+    },
+    "idle": {
+      "count": 24,
+      "settled": 0,
+      "lost": 24,
+      "timeLimited": 0,
+      "floor": {
+        "min": 3,
+        "median": 5,
+        "max": 25
+      },
+      "durationMedian": 66.575,
+      "damageMedian": 147.2,
+      "evolutionRuns": 24
+    }
+  },
+  "bounds": {
+    "enemies": 29,
+    "projectiles": 21,
+    "effects": 25
+  }
+}

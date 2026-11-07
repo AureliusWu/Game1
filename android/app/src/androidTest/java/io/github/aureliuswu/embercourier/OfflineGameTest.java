@@ -131,6 +131,27 @@ public final class OfflineGameTest {
             assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
     }
+    @Test public void testCombatControlsMeterAndRotation() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            js("document.querySelector('[data-mode=endless]').click(); document.getElementById('start').click(); document.getElementById('dash').click(); document.getElementById('pulse').click(); window.emberCourierNative.pause()");
+            // Skill controls use pointerdown on touch hardware; invoke those real input events.
+            js("window.emberCourierNative.back(); document.getElementById('dash').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); document.getElementById('pulse').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true})); window.emberCourierNative.pause()");
+            assertEquals("true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.endless.combat.version===1 && s.endless.combat.dashSerial===1 && s.metrics.dashes===1 && s.metrics.pulses===1})()"));
+            assertEquals("true", js("!document.getElementById('combat-meter').hidden"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            await("innerHeight > innerWidth");
+            assertEquals("true", js("(()=>{const a=document.getElementById('combat-meter').getBoundingClientRect(),b=document.getElementById('build-open').getBoundingClientRect();return a.bottom+1 <= b.top && document.documentElement.scrollWidth <= innerWidth+1})()"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight");
+            assertEquals("true", js("(()=>{const a=document.getElementById('combat-meter').getBoundingClientRect(),b=document.getElementById('build-open').getBoundingClientRect();return a.bottom+1 <= b.top})()"));
+            js("document.getElementById('save-exit').click(); document.getElementById('continue').click(); window.emberCourierNative.pause()");
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.combat.dashSerial===1"));
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
+    }
     @Test public void testEndlessRealDraftSaveAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

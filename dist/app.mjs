@@ -1,3 +1,4 @@
+import {isCombat,overdriving} from './combat.mjs';
 import {createGame,tick,dash,pulse,chooseUpgrade,serialize,restore,finalScore,CHAPTERS,UPGRADES,DIFFICULTIES,usePotion,nearestPOI,poiLabel} from './core.mjs';
 import {supplyCost,buyEndlessSupply,WEATHERS,weatherFor,isEndless,SKILLS,SKILL_BY_ID,RELICS,rankOf,evolved,choiceInfo,xpThreshold,rerollEndless,retireEndless} from './endless.mjs';
 import {Renderer,drawTitle} from './render.mjs';
@@ -91,7 +92,7 @@ function checkpoint(){if(run&&!ended){syncProgress();const data=serialize(run);i
 function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);}}
 function announceChapter(){
   const ch=CHAPTERS[run.chapter];$('banner-number').textContent=isEndless(run)?`FLOOR ${run.endless.floor} · ${run.endless.floor%5===0?'BOSS':'ENDLESS NIGHT'}`:`CHAPTER ${ch.number}`;$('banner-title').textContent=ch.name;$('banner-subtitle').textContent=isEndless(run)?'清开敌潮 · 拾取经验 · 打出你的构筑':ch.subtitle;
-  $('chapter-banner').hidden=false;$('chapter-banner').style.animation='none';void $('chapter-banner').offsetWidth;$('chapter-banner').style.animation='';bannerUntil=run.totalTime+4.2;
+  $('chapter-banner').hidden=false;$('chapter-banner').style.animation='none';void $('chapter-banner').offsetWidth;$('chapter-banner').style.animation='';bannerUntil=run.totalTime+(isCombat(run)?run.endless.floor===1?2.4:1.4:4.2);
   $('letter-toast').hidden=true;$('game-toast').hidden=true;letterUntil=0;toastUntil=0;
 }
 async function begin(resume=false){
@@ -99,15 +100,15 @@ async function begin(resume=false){
   const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
-  ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];
+  ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
-  if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。拾取微光升级，E 光环解围，空格冲刺！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
+  if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
 }
 function pauseGame(){if(screen!=='game'||!run||ended||run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
 function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;clearInput();last=performance.now();$('world').focus({preventScroll:true});}
 function returnToMenu(){checkpoint();closeDialogs();paused=false;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
-function doDash(){if(screen==='game'&&!paused&&!document.querySelector('dialog[open]')&&dash(run))audio.play('dash');}
+function doDash(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(dash(run)){processEvents(run.events);updateHUD();}}
 function doPulse(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(pulse(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function doPotion(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(usePotion(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function showUpgrade(){
@@ -129,8 +130,9 @@ function showEndlessDraft(){
   $('upgrade-note').textContent=route?`下一层天气 · ${WEATHERS[weatherFor(run,r.floor+1)].name}：${WEATHERS[weatherFor(run,r.floor+1)].desc} 可保存续玩或封存结算。`:'最多 3 种武器、4 种被动。强化选择与重抽次数均会保存。';
   $('draft-reroll').hidden=route;$('draft-reroll').disabled=r.rerolls<=0;$('draft-reroll').textContent=`重抽 · 剩 ${r.rerolls} 次`;$('endless-retire').hidden=!route;
   const market=$('endless-market');market.hidden=!route;market.replaceChildren();if(route){const label=document.createElement('span');label.textContent=`驿站补给 · ${run.journal.coins} 星砂 · 每项本层限购一次`;market.append(label);for(const id of ['tea','potion','reroll']){const b=document.createElement('button');const cost=supplyCost(run,id);b.textContent=({tea:'热茶 +25% 生命',potion:'补给 +1',reroll:'重抽 +1'})[id]+' · '+cost+' 砂';b.disabled=r.market.includes(id)||run.journal.coins<cost||(id==='tea'?run.player.hp>=run.player.maxHp:id==='potion'?run.journal.potions>=5:r.rerolls>=3);b.addEventListener('click',()=>{run.events=[];if(buyEndlessSupply(run,id)){processEvents(run.events);showEndlessDraft();updateHUD();}});market.append(b);}}
+  if(route&&isCombat(run))$('upgrade-copy').textContent=`第 ${r.floor} 层 · ${r.combat.lastClearTime.toFixed(1)} 秒${r.combat.lastPerfect?' · 无伤清场 +6 星砂':''}。${(r.floor+1)%5===0?'下一层必战首领！':'下一层，试试新的风险与回报。'}`;
   const container=$('upgrade-options');container.replaceChildren();
-  for(const id of run.offered){const u=choiceInfo(run,id),b=document.createElement('button');b.className='upgrade-card'+(relic?' relic-card':'');b.disabled=!!u.disabled;
+  for(const id of run.offered){const u=choiceInfo(run,id),b=document.createElement('button');b.className='upgrade-card'+(relic?' relic-card':'')+(u.ready?' evolution-card':'');b.disabled=!!u.disabled;
     b.innerHTML=`<small class="draft-tag">${u.tag}</small><svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small>${u.disabled?'星砂不足':route?'走这条路 →':'收入构筑 →'}</small>`;
     b.addEventListener('click',()=>{run.events=[];const floor=r.floor;if(chooseUpgrade(run,id)){$('upgrade-dialog').close();paused=false;audio.play('beacon');if(r.floor!==floor)announceChapter();processEvents(run.events);updateHUD();checkpoint();if(run.phase==='playing')$('world').focus({preventScroll:true});}});container.append(b);
   }showDialog('upgrade-dialog');
@@ -167,7 +169,7 @@ function processEvents(events){
       const b=run.beacons[e.id];renderer.react([{type:'beacon',x:b.x,y:b.y}]);
       if(e.lit===1){const ch=CHAPTERS[run.chapter];$('letter-text').textContent=ch.letter;$('letter-sender').textContent=ch.sender;$('letter-toast').hidden=false;letterUntil=run.totalTime+8;}
       if(e.lit===3&&run.chapter<2)toast('三座灯塔已亮，前往街区右侧的金色拱门。',5);
-      else toast(`灯塔已点亮 · ${e.lit}/3，附近可恢复生命。`,3);
+      else toast(isEndless(run)?'一次补给已用 · 恢复 20% 生命。':`灯塔已点亮 · ${e.lit}/3，附近可恢复生命。`,3);
     }
     if(e.type==='boss')toast(isEndless(run)?'夜航首领现身！看清预警，横向躲避；光环可打断蓄力。':'守夜者醒来了。灯塔可挡光球；看到定向预警请侧移。',6);
     if(e.type==='boss-warning')toast(e.text,5);
@@ -180,6 +182,7 @@ function processEvents(events){
     if(e.type==='evolution')toast(`武器进化 · ${e.name}！`,6);
     if(e.type==='revive')toast('第二次黎明已燃尽 · 复起！',5);
     if(e.type==='storm-warning')toast('雷雨锁定了脚下，离开紫色圆圈！',2);
+    if(e.type==='overdrive')toast('破晓超载！技能刷新，武器极速攻击 6 秒。',2);
     if(e.type==='fever')toast('20 连击 · 狂热 5 秒！',3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);
     if(e.type==='duplicate')toast('相同的装备已转为 8 星砂。',3);
@@ -212,6 +215,7 @@ function updateHUD(){
     $(`${id}-cd`).textContent=cd>0?cd.toFixed(1):label;$(`${id}-cd`).classList.toggle('counting',cd>0);
   }
   if(isEndless(run)){const r=run.endless;$('objective').textContent=`清开本层敌潮 · ${r.roomKills} / ${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`无尽夜航 · ${WEATHERS[r.weather].name} · ${r.evolutions.length?'进化 '+r.evolutions.length+' · ':''}剩余敌人 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障 ×1':''}${r.feverUntil>run.totalTime?' · 狂热':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
+  $('combat-meter').hidden=!isCombat(run);if(isCombat(run)){const burst=overdriving(run),c=run.endless.combat;$('combat-meter').classList.toggle('active',burst);$('combat-label').textContent=burst?'破晓超载 · '+(c.overdriveUntil-run.totalTime).toFixed(1)+'s':'破晓蓄能 · '+Math.floor(c.heat)+'%';$('combat-fill').style.width=(burst?(c.overdriveUntil-run.totalTime)/6*100:c.heat)+'%';}
   $('build-open').hidden=!isEndless(run);document.body.dataset.phase=run.phase;
 }
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>{settings.mode=b.dataset.mode;saveSettings();updateSettings();});
@@ -242,7 +246,7 @@ window.addEventListener('keydown',e=>{
     if(modal&&modal.id!=='pause-dialog')return;
     e.preventDefault();paused?resumeGame():pauseGame();return;
   }
-  if(modal){if(modal.id==='upgrade-dialog'&&!e.repeat&&['Digit1','Digit2','Digit3'].includes(e.code)){e.preventDefault();$('upgrade-options').children[Number(e.code.at(-1))-1]?.click();}return;}
+  if(modal){if(modal.id==='upgrade-dialog'){if(['Space','KeyE','KeyH','KeyF'].includes(e.code))e.preventDefault();if(!e.repeat&&['Digit1','Digit2','Digit3'].includes(e.code)){e.preventDefault();$('upgrade-options').children[Number(e.code.at(-1))-1]?.click();}}return;}
   keys.add(e.code);
   if(e.repeat)return;
   if(e.code==='Space')doDash();if(e.code==='KeyE')doPulse();

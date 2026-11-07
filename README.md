@@ -4,11 +4,19 @@
 
 一款原创俯视角无尽肉鸽。你是猫头鹰信使 **烛羽**：清开敌潮、拾光升级、搭配武器进化与奇物，每五层迎战首领，再选择更深一层的路线。原有三章送信冒险作为剧情模式完整保留。
 
-**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.3.0.md) · [部署说明](docs/DEPLOYMENT.md)
+**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.4.0.md) · [部署说明](docs/DEPLOYMENT.md)
 
-当前版本：**v1.3.0「无尽夜航」** · [升级说明](docs/releases/v1.3.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.3.0-endless-summary.json)。
+当前版本：**v1.4.0「疾焰连击」** · [升级说明](docs/releases/v1.4.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.4.0-endless-summary.json)。
 
 网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
+
+## v1.4 · 疾焰连击
+
+冲刺沿途切敌；光环击退并清除近身弹幕。击杀蓄满能量后进入 6 秒「破晓超载」，刷新冲刺与光环，光弹、冰环、雷电与羽刃的攻击节奏加快 65%。短暂命中亮色、敌人受击变形、合并伤害数字、清晰描边、冲刺光痕与分层音效同步反馈。
+
+敌潮更紧凑，普通影兽更容易击破，重装与首领保留压力。无伤清场额外获得 6 星砂，卡牌展示基础效果与即将达成的进化。新战斗规则只用于新建无尽旅途，v1.3 未完成运行与原剧情沿用既有规则。
+
+[研究与取舍](docs/COMBAT_v1.4.0.md) · [新旧同种子节奏对比](docs/balance/v1.4.0-combat-pacing.json)
 
 ## 无尽夜航
 
@@ -93,6 +101,7 @@ npm run check
 ```text
 dist/
   core.mjs              确定性游戏模拟、关卡、技能、战斗与存档校验
+  combat.mjs            冲刺切敌、破晓蓄能、爆发、无伤奖励与独立兼容校验
   endless.mjs           无尽房间、选卡、进化、奇物、天气、首领与结算状态
   routes.mjs            九种连通街区组合与有预算的全半径寻路
   expedition.mjs        新规则、奖励预算、首领招式与旅途复盘
@@ -115,4 +124,4 @@ GitHub Actions 在每次 main 推送和 PR 时执行测试、检查资源完整�
 
 ## 版本与授权
 
-v1.3.0 · 2026-11-06。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。
+v1.4.0 · 2026-11-07。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。

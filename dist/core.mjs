@@ -5,8 +5,9 @@ import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
 import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
+import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -105,6 +106,7 @@ export function dash(s) {
   const p=s.player;
   if(s.phase!=='playing'||p.dashCd>0) return false;
   p.dash=.2; p.dashCd=p.dashMax; p.invincible=Math.max(p.invincible,.42);
+  beginCombatDash(s);
   if(modern(s)&&has(s,'express'))s.v12.dashChargeUntil=s.totalTime+2;
   s.metrics.dashes++;event(s,'dash'); return true;
 }
@@ -115,7 +117,9 @@ export function pulse(s) {
   s.effects.push({type:'ring',x:p.x,y:p.y,r:p.pulseRadius,life:.65,maxLife:.65});
   let hits=0;
   for(const e of s.enemies) if(e.hp>0&&distance(p,e)<p.pulseRadius+e.r) {
-    hits++;e.hp-=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1); e.stun=1;
+    if(isCombat(s)&&e.warning>0)continue;
+    hits++;const damage=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1);
+    if(isCombat(s))damageEnemy(s,e,damage,{source:'pulse',stun:1});else{e.hp-=damage;e.stun=1;}
     if(modern(s)){
       if(e.cast>0&&(e.castType==='beam'||isEndless(s))){e.cast=0;e.beamReady=s.totalTime+6;if(isEndless(s))e.patternCd=5;s.v12.interrupts++;event(s,'interrupt');}
       if(Object.values(s.gear.slots).filter(id=>['prism-lamp','dawn-cape','echo-bag'].includes(id)).length===3)e.markUntil=s.totalTime+4;
@@ -128,6 +132,7 @@ export function pulse(s) {
     if(has(s,'return')&&hits>=2)p.pulseCd=Math.max(0,p.pulseCd-.6);
     if(['hearth-lamp','sentry-cape','herb-bag'].every(id=>Object.values(s.gear.slots).includes(id))){s.v12.barrier=1;s.v12.barrierSource='warden';s.v12.barrierUntil=s.totalTime+3;}
   }
+  if(isCombat(s))s.projectiles=s.projectiles.filter(b=>!b.enemy||distance(p,b)>p.pulseRadius+b.r);
   if(isEndless(s))onEndlessPulse(s,hits);s.metrics.pulses++;event(s,'pulse'); return true;
 }
 function spawnEnemy(s,kind) {
@@ -135,14 +140,14 @@ function spawnEnemy(s,kind) {
   let stats = kind==='boss' ? {hp:500,r:44,speed:70,damage:22} : kind==='caster'?{hp:48,r:18,speed:52,damage:12}:kind==='warder'?{hp:92,r:23,speed:44,damage:12}:kind==='runner' ? {hp:34,r:14,speed:116,damage:12} : kind==='brute' ? {hp:105,r:25,speed:52,damage:18} : {hp:45,r:18,speed:76,damage:13};
   if(isEndless(s))stats=endlessEnemy(s,kind,stats);
   const margin=65+stats.r+10;
-  const p=s.player, a=random(s)*Math.PI*2, d=450+random(s)*180;
+  const p=s.player, a=random(s)*Math.PI*2, d=isCombat(s)?325+random(s)*125:450+random(s)*180;
   let x=clamp(p.x+Math.cos(a)*d,margin,WORLD.width-margin);
   let y=clamp(p.y+Math.sin(a)*d,margin,WORLD.height-margin);
   for(let n=0;n<30&&(collides(s,x,y,stats.r+4)||distance(p,{x,y})<240||s.beacons.some(b=>b.lit&&distance(b,{x,y})<170));n++) {
     x=margin+random(s)*(WORLD.width-margin*2);y=margin+random(s)*(WORLD.height-margin*2);
   }
   if(collides(s,x,y,stats.r+4)||distance(p,{x,y})<220) return false;
-  const enemy={id:s.nextId++,x,y,kind,...stats,maxHp:stats.hp,stun:0,warning:1,attack:0,shotCd:2.5,angle:random(s)*6.28};
+  const enemy={id:s.nextId++,x,y,kind,...stats,maxHp:stats.hp,stun:0,warning:isCombat(s)&&kind!=='boss'?.75:1,attack:0,shotCd:2.5,angle:random(s)*6.28};
   if(modern(s)&&!isEndless(s)&&kind!=='boss'){
     const spawned=12+s.chapter*2-s.v12.patrolLeft;
     if(condition(s,'elite-patrol')&&[2,8].includes(spawned)){enemy.hp*=1.5;enemy.maxHp=enemy.hp;enemy.damage*=1.2;enemy.patrolElite=true;enemy.warning=1.5;}
@@ -189,8 +194,10 @@ export function tick(s,input={},dt=1/60) {
   let mx=Number.isFinite(input.x)?input.x:0,my=Number.isFinite(input.y)?input.y:0;
   const mag=Math.hypot(mx,my);if(mag>1){mx/=mag;my/=mag;}
   if(mag>.12) { const n=Math.hypot(mx,my);p.aimX=mx/n;p.aimY=my/n;if(Math.abs(mx)>.05)p.facing=mx>0?1:-1; }
+  const previous={x:p.x,y:p.y};
   if(p.dash>0) moveEntity(s,p,p.aimX*720,p.aimY*720,dt);
   else {const speed=p.speed*(modern(s)&&s.v12.tailwindUntil>s.totalTime?1.25:1)*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1);moveEntity(s,p,mx*speed,my*speed,dt);}
+  strikeCombatDash(s,previous);
   const sanctuary=!isEndless(s)&&s.beacons.find(b=>b.lit&&distance(p,b)<150),safe=!!sanctuary;
   if(modern(s))updateExpedition(s,dt,safe);
   if(safe)heal(s,sanctuaryRate(s,sanctuary)*dt);
@@ -246,7 +253,7 @@ export function tick(s,input={},dt=1/60) {
         const bonus=modern(s)?(has(s,'focus')&&eligible.length===1?1.25:1)*(s.v12.dashChargeUntil>s.totalTime?1.25:1):1;
         s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?(isEndless(s)?2.1:1.75):1)*bonus*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1),r:critical?7:5,critical});
       }
-      if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate;event(s,'shoot');
+      if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate/(overdriving(s)?1.65:1);event(s,'shoot');
     }
   }
   if(!isEndless(s)&&!s.exit.open && !(s.chapter===2&&allLit)) {
@@ -303,7 +310,9 @@ export function tick(s,input={},dt=1/60) {
       const hit=s.enemies.find(e=>e.warning<=0&&e.hp>0&&distance(b,e)<e.r+b.r);
       if(hit){
         const protectedBy=modern(s)&&s.enemies.some(e=>e.kind==='warder'&&e.hp>0&&e.id!==hit.id&&distance(e,hit)<130);
-        hit.hp-=b.damage*(protectedBy?.6:1);hit.stun=Math.max(hit.stun,.1);b.life=0;event(s,'hit',{x:hit.x,y:hit.y});
+        if(isCombat(s))damageEnemy(s,hit,b.damage*(protectedBy?.6:1),{critical:b.critical,stun:.1});
+        else{hit.hp-=b.damage*(protectedBy?.6:1);hit.stun=Math.max(hit.stun,.1);}
+        b.life=0;event(s,'hit',{x:hit.x,y:hit.y,critical:b.critical});
         if(isEndless(s))onEndlessBolt(s,hit,b);
         if(modern(s)&&hit.markUntil>s.totalTime&&s.totalTime>=s.v12.echoReady){hit.markUntil=0;s.v12.echoReady=s.totalTime+1;s.v12.echoes++;for(const e of s.enemies)if(e.hp>0&&distance(e,hit)<100)e.hp-=p.damage*.6;s.effects.push({type:'echo',x:hit.x,y:hit.y,r:100,life:.5,maxLife:.5});event(s,'echo');}
       }

@@ -54,6 +54,9 @@ export function findPath(s,start,goal,r=15){
 export function pursuit(s,e,target){
  if(clearLine(s,e,target,e.r+1)){e.path=[];return target;}
  if((!e.path?.length||s.totalTime>=(e.repathAt||0))&&s.v12.pathBudget>0){s.v12.pathBudget--;e.path=findPath(s,e,target,e.r+1);e.repathAt=s.totalTime+1.15;}
+ // A new nearest grid anchor can be behind a slow actor on every replan.
+ // Continue to the furthest visible waypoint instead of walking back to it.
+ if(s.endless?.combat?.version===1&&e.path?.length)for(let i=e.path.length-1;i>0;i--)if(clearLine(s,e,e.path[i],e.r+1)){e.path.splice(0,i);break;}
  while(e.path?.length>1&&Math.hypot(e.x-e.path[0].x,e.y-e.path[0].y)<5)e.path.shift();
  return e.path?.[0]||target;
 }

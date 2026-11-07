@@ -56,7 +56,7 @@ test('every weapon evolves only with its own Lv.2 partner and persists the evolu
 });
 test('clearing a room claims rewards once and collects the remaining real XP',()=>{
  const s=game();s.endless.remaining=0;s.enemies=[];s.embers=[{id:900,x:1000,y:690,wobble:0,xp:6}];
- const coins=s.journal.coins;advanceEndlessChoices(s);assert.equal(s.endless.cleared,1);assert.equal(s.journal.xp,6);assert.equal(s.journal.coins,coins+10);assert.equal(s.collected,1);
+ const coins=s.journal.coins;advanceEndlessChoices(s);assert.equal(s.endless.cleared,1);assert.equal(s.journal.xp,6);assert.equal(s.journal.coins,coins+16);assert.equal(s.collected,1);
  const copy=restore(serialize(s));assert.ok(copy);chooseUpgrade(copy,copy.offered[0]);const after=copy.journal.coins;
  advanceEndlessChoices(copy);assert.equal(copy.journal.coins,after);assert.equal(copy.endless.cleared,1);
 });

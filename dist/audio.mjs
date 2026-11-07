@@ -1,6 +1,6 @@
 /** Original oscillator-only soundtrack: no samples, streaming, or third-party assets. */
 export class AudioEngine {
-  constructor(){this.enabled=true;this.ctx=null;this.master=null;this.nextNote=0;this.step=0;this.music=false;}
+  constructor(){this.enabled=true;this.ctx=null;this.master=null;this.nextNote=0;this.step=0;this.music=false;this.voices=0;this.lastSounds=new Map();}
   async unlock(){
     if(!this.enabled)return;
     try{
@@ -11,12 +11,19 @@ export class AudioEngine {
   setEnabled(on){this.enabled=on;if(this.master&&this.ctx)this.master.gain.setTargetAtTime(on?.36:0,this.ctx.currentTime,.12);if(on)this.unlock();}
   tone(freq,dur=.15,type='sine',vol=.2,delay=0,to=0){
     if(!this.enabled||!this.ctx||this.ctx.state!=='running')return;
+    if(this.voices>=48)return;this.voices++;
     const at=this.ctx.currentTime+delay,o=this.ctx.createOscillator(),g=this.ctx.createGain();
     o.type=type;o.frequency.setValueAtTime(freq,at);if(to)o.frequency.exponentialRampToValueAtTime(to,at+dur);
     g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.012);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
-    o.connect(g);g.connect(this.master);o.start(at);o.stop(at+dur+.03);o.onended=()=>{o.disconnect();g.disconnect();};
+    o.connect(g);g.connect(this.master);o.start(at);o.stop(at+dur+.03);o.onended=()=>{o.disconnect();g.disconnect();this.voices--;};
   }
   play(type){
+    const interval=({impact:.07,death:.085,collect:.065,shoot:.06})[type];
+    if(interval){const now=this.ctx?.currentTime||0;if(now-(this.lastSounds.get(type)??-Infinity)<interval)return;this.lastSounds.set(type,now);}
+    if(type==='impact'){this.tone(165,.055,'triangle',.085,0,75);this.tone(1000,.035,'sine',.03,0,350);}
+    if(type==='dash-hit'){this.tone(320,.13,'sawtooth',.055,0,85);this.tone(900,.08,'triangle',.07);}
+    if(type==='overdrive'){this.tone(80,.4,'triangle',.18,0,42);[392,523,784,1047].forEach((n,i)=>this.tone(n,.45,'triangle',.1,i*.07));}
+    if(type==='perfect-clear'){this.tone(1047,.3,'sine',.1);this.tone(1568,.4,'sine',.07,.08);}
     if(type==='collect'){this.tone(880,.22,'sine',.17);this.tone(1320,.18,'sine',.07,.045);}
     if(type==='dash')this.tone(180,.16,'triangle',.15,0,600);
     if(type==='pulse'){this.tone(150,.45,'sine',.3,0,500);this.tone(600,.5,'triangle',.08,.05,1200);}

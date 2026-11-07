@@ -1,6 +1,6 @@
 {
   "name": "ember-courier",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "private": true,
   "type": "module",
   "description": "余烬信使 — an original offline-ready survival adventure",
@@ -10,5 +10,7 @@
     "check": "node scripts/check.mjs",
     "build": "node scripts/check.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": {
+    "node": ">=22"
+  }
 }

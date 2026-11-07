@@ -47,7 +47,7 @@ export function recalculate(s){
   }
   if(s.gear){const sets=equippedSets(s);if(sets.courier>=2)st.speed+=12;if(sets.warden>=2)st.armor+=.08;if(sets.warden===3&&!modern(s)){st.maxHp+=20;st.heal+=3;}if(sets.dawn>=2)st.crit+=.12;if(sets.dawn===3&&!modern(s))st.pulseMax-=1.2;}
   applyEndlessStats(s,st);
-  st.dashMax=Math.max(1.05,st.dashMax);st.pulseMax=Math.max(2.2,st.pulseMax);st.attackRate=Math.max(.5,st.attackRate);st.armor=cap(st.armor,0,.5);st.crit=cap(st.crit,0,.65);
+  st.dashMax=Math.max(1.05,st.dashMax);st.pulseMax=Math.max(2.2,st.pulseMax);st.attackRate=Math.max(s.endless?.combat?.version===1?.22:.5,st.attackRate);st.armor=cap(st.armor,0,.5);st.crit=cap(st.crit,0,.65);
   Object.assign(p,st);p.hp=Math.min(hp,st.maxHp);p.dashCd=Math.min(p.dashCd,p.dashMax);p.pulseCd=Math.min(p.pulseCd,p.pulseMax);
 }
 export function addCoins(s,amount){if(amount<=0)return;s.journal.coins+=amount;s.metrics.coinsEarned+=amount;}

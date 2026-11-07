@@ -1,5 +1,6 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
+import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
 const TAU=Math.PI*2;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const emit=(s,type,data={})=>s.events.push({type,...data});
@@ -49,6 +50,7 @@ export function initEndless(s,starter='cinder'){
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
   frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0};
+ initCombat(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
 }
 export function applyEndlessStats(s,st){
@@ -61,6 +63,7 @@ export function applyEndlessStats(s,st){
  st.pulseMax-=rankOf(s,'pulsecraft')*.3;st.pickup+=rankOf(s,'magnet')*35+(hasRelic(s,'lodestone')?160:0);
  st.heal=(1+rankOf(s,'magnet')*.3)*(r.weather==='ash'?1.5:1);if(r.weather==='gale')st.pickup+=40;st.crit+=rankOf(s,'focus')*.09;
  if(hasRelic(s,'hourglass')){st.dashMax*=.7;st.pulseMax*=1.15;}
+ combatStats(s,st);
 }
 export function gainEndlessXP(s,amount){
  if(!(amount>0))return;const j=s.journal,r=s.endless;j.xp+=amount;
@@ -69,6 +72,7 @@ export function gainEndlessXP(s,amount){
 export function configureEndlessRoom(s){
  const r=s.endless,n=r.floor,boss=n%5===0;
  r.total=boss?9+Math.min(12,Math.floor(n/5)*2):11+Math.min(42,n*2);
+ if(isCombat(s)){r.total=boss?13+Math.min(12,Math.floor(n/5)*2):19+Math.min(40,n*3);r.combat.roomStart=s.totalTime;r.combat.burstPending=false;}
  if(r.route==='cache')r.total=Math.ceil(r.total*.85);
  r.remaining=r.total;r.roomKills=0;r.spawnIn=.6;r.bossMade=false;r.clearedRoom=false;r.rewardPending=false;r.choice='';r.roomDamage=s.damageTaken;r.pools=[];r.zones=[];r.zoneCd=4;r.weather=weatherFor(s);r.market=[];
  s.player.x=940;s.player.y=690;s.player.embers=Math.min(15,s.player.embers);s.player.invincible=2;
@@ -83,11 +87,12 @@ export function configureEndlessRoom(s){
 }
 export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&r.route==='elite'&&r.remaining%7===0;
- const scale=(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(r.weather==='ash'?1.15:1)*(kind==='boss'?1.8:1);
+ const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  return {...stats,hp:stats.hp*scale*(elite?2:1),maxHp:stats.hp*scale*(elite?2:1),speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%3};
 }
 function hit(s,e,amount,slow=0){
+ if(isCombat(s)){damageEnemy(s,e,amount,{slow});return;}
  if(e.hp<=0||e.warning>0)return;e.hp-=amount;
  if(slow)e.slowUntil=Math.max(e.slowUntil||0,s.totalTime+slow);
  e.stun=Math.max(e.stun,.07);emit(s,'damage-number',{x:e.x,y:e.y,damage:Math.round(amount)});
@@ -110,13 +115,13 @@ function chain(s,extra=false){
 export function orbitPositions(s){
  const level=rankOf(s,'orbit');if(!level)return [];
  const evo=evolved(s,'orbit'),count=level+1,positions=[];
- for(let i=0;i<count;i++){const a=s.totalTime*(s.player.dash>0?6:2.4)+i*TAU/count,r=evo&&i%2?155:85+level*6;positions.push({x:s.player.x+Math.cos(a)*r,y:s.player.y+Math.sin(a)*r});}return positions;
+ for(let i=0;i<count;i++){const a=s.totalTime*(s.player.dash>0?6:2.4)*(overdriving(s)?1.65:1)+i*TAU/count,r=evo&&i%2?155:85+level*6;positions.push({x:s.player.x+Math.cos(a)*r,y:s.player.y+Math.sin(a)*r});}return positions;
 }
 export function onEndlessBolt(s,target,bolt){
  if(rankOf(s,'cinder'))area(s,target,55+rankOf(s,'cinder')*9,(7+rankOf(s,'cinder')*4)*power(s),'blast');
  if(evolved(s,'cinder')){s.endless.pools.push({x:target.x,y:target.y,until:s.totalTime+1.4});s.endless.pools=s.endless.pools.slice(-14);}
  if(evolved(s,'frost')&&(target.slowUntil||0)>s.totalTime)hit(s,target,bolt.damage*.35);
- emit(s,'damage-number',{x:target.x,y:target.y,damage:Math.round(bolt.damage),critical:bolt.critical});
+ if(!isCombat(s))emit(s,'damage-number',{x:target.x,y:target.y,damage:Math.round(bolt.damage),critical:bolt.critical});
 }
 export function onEndlessPulse(s,hits){
  if(rankOf(s,'frost'))for(const e of s.enemies)if(dist(s.player,e)<s.player.pulseRadius+e.r)e.slowUntil=s.totalTime+3;
@@ -127,9 +132,10 @@ export function onEndlessPulse(s,hits){
 }
 export function updateEndlessCombat(s,dt,{spawn,hurt}){
  const r=s.endless,p=s.player;
- r.spawnIn-=dt;
+ updateCombatBurst(s);
+ r.spawnIn-=dt;if(isCombat(s)&&s.enemies.filter(e=>e.hp>0).length<3)r.spawnIn=Math.min(r.spawnIn,.22);
  if(r.remaining>0&&r.spawnIn<=0&&s.enemies.length<30){
-  let batch=Math.min(3+Math.floor(r.floor/4),6,r.remaining,30-s.enemies.length);
+  let batch=Math.min((isCombat(s)?4:3)+Math.floor(r.floor/4),6,r.remaining,30-s.enemies.length);
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
@@ -138,16 +144,16 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=Math.max(1.15,3.1-r.floor*.07)*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?Math.max(1.1,1.95-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  r.zoneCd-=dt;
  if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}
  for(const z of r.zones){z.warning-=dt;if(z.warning<=0){if(dist(z,p)<z.r+p.r)hurt(s,(18+r.floor*.8),'雷雨·落雷');s.effects.push({type:'lightning-burst',x:z.x,y:z.y,r:z.r,life:.35,maxLife:.35});}}r.zones=r.zones.filter(z=>z.warning>0).slice(-4);
  const haste=Math.pow(.9,rankOf(s,'haste'));
- r.frostCd-=dt;r.thunderCd-=dt;r.fireCd-=dt;
+ const weaponDt=dt*(overdriving(s)?1.65:1);r.frostCd-=weaponDt;r.thunderCd-=weaponDt;r.fireCd-=dt;
  if(rankOf(s,'frost')&&r.frostCd<=0){const lv=rankOf(s,'frost');r.frostCd=(3.7-lv*.3)*haste;area(s,p,115+lv*24,(18+lv*10)*power(s),'frost',evolved(s,'frost')?3:1.8);if(evolved(s,'frost'))for(const e of s.enemies)if(dist(p,e)<235)e.stun=Math.max(e.stun,.7);emit(s,'frost');}
  if(rankOf(s,'thunder')&&r.thunderCd<=0){r.thunderCd=(3-lvThunder(s)*.18)*haste;chain(s);}
- const blades=orbitPositions(s);if(blades.length)for(const e of s.enemies)if(e.hp>0&&s.totalTime>=(e.featherAt||0)&&blades.some(b=>dist(b,e)<e.r+19)){hit(s,e,(9+rankOf(s,'orbit')*5)*power(s)*(evolved(s,'orbit')?1.5:1));e.featherAt=s.totalTime+.38;}
+ const blades=orbitPositions(s);if(blades.length)for(const e of s.enemies)if(e.hp>0&&s.totalTime>=(e.featherAt||0)&&blades.some(b=>dist(b,e)<e.r+19)){hit(s,e,(9+rankOf(s,'orbit')*5)*power(s)*(evolved(s,'orbit')?1.5:1));e.featherAt=s.totalTime+.38/(overdriving(s)?1.65:1);}
  if(rankOf(s,'cinder')>=3&&p.dash>0&&r.fireCd<=0){r.fireCd=.12;r.pools.push({x:p.x,y:p.y,until:s.totalTime+2.4});}
  r.pools=r.pools.filter(f=>f.until>s.totalTime).slice(-14);
  for(const e of s.enemies)if(s.totalTime>=(e.burnAt||0)&&r.pools.some(f=>dist(f,e)<80+e.r)){hit(s,e,18*power(s));e.burnAt=s.totalTime+.5;}
@@ -155,6 +161,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
 const lvThunder=s=>rankOf(s,'thunder');
 export function onEndlessKill(s,e){
  const r=s.endless;r.roomKills++;
+ chargeCombat(s,e);
  if(e.kind==='boss'){r.bosses++;r.rerolls=Math.min(3,r.rerolls+1);}
  if(rankOf(s,'sustain')&&s.kills%8===0)s.player.hp=Math.min(s.player.maxHp,s.player.hp+3*rankOf(s,'sustain'));
  if(hasRelic(s,'hunger')&&s.journal.combo>0&&s.journal.combo%20===0){r.feverMark++;r.feverUntil=s.totalTime+5;emit(s,'fever');}
@@ -178,6 +185,7 @@ export function advanceEndlessChoices(s){
   s.score+=350+r.floor*50;const coins=10+(r.route==='curse'?25:0);s.journal.coins+=coins;s.metrics.coinsEarned+=coins;
   for(const e of s.embers){gainEndlessXP(s,e.xp||0);s.collected++;}s.embers=[];
   r.pending+=r.route==='curse'?2:1;s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.1+(hasRelic(s,'lodestone')?8:0));
+  finishCombatRoom(s);
   emit(s,'room-clear',{floor:r.floor});
  }
  if(r.pending>0){setChoice(s,'skill',draftSkills(s));return;}
@@ -188,7 +196,12 @@ export function choiceInfo(s,id){
  const r=s.endless;
  if(r.choice==='route'){const u=ROUTES.find(u=>u.id===id);return {...u,tag:`第 ${r.floor+1} 层${(r.floor+1)%5===0?' · 首领':''}`,desc:u.desc+(id==='rest'?` 费用 ${restCost(s)} 星砂。`:''),disabled:id==='rest'&&s.journal.coins<restCost(s)};}
  if(r.choice==='relic'&&RELICS.some(u=>u.id===id))return {...RELICS.find(u=>u.id===id),tag:'奇物 · 本局生效'};
- const u=SKILL_BY_ID[id];if(u){const level=rankOf(s,id);return {...u,tag:`${u.kind==='weapon'?'武器':'被动'} · Lv.${level} → ${level+1}`,desc:u.desc,detail:level===4&&u.partner?`${u.detail} 搭配 ${SKILL_BY_ID[u.partner].name} Lv.2 可进化。`:u.detail};}
+ const u=SKILL_BY_ID[id];if(u){const level=rankOf(s,id),n=level+1;
+  const nextWeapon=u.partner&&n===5&&rankOf(s,u.partner)>=2;
+  const nextPartner=SKILLS.find(w=>w.partner===id&&rankOf(s,w.id)===5&&n===2);
+  const ready=isCombat(s)&&!!(nextWeapon||nextPartner);
+  const delta=({cinder:`基础爆炸 ${7+n*4} · 半径 ${55+n*9}${n>=3?' · 冲刺留下火径':''}`,frost:`基础冰环 ${18+n*10} · 间隔 ${(3.7-n*.3).toFixed(1)} 秒 · 半径 ${115+n*24}`,orbit:`羽刃 ${n+1} 枚 · 基础击伤 ${9+n*5}`,thunder:`连锁最多 ${2+n} 名 · 基础雷伤 ${18+n*7} · 间隔 ${(3-n*.18).toFixed(2)} 秒`})[id];
+  return {...u,ready,tag:ready?'✦ 本次选择立即进化':`${u.kind==='weapon'?'武器':'被动'} · Lv.${level} → ${n}`,desc:u.desc,detail:isCombat(s)&&delta?delta+'。'+(u.partner?`进化搭配：${SKILL_BY_ID[u.partner].name} 2（当前 ${rankOf(s,u.partner)}）。`:''):level===4&&u.partner?`${u.detail} 搭配 ${SKILL_BY_ID[u.partner].name} Lv.2 可进化。`:u.detail};}
  return {id,symbol:id==='ash'?'flame':id==='mend'?'tea':'bag',name:id==='ash'?'余烬淬炼':id==='mend'?'温热回信':'补给包',tag:'构筑已满 · 继续成长',desc:id==='ash'?'所有伤害再提高 4%。':id==='mend'?'恢复 25% 最大生命。':'增加一瓶补给，已满则获得 12 星砂。'};
 }
 export const restCost=s=>14+s.endless.floor*2;
@@ -241,6 +254,7 @@ export function endlessBossCast(s,e,dt,hurt,move){
  return false;
 }
 export function validateEndless(s){
+ if(!validateCombat(s))return false;
  const r=s.endless;if(!r||r.version!==1||!Number.isInteger(r.floor)||r.floor<1||r.floor>1000000||s.chapter!==(r.floor-1)%3)return false;
  for(const k of ['cleared','rng','remaining','total','roomKills','pending','rerolls','rerollsUsed','bosses','ash','feverMark'])if(!Number.isInteger(r[k])||r[k]<0)return false;
  if(r.remaining>r.total||r.total>80||r.pending>500||r.rerolls>3||r.cleared>r.floor||r.roomKills>r.total)return false;

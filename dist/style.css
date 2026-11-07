@@ -18,3 +18,12 @@
 @media(max-height:530px) and (min-width:541px){.build-open{top:90px;font-size:9px}.run-status{top:91px}.upgrade-card{display:flex;min-height:0;gap:7px;padding:12px}.upgrade-card .draft-tag{display:block}.upgrade-card span{font-size:10px}.upgrade-card .card-detail{font-size:9px}.upgrade-modal{padding-top:20px}.upgrade-options{margin-top:10px}.upgrade-modal h2{font-size:23px}.upgrade-modal .modal-intro{font-size:11px}.draft-actions{margin-top:9px}.hero-art{margin-top:20px}}
 
 .endless-market{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px;padding:13px;border:1px solid #a1af8755;border-radius:9px;background:#143238}.endless-market>span{flex-basis:100%;font-size:10px;color:#bcc9aa;text-align:left;margin-bottom:3px}.endless-market button{padding:8px 10px;border-radius:5px;border:1px solid #9cae8455;background:#305047;color:#e6d6ac;font-size:10px}.endless-market button:disabled{opacity:.4;cursor:default}.boss-panel b{font-weight:500}
+
+/* Compact combat feedback follows the XP track on every viewport. */
+.combat-meter{margin-top:9px;color:#d4bc8f;font-size:9px;letter-spacing:.4px}.combat-meter>div{height:4px;margin-top:5px;background:#e3bd6e22;border-radius:4px;overflow:hidden}.combat-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#be8b56,#f6ca80);transition:width .09s linear}.combat-meter.active{color:#ffe4af}.combat-meter.active i{background:#ffe0a1;box-shadow:0 0 8px #ffc980}.combat-meter.active>span{font-weight:700}
+@media(prefers-reduced-motion:reduce){.combat-meter i{transition:none}}
+
+.upgrade-card.evolution-card{border-color:#f2ca83;background:linear-gradient(145deg,#65503355,#203d3c)}.evolution-card .draft-tag{color:#ffe0a1}
+
+@media(min-width:700px){.build-open{top:calc(151px + env(safe-area-inset-top))}}
+@media(max-height:520px) and (orientation:landscape){.build-open{top:calc(120px + env(safe-area-inset-top))}}
