@@ -4,7 +4,7 @@ import {UPGRADES as UPGRADE_DATA} from './content.mjs';
 import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
-import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
+import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
@@ -114,6 +114,7 @@ export function dash(s) {
   if(s.phase!=='playing'||p.dashCd>0) return false;
   p.dash=.2; p.dashCd=p.dashMax; p.invincible=Math.max(p.invincible,.42);
   beginCombatDash(s);growthDash(s);
+  if(isEndless(s))onEndlessDash(s);
   if(modern(s)&&has(s,'express'))s.v12.dashChargeUntil=s.totalTime+2;
   s.metrics.dashes++;event(s,'dash'); return true;
 }

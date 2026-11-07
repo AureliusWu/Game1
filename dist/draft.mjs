@@ -1,5 +1,5 @@
 /** Visible-time draft countdown. No DOM, clock, randomness or free resource mutation. */
-import {SKILLS,SKILL_BY_ID,choiceInfo,rankOf} from './endless.mjs';
+import {SKILLS,SKILL_BY_ID,choiceInfo,rankOf,oathRank} from './endless.mjs';
 const keyFor=s=>`${s.endless?.floor??s.chapter}:${s.endless?.choice||s.v12?.choiceKind||'story'}:${s.endless?.pending||0}:${s.offered.join(',')}`;
 export function ensureDraft(s){
  if(s?.phase!=='upgrade'||!s.offered?.length)return null;
@@ -12,6 +12,7 @@ export function recommendedChoice(s){
  if(!s.endless)return s.offered[0]||null;
  const valid=s.offered.filter(id=>!choiceInfo(s,id).disabled);
  if(s.endless.choice==='route')return valid.includes('hunt')?'hunt':valid.find(id=>id!=='rest')||null;
+ if(s.endless.choice==='oath'){const linked=({cinder:'ember',frost:'storm',orbit:'gale',thunder:'storm'})[s.endless.starter];return valid.includes(linked)?linked:valid.sort((a,b)=>oathRank(s,b)-oathRank(s,a))[0]||null;}
  const score=id=>{
   if(id==='mend')return s.player.hp/s.player.maxHp<.35?210:5;
   if(id==='supplies')return s.journal.potions===0?75:4;
