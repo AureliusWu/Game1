@@ -46,6 +46,6 @@ test('Windows updater waits for original process, compares staged hash, rolls ba
  assert.match(win.REPLACE_SCRIPT,/Move-Item -LiteralPath \$Backup -Destination \$Target/);
  assert.match(win.REPLACE_SCRIPT,/Start-Process -FilePath \$Target/);
  const host=await readFile(new URL('../windows/main.cjs',import.meta.url),'utf8');
- assert.match(host,/ember-update:\/\/check/);
+ assert.match(host,/ember:\/\/game\/update-check/);
  assert.match(host,/updater\?\.check\(false\)/);
 });

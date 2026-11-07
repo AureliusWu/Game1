@@ -155,6 +155,15 @@ function createUpdater({app,dialog,getWindow,currentVersion,quit}){
    fs.writeFileSync(stateFile,JSON.stringify({time:Date.now()})+'\n');
    const release=pickRelease(latest,currentVersion);
    if(!release){if(manual)await notify({title:'余烬信使 · 检查更新',message:'当前 v'+currentVersion+' 已是最新版。'});return;}
+   if(!manual){
+    const win=getWindow();
+    const idle=await win.webContents.executeJavaScript("document.body.dataset.screen==='menu' && !document.querySelector('dialog[open]')").catch(()=>false);
+    if(!idle){
+     // A background check never interrupts a live fight. The Settings button remains available.
+     await win.webContents.executeJavaScript("document.getElementById('update-status').textContent='发现新版 v"+release.version+" · 回到邮局后可检查更新'").catch(()=>{});
+     return;
+    }
+   }
    const decision=await notify({title:'余烬信使 v'+release.version+' 可更新',
     message:'已发现官方新版。下载并校验完整 EXE 后，将保存游戏、退出当前程序、覆盖原位置并重新启动。存档不会删除。',
     buttons:['下载并更新','稍后']});

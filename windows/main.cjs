@@ -85,7 +85,7 @@ async function boot(){
  win.setMenu(null);
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  win.webContents.on('will-navigate',(event,url)=>{
-  if(url==='ember-update://check'){event.preventDefault();updater?.check(true);return;}
+  if(url==='ember://game/update-check'||url==='ember-update://check'){event.preventDefault();updater?.check(true);return;}
   if(!ownURL(url))event.preventDefault();
  });
  win.webContents.on('before-input-event',(event,input)=>{if(input.type==='keyDown'&&(input.key==='F11'||input.key==='Enter'&&input.alt)){event.preventDefault();win.setFullScreen(!win.isFullScreen());}});

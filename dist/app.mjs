@@ -396,7 +396,7 @@ function watchWebRegistration(reg){
 async function triggerUpdateCheck(){
  if(updatePlatform!=='web'){
   updateStatus('正在打开安装包更新通道…');
-  location.href='ember-update://check';
+  location.href=updatePlatform==='windows'?'ember://game/update-check':'ember-update://check';
   return;
  }
  if(!('serviceWorker' in navigator)){updateStatus('此浏览器不支持离线自动更新');return;}
@@ -423,7 +423,8 @@ if(updatePlatform==='web'&&'serviceWorker' in navigator){
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){webRegistration?.update().catch(()=>{});applyWebUpdateIfSafe();}});
  window.addEventListener('online',()=>webRegistration?.update().catch(()=>{}));
  document.addEventListener('close',()=>queueMicrotask(applyWebUpdateIfSafe),true);
- window.setInterval(()=>{if(!document.hidden)webRegistration?.update().catch(()=>{});},20*60*1000);
+ window.setInterval(()=>{if(!document.hidden){webRegistration?.update().catch(()=>{});applyWebUpdateIfSafe();}},20*60*1000);
+ window.setInterval(()=>{if(webRegistration?.waiting&&!document.hidden)applyWebUpdateIfSafe();},30*1000);
 }else{
  updateStatus(updatePlatform==='android'?'Android：支持同签名覆盖安装并保留数据':updatePlatform==='windows'?'Windows：支持校验后原位置覆盖更新':'本地文件模式：请获取新版安装包');
 }
