@@ -146,11 +146,11 @@ export class Renderer{
   resize(){const r=this.canvas.getBoundingClientRect();this.w=r.width;this.h=r.height;const dpr=Math.min(window.devicePixelRatio||1,1.75);this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);this.dpr=dpr;this.zoom=this.w<650?.77:1;this.ctx.setTransform(dpr,0,0,dpr,0,0);}
   buildMap(s){
     this.chapter=s.chapter;this.seed=s.seed;this.floor=s.endless?.floor||0;const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
-    const variant=s.endless?.mapIndex??s.v12.layout??0;
-    const c=map.getContext('2d'),rand=rng(9281+s.chapter*477+variant*1807+(s.endless?.floor||0)*31);c.fillStyle=s.endless?ENDLESS_MAPS[variant]?.tone||'#193c3d':['#193c3d','#1d383f','#303a40'][s.chapter];c.fillRect(0,0,map.width,map.height);
+    const fresh=s.endless?.draftSerial!==undefined,variant=fresh?(s.endless.mapIndex??0):(s.v12.layout??0);
+    const c=map.getContext('2d'),rand=rng(9281+s.chapter*477+(fresh?variant*1807+(s.endless.floor||0)*31:0));c.fillStyle=fresh?ENDLESS_MAPS[variant]?.tone||'#193c3d':['#193c3d','#1d383f','#303a40'][s.chapter];c.fillRect(0,0,map.width,map.height);
     // Quiet stone streets and narrow seams.
     for(let y=0;y<WORLD.height;y+=64)for(let x=0;x<WORLD.width;x+=84){
-      const off=(y/64)%2*42;const shadeSets=[['#284b48','#264945','#2b4d49','#214542'],['#2c4757','#2a4454','#334e5c','#25404e'],['#3d5351','#354b49','#415957','#2c4345'],['#345843','#30513c','#3c604c','#2b493f'],['#2b4e61','#305468','#26495b','#24485a'],['#4f555a','#464b51','#54575b','#393f49'],['#424459','#3c4052','#4d4a59','#353b4d']];const shades=shadeSets[variant%shadeSets.length];
+      const off=(y/64)%2*42;const shadeSets=[['#284b48','#264945','#2b4d49','#214542'],['#2c4757','#2a4454','#334e5c','#25404e'],['#3d5351','#354b49','#415957','#2c4345'],['#345843','#30513c','#3c604c','#2b493f'],['#2b4e61','#305468','#26495b','#24485a'],['#4f555a','#464b51','#54575b','#393f49'],['#424459','#3c4052','#4d4a59','#353b4d']];const shades=fresh?shadeSets[variant%shadeSets.length]:shadeSets[0];
       round(c,x-off+2,y+2,80,60,3,shades[Math.floor(rand()*shades.length)]);
       if(rand()>.74)line(c,[[x-off+15,y+15],[x-off+23,y+20],[x-off+19,y+28]],'#183e3d66',1);
     }

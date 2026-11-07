@@ -91,13 +91,23 @@ export function configureEndlessRoom(s){
  if(r.route==='cache')r.total=Math.ceil(r.total*.85);
  r.remaining=r.total;r.roomKills=0;r.spawnIn=.6;r.bossMade=false;r.clearedRoom=false;r.rewardPending=false;r.choice='';r.roomDamage=s.damageTaken;r.pools=[];r.zones=[];r.zoneCd=4;r.weather=weatherFor(s);r.market=[];
  s.player.x=940;s.player.y=690;s.player.embers=Math.min(15,s.player.embers);s.player.invincible=2;
- const k=nextEndlessMap(s.seed,n,r.mapIndex),map=ENDLESS_MAPS[k];r.mapIndex=k;s.v12.layout=k%3;
- s.beacons=map.lamps.map(([x,y],id)=>({x,y,id,lit:false,progress:0,cost:5,r:38}));
- s.obstacles=map.covers.map(([x,y,w,h])=>({x,y,w,h}));s.pois=[];
+ let k,map;
+ if(r.draftSerial!==undefined){
+  k=nextEndlessMap(s.seed,n,r.mapIndex);map=ENDLESS_MAPS[k];r.mapIndex=k;s.v12.layout=k%3;
+  s.beacons=map.lamps.map(([x,y],id)=>({x,y,id,lit:false,progress:0,cost:5,r:38}));
+  s.obstacles=map.covers.map(([x,y,w,h])=>({x,y,w,h}));
+ }else{
+  // Old saved runs must replay byte-for-byte with their original three arenas.
+  k=seedMix(s.seed,n+130)%3;s.v12.layout=k;
+  s.beacons=[{x:650,y:430},{x:1230,y:430},{x:940,y:1040}].map((p,id)=>({...p,id,lit:false,progress:0,cost:5,r:38}));
+  const legacy=[[[490,590,100,100],[1290,800,110,90]],[[750,430,105,75],[1040,910,110,80]],[[520,910,120,75],[1260,430,100,80]]];
+  s.obstacles=legacy[k].map(([x,y,w,h])=>({x,y,w,h}));
+ }
+ s.pois=[];
  s.exit={x:1740,y:690,r:58,open:false};s.embers=[];
  s.v12.patrolLeft=0;s.v12.goldLeft=0;s.v12.xpLeft=0;
  if(hasRelic(s,'moon')){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+3600;}
- emit(s,'floor',{floor:n,boss,route:r.route,map:k,mapName:map.name});
+ emit(s,'floor',map?{floor:n,boss,route:r.route,map:k,mapName:map.name}:{floor:n,boss,route:r.route});
 }
 export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
