@@ -66,8 +66,12 @@ body[data-live-draft=true] #upgrade-dialog .draft-bottom p{font-size:9px;line-he
 body[data-live-draft=true] #upgrade-dialog .draft-footer{gap:4px}
 body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{font-size:9px;min-height:24px;padding:3px 7px}
 @media (orientation:landscape) and (max-height:430px){
- body[data-live-draft=true] #upgrade-dialog.upgrade-modal{top:calc(65px + env(safe-area-inset-top));max-height:calc(100dvh - 77px - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:min(315px,calc(100vw - 220px));padding:7px 8px}
+ body[data-live-draft=true] #upgrade-dialog.upgrade-modal{top:calc(65px + env(safe-area-inset-top));max-height:calc(100dvh - 170px - env(safe-area-inset-top) - env(safe-area-inset-bottom));width:min(315px,calc(100vw - 220px));padding:7px 8px}
  body[data-live-draft=true] #upgrade-dialog .draft-heading p{display:none}
- body[data-live-draft=true] #upgrade-dialog .upgrade-card{padding:4px 7px}
+ body[data-live-draft=true] #upgrade-dialog .upgrade-card{padding:3px 7px;grid-template-rows:auto auto;gap:1px 5px}
+ body[data-live-draft=true] #upgrade-dialog .draft-tag{display:none}
+ body[data-live-draft=true] #upgrade-dialog .choice-icon{grid-row:1/span 2}
+ body[data-live-draft=true] #upgrade-dialog .draft-time-track{margin:3px 0}
+ body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{min-height:21px;padding:2px 5px}
  body[data-live-draft=true] #upgrade-dialog .draft-bottom{display:none}
 }
