@@ -38,7 +38,9 @@ export const RELICS=[
 export const OATHS=[
  {id:'ember',name:'焚烬刻印',symbol:'flame',desc:'连续击败敌人后在目标处触发范围爆炸；阶级越高，触发越快。',detail:'爆焰行灯 Lv.3 后，爆炸留下火径。'},
  {id:'gale',name:'疾风刻印',symbol:'wind',desc:'冲刺释放羽风震荡，缩短本次冲刺冷却；阶级越高，伤害和范围越大。',detail:'回旋护羽 Lv.3 后，羽风伤害再提高 35%。'},
- {id:'storm',name:'雷鸣刻印',symbol:'star',desc:'光环额外触发连锁雷；阶级越高，跳跃次数和伤害越多。',detail:'连锁雷笺 Lv.3 后，雷电额外跳跃 2 次。'}
+ {id:'storm',name:'雷鸣刻印',symbol:'star',desc:'光环额外触发连锁雷；阶级越高，跳跃次数和伤害越多。',detail:'连锁雷笺 Lv.3 后，雷电额外跳跃 2 次。'},
+ {id:'frost',name:'寒潮刻印',symbol:'sun',desc:'光环追加冰伤与减速，阶级越高范围和伤害越高。',detail:'霜降邮戳 Lv.3 后，寒潮伤害提高 40%。'},
+ {id:'ward',name:'守望刻印',symbol:'shield',desc:'光环给予一次限时格挡，阶级越高持续越久。',detail:'长明灯芯 Lv.2 后，每次释放光环还回复少量生命。'}
 ];
 export const oathRank=(s,id)=>s.endless?.oaths?.ranks[id]||0;
 export const oathTotal=s=>s.endless?.oaths?Object.values(s.endless.oaths.ranks).reduce((a,b)=>a+b,0):0;
@@ -146,6 +148,8 @@ export function onEndlessPulse(s,hits){
  if(rankOf(s,'frost'))for(const e of s.enemies)if(dist(s.player,e)<s.player.pulseRadius+e.r)e.slowUntil=s.totalTime+3;
  if(rankOf(s,'thunder'))s.endless.thunderCd=0;
  const storm=oathRank(s,'storm');if(hasRelic(s,'ink')||storm){chain(s,true,storm+(storm&&rankOf(s,'thunder')>=3?2:0));if(storm)emit(s,'oath-proc',{id:'storm'});}
+ const frost=oathRank(s,'frost');if(frost){area(s,s.player,140+frost*35,(14+frost*10)*power(s)*(rankOf(s,'frost')>=3?1.4:1),'frost',1.2+frost*.5);emit(s,'oath-proc',{id:'frost'});}
+ const ward=oathRank(s,'ward');if(ward){const until=s.totalTime+.6+ward*.55;if(!s.v12.barrier||s.v12.barrierUntil<until){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=until;}if(rankOf(s,'vitality')>=2)s.player.hp=Math.min(s.player.maxHp,s.player.hp+ward*2);emit(s,'oath-proc',{id:'ward'});}
  if(evolved(s,'orbit'))area(s,s.player,270,50*power(s),'feather');
  if(rankOf(s,'pulsecraft')&&hits>=3){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+2;}
 }
@@ -195,6 +199,7 @@ export function onEndlessKill(s,e){
  }
 }
 function shuffle(s,items){for(let i=items.length-1;i>0;i--){const j=Math.floor(endlessRandom(s)*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;}
+function draftOaths(s){const pool=shuffle(s,OATHS.filter(u=>oathRank(s,u.id)<3).map(u=>u.id)),picks=[];const linked=({cinder:'ember',frost:'frost',orbit:'gale',thunder:'storm'})[s.endless.starter];if(pool.includes(linked))picks.push(linked);const owned=pool.find(id=>oathRank(s,id)>0&&!picks.includes(id));if(owned)picks.push(owned);for(const id of pool)if(picks.length<3&&!picks.includes(id))picks.push(id);return picks;}
 function draftSkills(s){
  const r=s.endless,owned=Object.keys(r.ranks),weapons=owned.filter(id=>SKILL_BY_ID[id].kind==='weapon').length,passives=owned.length-weapons;
  const pool=SKILLS.filter(u=>!s.growth?.banished.includes(u.id)&&rankOf(s,u.id)<5&&(rankOf(s,u.id)|| (u.kind==='weapon'?weapons<3:passives<4)));
@@ -219,7 +224,7 @@ export function advanceEndlessChoices(s){
  }
  if(r.pending>0){setChoice(s,'skill',draftSkills(s));return;}
  if(r.clearedRoom&&r.rewardPending){const pool=shuffle(s,RELICS.filter(x=>!r.relics.includes(x.id)));setChoice(s,'relic',pool.length?pool.slice(0,3).map(x=>x.id):['ash','mend','supplies']);return;}
- if(r.clearedRoom&&r.oaths?.offerPending){const available=OATHS.filter(x=>oathRank(s,x.id)<3).map(x=>x.id);if(available.length){setChoice(s,'oath',available);return;}r.oaths.offerPending=false;}
+ if(r.clearedRoom&&r.oaths?.offerPending){const available=draftOaths(s);if(available.length){setChoice(s,'oath',available);return;}r.oaths.offerPending=false;}
  if(r.clearedRoom){const rest=shuffle(s,['elite','cache','rest','curse']).slice(0,2);setChoice(s,'route',['hunt',...rest]);}
 }
 export function choiceInfo(s,id){
@@ -309,7 +314,7 @@ export function validateEndless(s){
  if(r.mapIndex!==undefined&&(!Number.isInteger(r.mapIndex)||r.mapIndex<0||r.mapIndex>=ENDLESS_MAPS.length))return false;
  if(r.oaths!==undefined){
   const o=r.oaths;if(!o||o.version!==1||typeof o.offerPending!=='boolean'||!o.ranks||Array.isArray(o.ranks)||typeof o.ranks!=='object')return false;
-  if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>9)return false;
+  if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>OATHS.length*3)return false;
  }
  if(!['','skill','relic','route','oath'].includes(r.choice)||r.choice==='oath'&&!r.oaths)return false;
  if(s.phase==='upgrade'){
