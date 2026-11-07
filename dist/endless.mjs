@@ -1,6 +1,7 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
 import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
+import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
 const TAU=Math.PI*2;
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
 const emit=(s,type,data={})=>s.events.push({type,...data});
@@ -51,6 +52,7 @@ export function initEndless(s,starter='cinder'){
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
   frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0};
  initCombat(s);
+ initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
 }
 export function applyEndlessStats(s,st){
@@ -86,9 +88,10 @@ export function configureEndlessRoom(s){
  emit(s,'floor',{floor:n,boss,route:r.route});
 }
 export function endlessEnemy(s,kind,stats){
- const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&r.route==='elite'&&r.remaining%7===0;
+ const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&r.remaining%11===0);
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
- return {...stats,hp:stats.hp*scale*(elite?2:1),maxHp:stats.hp*scale*(elite?2:1),speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
+ const armor=isTactical(s)&&kind==='boss'?1.25:1;
+ return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%3};
 }
 function hit(s,e,amount,slow=0){
@@ -162,6 +165,7 @@ const lvThunder=s=>rankOf(s,'thunder');
 export function onEndlessKill(s,e){
  const r=s.endless;r.roomKills++;
  chargeCombat(s,e);
+ rewardKill(s,e);
  if(e.kind==='boss'){r.bosses++;r.rerolls=Math.min(3,r.rerolls+1);}
  if(rankOf(s,'sustain')&&s.kills%8===0)s.player.hp=Math.min(s.player.maxHp,s.player.hp+3*rankOf(s,'sustain'));
  if(hasRelic(s,'hunger')&&s.journal.combo>0&&s.journal.combo%20===0){r.feverMark++;r.feverUntil=s.totalTime+5;emit(s,'fever');}
@@ -230,7 +234,7 @@ export function pickEndless(s,id){
  return {advance:false};
 }
 export function checkEvolutions(s){for(const u of SKILLS.filter(u=>u.kind==='weapon'))if(evolved(s,u.id)&&!s.endless.evolutions.includes(u.id)){s.endless.evolutions.push(u.id);emit(s,'evolution',{id:u.id,name:u.evolution});}}
-export function rerollEndless(s){const r=s.endless;if(!r||s.phase!=='upgrade'||r.choice==='route'||r.rerolls<=0)return false;r.rerolls--;r.rerollsUsed++;s.offered=r.choice==='skill'?draftSkills(s):shuffle(s,RELICS.filter(u=>!r.relics.includes(u.id))).slice(0,3).map(u=>u.id);if(!s.offered.length)s.offered=['ash','mend','supplies'];return true;}
+export function rerollEndless(s){const r=s.endless;if(!r||s.phase!=='upgrade'||r.choice==='route'||r.rerolls<=0)return false;r.rerolls--;r.rerollsUsed++;delete s.selection;s.offered=r.choice==='skill'?draftSkills(s):shuffle(s,RELICS.filter(u=>!r.relics.includes(u.id))).slice(0,3).map(u=>u.id);if(!s.offered.length)s.offered=['ash','mend','supplies'];return true;}
 export function retireEndless(s){if(!isEndless(s)||s.phase!=='upgrade'||s.endless.choice!=='route')return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
 export function reviveEndless(s){const r=s.endless;if(s.player.hp>0||!hasRelic(s,'dawn')||r.revived)return false;r.revived=true;s.player.hp=s.player.maxHp*.5;s.player.invincible=3;s.projectiles=s.projectiles.filter(p=>!p.enemy);area(s,s.player,300,80*power(s),'blast');emit(s,'revive');return true;}
 /** Three boss patterns: clock beam, charging courier, and radial rain. Telegraphs lock before damage. */
@@ -255,6 +259,7 @@ export function endlessBossCast(s,e,dt,hurt,move){
 }
 export function validateEndless(s){
  if(!validateCombat(s))return false;
+ if(!validateTactics(s))return false;
  const r=s.endless;if(!r||r.version!==1||!Number.isInteger(r.floor)||r.floor<1||r.floor>1000000||s.chapter!==(r.floor-1)%3)return false;
  for(const k of ['cleared','rng','remaining','total','roomKills','pending','rerolls','rerollsUsed','bosses','ash','feverMark'])if(!Number.isInteger(r[k])||r[k]<0)return false;
  if(r.remaining>r.total||r.total>80||r.pending>500||r.rerolls>3||r.cleared>r.floor||r.roomKills>r.total)return false;

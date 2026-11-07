@@ -46,6 +46,13 @@ public final class OfflineGameTest {
         getInstrumentation().sendPointerSync(event);
         event.recycle();
     }
+    private void capture(String name) throws Exception {
+        android.graphics.Bitmap bitmap = getInstrumentation().getUiAutomation().takeScreenshot();
+        assertNotNull("Missing UI screenshot", bitmap);
+        try (java.io.FileOutputStream out = new java.io.FileOutputStream(new java.io.File(getInstrumentation().getTargetContext().getFilesDir(), name))) {
+            assertTrue(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out));
+        } finally { bitmap.recycle(); }
+    }
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -150,6 +157,38 @@ public final class OfflineGameTest {
             assertEquals("true", js("(()=>{const a=document.getElementById('combat-meter').getBoundingClientRect(),b=document.getElementById('build-open').getBoundingClientRect();return a.bottom+1 <= b.top})()"));
             js("document.getElementById('save-exit').click(); document.getElementById('continue').click(); window.emberCourierNative.pause()");
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.combat.dashSerial===1"));
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
+    }
+    @Test public void testCompactDraftClockAutoPickAndRotation() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT));
+            await("innerHeight > innerWidth");
+            js("document.querySelector('[data-mode=endless]').click(); document.querySelector('[data-starter=thunder]').click(); document.querySelector('[data-difficulty=normal]').click(); document.getElementById('start').click()");
+            // Real kills and collected room XP open this panel; no actor or reward edits.
+            await("document.getElementById('upgrade-dialog').open", 600);
+            js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
+            assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect();return d.open && !d.matches(':modal') && r.top>innerHeight*.50 && r.height<=innerHeight*.45 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            capture("draft-portrait.png");
+            String remaining = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining");
+            Thread.sleep(700);
+            js("window.emberCourierNative.pause()");
+            assertEquals(remaining, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining"));
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight");
+            assertEquals("true", js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect();return r.top>innerHeight*.48 && r.height<=innerHeight*.49 && document.documentElement.scrollWidth<=innerWidth+1})()"));
+            capture("draft-landscape.png");
+            js("document.getElementById('upgrade-exit').click(); document.getElementById('continue').click()");
+            assertEquals(remaining, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining"));
+            assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.held"));
+            String before = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).metrics.autoChoices||0");
+            js("document.getElementById('draft-hold').click()");
+            await("(JSON.parse(localStorage.getItem('ember-courier.save.v1')).metrics.autoChoices||0)>" + before, 160);
+            assertEquals("true", js("document.getElementById('game').hidden===false"));
+            js("window.emberCourierNative.pause()");
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish()); }
     }
     @Test public void testEndlessRealDraftSaveAndResume() throws Exception {

@@ -17,7 +17,7 @@ export class AudioEngine {
     g.gain.setValueAtTime(0,at);g.gain.linearRampToValueAtTime(vol,at+.012);g.gain.exponentialRampToValueAtTime(.0001,at+dur);
     o.connect(g);g.connect(this.master);o.start(at);o.stop(at+dur+.03);o.onended=()=>{o.disconnect();g.disconnect();this.voices--;};
   }
-  play(type){
+  play(type,data={}){
     const interval=({impact:.07,death:.085,collect:.065,shoot:.06})[type];
     if(interval){const now=this.ctx?.currentTime||0;if(now-(this.lastSounds.get(type)??-Infinity)<interval)return;this.lastSounds.set(type,now);}
     if(type==='impact'){this.tone(165,.055,'triangle',.085,0,75);this.tone(1000,.035,'sine',.03,0,350);}
@@ -30,7 +30,7 @@ export class AudioEngine {
     if(type==='hurt')this.tone(120,.25,'triangle',.22,0,55);
     if(type==='beacon'||type==='won'||type==='boss-defeated') [261.63,329.63,392,523.25,659.25].forEach((n,i)=>this.tone(n,1.7,'sine',.16,i*.13));
     if(type==='shoot')this.tone(540,.09,'sine',.035,0,880);
-    if(type==='death')this.tone(220,.2,'triangle',.05,0,110);
+    if(type==='death'){const note=220+Math.min(12,data.combo||0)*23;this.tone(note,.12,'triangle',.075,0,note*.65);}
     if(type==='boss')this.tone(65,.9,'triangle',.16,0,55);
     if(type==='boss-warning'){this.tone(220,.25,'triangle',.12);this.tone(330,.35,'triangle',.12,.2);}
     if(type==='shield'||type==='interrupt'){this.tone(740,.2,'sine',.13);this.tone(990,.35,'sine',.08,.06);}
@@ -44,6 +44,12 @@ export class AudioEngine {
     if(type==='room-clear') [440,660,880].forEach((n,i)=>this.tone(n,.45,'triangle',.08,i*.09));
     if(type==='evolution'||type==='revive') [262,392,523,784,1047].forEach((n,i)=>this.tone(n,.9,'sine',.11,i*.12));
     if(type==='storm-warning')this.tone(320,.15,'triangle',.08,0,700);
+    if(type==='upgrade-pick'){this.tone(660,.16,'sine',.1);this.tone(990,.2,'sine',.08,.055);}
+    if(type==='elite-defeated'){this.tone(130,.25,'triangle',.14,0,65);[523,659,784].forEach((n,i)=>this.tone(n,.3,'triangle',.09,i*.07));}
+    if(type==='combo-milestone'){[523,784,1047].forEach((n,i)=>this.tone(n,.2,'sine',.09,i*.05));}
+    if(type==='boss-enrage'){this.tone(110,.7,'sawtooth',.06,0,65);this.tone(220,.5,'triangle',.1,.1,110);}
+    if(type==='ward-break')this.tone(1200,.22,'triangle',.075,0,420);
+    if(type==='enemy-attack')this.tone(140,.12,'triangle',.04,0,80);
     if(type==='click')this.tone(520,.07,'sine',.08);
   }
   update(active,chapter=0){

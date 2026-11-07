@@ -4,11 +4,20 @@
 
 一款原创俯视角无尽肉鸽。你是猫头鹰信使 **烛羽**：清开敌潮、拾光升级、搭配武器进化与奇物，每五层迎战首领，再选择更深一层的路线。原有三章送信冒险作为剧情模式完整保留。
 
-**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.4.0.md) · [部署说明](docs/DEPLOYMENT.md)
+**[在线试玩](https://ember-courier-game1.dazzlingmodel.chatgpt.site)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/QA_v1.5.0.md) · [部署说明](docs/DEPLOYMENT.md)
 
-当前版本：**v1.4.0「疾焰连击」** · [升级说明](docs/releases/v1.4.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.4.0-endless-summary.json)。
+当前版本：**v1.5.0「战场回响」** · [升级说明](docs/releases/v1.5.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
 
 网页版现已公开访问；Android APK 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。Android 构建说明见 [ANDROID.md](docs/ANDROID.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
+
+## v1.5 · 战场回响
+
+- 底部三张短卡，移除全屏遮罩，角色留在上方。强化/奇物 8 秒自动按构筑推荐选择；路线 12 秒自动走免费常规路线。P 或暂缓按钮停表，后台自动暂缓，剩余时间随存档恢复。
+- 新增驱影计数、当前武器条、连斩里程碑与精英击破反馈，连续击杀音阶更明确。连斩减少少量冲刺冷却，部分里程碑额外获得星砂。
+- 新无尽旅途启用扑击、震地、散射、可击破的结界；精英有三种技能词缀。每名首领轮换三种招式，半血进入第二阶段。预警锁定后不追踪，光环可打断。
+- 四类武器实体、不同光弹轮廓、冰环符文、连锁电弧、羽刃拖尾、火径火苗、冲刺光痕与双层光环均由 Canvas 原创绘制。敌方粉色预警与己方金/青/绿/紫效果保持区分。
+
+[设计与验证](docs/QA_v1.5.0.md)。现有旅途使用新 UI 与绘制；v1.3 / v1.4 旧档保留原战斗规则，新怪物招式用于新开无尽旅途。
 
 ## v1.4 · 疾焰连击
 
@@ -101,6 +110,9 @@ npm run check
 ```text
 dist/
   core.mjs              确定性游戏模拟、关卡、技能、战斗与存档校验
+  draft.mjs             可保存的可见时间倒计时与合法默认选择
+  tactics.mjs           锁定预警、敌人技能、精英词缀与首领阶段
+  battlefx.mjs          武器实体、弹体与技能 Canvas 表现
   combat.mjs            冲刺切敌、破晓蓄能、爆发、无伤奖励与独立兼容校验
   endless.mjs           无尽房间、选卡、进化、奇物、天气、首领与结算状态
   routes.mjs            九种连通街区组合与有预算的全半径寻路
@@ -124,4 +136,4 @@ GitHub Actions 在每次 main 推送和 PR 时执行测试、检查资源完整�
 
 ## 版本与授权
 
-v1.4.0 · 2026-11-07。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。
+v1.5.0 · 2026-11-07。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。

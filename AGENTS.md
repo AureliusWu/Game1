@@ -17,3 +17,6 @@
 - Fair challenges normalize the starting loadout and talents; the rule/date/condition key owns first rewards and personal bests. Keep eight new achievement rewards as commemorative letters.
 
 - v1.4 new endless runs add `endless.combat.version=1` in combat.mjs. Keep runs without it on v1.3 behavior; real compatibility fixtures must replay identically. Dash hits are once per dash identity and require an unobstructed movement segment. Process queued overdrive damage before death accounting so all kills receive rewards. Charge stops during overdrive; perfect-room rewards use the existing clear latch.
+
+- v1.5 new endless runs opt in through `endless.tactics.version=1`; preserve v1.4 fixture replays without this object. Enemy windups lock their target, resolve once, persist across saves and remain interruptible. Elite/Boss effects never grant unbudgeted extra actors or rewards.
+- `draft.mjs` keeps visible-time countdowns in optional `selection.version=1`. Freeze simulation during drafts; pause the timer on background/manual hold/another modal. Automatic selection must use normal legality and cost checks and may not buy rest. Preserve time across saves; guard clicks by draft identity. Keep the bottom dock small on portrait and landscape with the player above it.

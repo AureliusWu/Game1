@@ -1,3 +1,5 @@
+import {ensureDraft,recommendedChoice,stepDraft,toggleDraft} from './draft.mjs';
+import {AFFIXES,isTactical} from './tactics.mjs';
 import {isCombat,overdriving} from './combat.mjs';
 import {createGame,tick,dash,pulse,chooseUpgrade,serialize,restore,finalScore,CHAPTERS,UPGRADES,DIFFICULTIES,usePotion,nearestPOI,poiLabel} from './core.mjs';
 import {supplyCost,buyEndlessSupply,WEATHERS,weatherFor,isEndless,SKILLS,SKILL_BY_ID,RELICS,rankOf,evolved,choiceInfo,xpThreshold,rerollEndless,retireEndless} from './endless.mjs';
@@ -87,7 +89,7 @@ function updateMenu(){
 function formatTime(time){const n=Math.floor(time);return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}
 function clearInput(){keys.clear();joystickId=null;joy={x:0,y:0};destination=null;renderer.destination=null;stuckFor=0;$('joystick-thumb').style.transform='translate(0,0)';}
 function showDialog(id){const d=$(id);if(!d.open)d.showModal();clearInput();}
-function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))d.close();}
+function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))d.close();renderer.selection=false;delete document.body.dataset.draft;}
 function checkpoint(){if(run&&!ended){syncProgress();const data=serialize(run);if(data)storage.set(STORE.save,data);}persistProfile();}
 function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);}}
 function announceChapter(){
@@ -100,42 +102,60 @@ async function begin(resume=false){
   const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
-  ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;
+  ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;renderer.killMarks=[];renderer.killBurst=0;renderer.lastKillAt=0;
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
   if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
 }
-function pauseGame(){if(screen!=='game'||!run||ended||run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
+function pauseGame(){if(screen!=='game'||!run||ended)return;if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
 function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;clearInput();last=performance.now();$('world').focus({preventScroll:true});}
 function returnToMenu(){checkpoint();closeDialogs();paused=false;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
 function doDash(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(dash(run)){processEvents(run.events);updateHUD();}}
 function doPulse(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(pulse(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function doPotion(){if(screen!=='game'||paused||document.querySelector('dialog[open]'))return;run.events=[];if(usePotion(run)){processEvents(run.events);checkpoint();updateHUD();}}
+function openDraftPane(){
+  clearInput();renderer.selection=true;document.body.dataset.draft=run.endless?.choice||'story';$('chapter-banner').hidden=true;$('game-toast').hidden=true;
+  const d=$('upgrade-dialog');if(!d.open)d.show();ensureDraft(run);updateDraftClock();updateHUD();checkpoint();
+}
+function updateDraftClock(){
+  if(run?.phase!=='upgrade')return;const c=ensureDraft(run),id=recommendedChoice(run);if(!c)return;
+  const u=isEndless(run)?choiceInfo(run,id):UPGRADES.find(u=>u.id===id);
+  $('draft-countdown').textContent=c.held?'已暂缓':Math.ceil(c.remaining)+'s';
+  $('draft-timer-bar').style.width=(c.remaining/c.duration*100)+'%';
+  $('draft-hold').textContent=c.held?'继续计时':'暂缓 · P';$('draft-hold').setAttribute('aria-pressed',String(c.held));
+  $('draft-suggestion').textContent=(c.held?'战斗暂停 · 继续计时后自动选择：':'战斗暂停 · 倒计时后选择：')+(u?.name||'常规强化');
+}
+function applyDraftChoice(id,key,automatic=false){
+  if(run?.phase!=='upgrade'||ensureDraft(run)?.key!==key)return false;
+  run.events=[];const oldChapter=run.chapter,oldFloor=run.endless?.floor;
+  if(!chooseUpgrade(run,id))return false;
+  if(automatic)run.metrics.autoChoices=(run.metrics.autoChoices||0)+1;
+  $('upgrade-dialog').close();renderer.selection=false;delete document.body.dataset.draft;paused=false;audio.unlock();audio.play('upgrade-pick');
+  if(oldChapter!==run.chapter||oldFloor!==run.endless?.floor)announceChapter();
+  processEvents(run.events);updateHUD();checkpoint();if(run.phase==='playing')$('world').focus({preventScroll:true});return true;
+}
+function appendDraftCards(infos){
+  const container=$('upgrade-options');container.replaceChildren();const key=ensureDraft(run).key,recommended=recommendedChoice(run);
+  infos.forEach((u,index)=>{const b=document.createElement('button');b.className='upgrade-card'+(u.ready?' evolution-card':'');b.disabled=!!u.disabled;b.dataset.recommended=String(u.id===recommended);b.title=(u.tag||'')+' '+u.desc+' '+(u.detail||'');const shortTag=SKILL_BY_ID[u.id]&&isEndless(run)?`Lv.${rankOf(run,u.id)}→${rankOf(run,u.id)+1}`:u.tag||'本局强化';
+    b.innerHTML=`<div class="choice-icon"><svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><kbd>${index+1}</kbd></div><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small class="draft-tag">${u.disabled?'星砂不足':u.ready?'✦ 立即进化':u.id===recommended?'✦ '+shortTag+' · 推荐':shortTag}</small>`;
+    b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
+  });
+}
 function showUpgrade(){
   if(isEndless(run)){showEndlessDraft();return;}
-  $('endless-market').hidden=true;$('upgrade-title').textContent='带一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;
-  checkpoint();clearInput();$('upgrade-copy').textContent=run.v12?.choiceKind==='field'?'第二盏灯已经亮起。选一束新的光，留在街区继续送信。':`${CHAPTERS[run.chapter].name}重新亮了起来。挑一件礼物，继续向前。`;
-  $('upgrade-note').textContent=run.v12?.choiceKind==='field'?'选择一项强化，生命回满，继续本章。':'选择一项强化，生命回满，前往下一片街区。';
-  const container=$('upgrade-options');container.replaceChildren();
-  for(const id of run.offered){const u=UPGRADES.find(u=>u.id===id);const b=document.createElement('button');b.className='upgrade-card';
-    b.innerHTML=`<svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><strong>${u.name}</strong><span>${u.desc}</span><small>带上这束光 →</small>`;
-    b.addEventListener('click',()=>{audio.unlock();audio.play('beacon');const previousChapter=run.chapter;if(chooseUpgrade(run,u.id)){$('upgrade-dialog').close();paused=false;if(run.chapter!==previousChapter)announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});}});container.append(b);
-  }
-  showDialog('upgrade-dialog');
+  $('endless-market').hidden=true;$('upgrade-title').textContent='选一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;
+  $('upgrade-copy').textContent=run.v12?.choiceKind==='field'?'街区强化 · 继续本章':'章节礼物 · 前往下一章';
+  $('upgrade-note').textContent='1 / 2 / 3 选择 · P 暂缓';ensureDraft(run);appendDraftCards(run.offered.map(id=>({...UPGRADES.find(u=>u.id===id),tag:'本局强化'})));openDraftPane();
 }
 function showEndlessDraft(){
-  checkpoint();clearInput();const r=run.endless,route=r.choice==='route',relic=r.choice==='relic';
-  $('upgrade-title').textContent=route?'下一层，走哪条路？':relic?'一件奇物，改变规则':'再添一份力量';
-  $('upgrade-copy').textContent=route?`第 ${r.floor} 层已清场${(r.floor+1)%5===0?'。下一层必战首领，做好准备！':'。这次选择，决定下一层的风险与奖励。'}`:relic?'本局永久生效。代价、联动与机会，由你取舍。':`Lv.${run.journal.level} · 三选一。已有技能可强化至 Lv.5，搭配对应被动即可进化。`;
-  $('upgrade-note').textContent=route?`下一层天气 · ${WEATHERS[weatherFor(run,r.floor+1)].name}：${WEATHERS[weatherFor(run,r.floor+1)].desc} 可保存续玩或封存结算。`:'最多 3 种武器、4 种被动。强化选择与重抽次数均会保存。';
-  $('draft-reroll').hidden=route;$('draft-reroll').disabled=r.rerolls<=0;$('draft-reroll').textContent=`重抽 · 剩 ${r.rerolls} 次`;$('endless-retire').hidden=!route;
-  const market=$('endless-market');market.hidden=!route;market.replaceChildren();if(route){const label=document.createElement('span');label.textContent=`驿站补给 · ${run.journal.coins} 星砂 · 每项本层限购一次`;market.append(label);for(const id of ['tea','potion','reroll']){const b=document.createElement('button');const cost=supplyCost(run,id);b.textContent=({tea:'热茶 +25% 生命',potion:'补给 +1',reroll:'重抽 +1'})[id]+' · '+cost+' 砂';b.disabled=r.market.includes(id)||run.journal.coins<cost||(id==='tea'?run.player.hp>=run.player.maxHp:id==='potion'?run.journal.potions>=5:r.rerolls>=3);b.addEventListener('click',()=>{run.events=[];if(buyEndlessSupply(run,id)){processEvents(run.events);showEndlessDraft();updateHUD();}});market.append(b);}}
-  if(route&&isCombat(run))$('upgrade-copy').textContent=`第 ${r.floor} 层 · ${r.combat.lastClearTime.toFixed(1)} 秒${r.combat.lastPerfect?' · 无伤清场 +6 星砂':''}。${(r.floor+1)%5===0?'下一层必战首领！':'下一层，试试新的风险与回报。'}`;
-  const container=$('upgrade-options');container.replaceChildren();
-  for(const id of run.offered){const u=choiceInfo(run,id),b=document.createElement('button');b.className='upgrade-card'+(relic?' relic-card':'')+(u.ready?' evolution-card':'');b.disabled=!!u.disabled;
-    b.innerHTML=`<small class="draft-tag">${u.tag}</small><svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small>${u.disabled?'星砂不足':route?'走这条路 →':'收入构筑 →'}</small>`;
-    b.addEventListener('click',()=>{run.events=[];const floor=r.floor;if(chooseUpgrade(run,id)){$('upgrade-dialog').close();paused=false;audio.play('beacon');if(r.floor!==floor)announceChapter();processEvents(run.events);updateHUD();checkpoint();if(run.phase==='playing')$('world').focus({preventScroll:true});}});container.append(b);
-  }showDialog('upgrade-dialog');
+  const r=run.endless,route=r.choice==='route',relic=r.choice==='relic';
+  $('upgrade-title').textContent=route?'下一层路线':relic?'选择一件奇物':'选择强化';
+  $('upgrade-copy').textContent=route?`第 ${r.floor} 层清场${isCombat(run)?' · '+r.combat.lastClearTime.toFixed(1)+'s'+(r.combat.lastPerfect?' · 无伤 +6 砂':''):''}`:relic?'本局生效 · 选择你的联动':`Lv.${run.journal.level} · 3 武器 / 4 被动${r.pending>1?' · 待选 '+r.pending+' 次':''}`;
+  $('upgrade-note').textContent=route?`下层${(r.floor+1)%5===0?' · 首领':''} · ${WEATHERS[weatherFor(run,r.floor+1)].name}`:'1 / 2 / 3 选择 · P 暂缓';
+  $('draft-reroll').hidden=route;$('draft-reroll').disabled=r.rerolls<=0;$('draft-reroll').textContent=`重抽 ${r.rerolls}`;$('endless-retire').hidden=!route;
+  const market=$('endless-market');market.hidden=!route;market.replaceChildren();
+  if(route)for(const id of ['tea','potion','reroll']){const b=document.createElement('button'),cost=supplyCost(run,id);b.textContent=({tea:'热茶',potion:'补给',reroll:'重抽'})[id]+' '+cost+'砂';b.disabled=r.market.includes(id)||run.journal.coins<cost||(id==='tea'?run.player.hp>=run.player.maxHp:id==='potion'?run.journal.potions>=5:r.rerolls>=3);b.addEventListener('click',()=>{run.events=[];if(buyEndlessSupply(run,id)){processEvents(run.events);showEndlessDraft();updateHUD();}});market.append(b);}
+  ensureDraft(run);appendDraftCards(run.offered.map(id=>choiceInfo(run,id)));openDraftPane();
 }
 function showBuild(){
  if(!isEndless(run))return;checkpoint();const r=run.endless,c=$('build-content');c.replaceChildren();
@@ -164,7 +184,7 @@ function finish(){
   showDialog('result-dialog');
 }
 function processEvents(events){
-  for(const e of events){audio.play(e.type);
+  for(const e of events){audio.play(e.type,e);
     if(e.type==='beacon'){
       const b=run.beacons[e.id];renderer.react([{type:'beacon',x:b.x,y:b.y}]);
       if(e.lit===1){const ch=CHAPTERS[run.chapter];$('letter-text').textContent=ch.letter;$('letter-sender').textContent=ch.sender;$('letter-toast').hidden=false;letterUntil=run.totalTime+8;}
@@ -173,7 +193,8 @@ function processEvents(events){
     }
     if(e.type==='boss')toast(isEndless(run)?'夜航首领现身！看清预警，横向躲避；光环可打断蓄力。':'守夜者醒来了。灯塔可挡光球；看到定向预警请侧移。',6);
     if(e.type==='boss-warning')toast(e.text,5);
-    if(e.type==='interrupt')toast('光环打断了定向回声。',2);
+    if(e.type==='interrupt')toast('打断成功 · 趁现在反击！',1.6);
+    if(e.type==='ward-break')toast('结界击破 · 3 秒破绽',1.5);
     if(e.type==='shield')toast('护灯屏障抵挡了一次攻击。',2);
     if(e.type==='tailwind')toast('顺风已起 · 3 秒加速。',2);
     if(e.type==='boss-defeated')toast(isEndless(run)?'首领击破！清掉余下敌人，领取奇物。':'长夜退去了。前往金色拱门，把黎明送达。',6);
@@ -216,6 +237,10 @@ function updateHUD(){
   }
   if(isEndless(run)){const r=run.endless;$('objective').textContent=`清开本层敌潮 · ${r.roomKills} / ${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`无尽夜航 · ${WEATHERS[r.weather].name} · ${r.evolutions.length?'进化 '+r.evolutions.length+' · ':''}剩余敌人 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障 ×1':''}${r.feverUntil>run.totalTime?' · 狂热':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
   $('combat-meter').hidden=!isCombat(run);if(isCombat(run)){const burst=overdriving(run),c=run.endless.combat;$('combat-meter').classList.toggle('active',burst);$('combat-label').textContent=burst?'破晓超载 · '+(c.overdriveUntil-run.totalTime).toFixed(1)+'s':'破晓蓄能 · '+Math.floor(c.heat)+'%';$('combat-fill').style.width=(burst?(c.overdriveUntil-run.totalTime)/6*100:c.heat)+'%';}
+  $('kill-hud').hidden=!isEndless(run);$('kill-count').textContent=run.kills;
+  const weaponKey=isEndless(run)?Object.entries(run.endless.ranks).filter(([id])=>SKILL_BY_ID[id].kind==='weapon').map(([id,lv])=>id+':'+lv+':'+evolved(run,id)).join('|'):'';
+  if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`<svg><use href="#i-${u.symbol}"/></svg><b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
+  if(boss&&isTactical(run))$('boss-subtitle').textContent=boss.enraged?'第二阶段 · 招式加速 · 光环可打断':'招式轮换 · 留意粉色预警';
   $('build-open').hidden=!isEndless(run);document.body.dataset.phase=run.phase;
 }
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>{settings.mode=b.dataset.mode;saveSettings();updateSettings();});
@@ -223,6 +248,7 @@ for(const b of document.querySelectorAll('[data-difficulty]'))b.addEventListener
 for(const b of document.querySelectorAll('[data-dialog]'))b.addEventListener('click',()=>showDialog(b.dataset.dialog));
 for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>b.closest('dialog').close());
 for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target!==d||['pause-dialog','upgrade-dialog','result-dialog'].includes(d.id))return;const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();});
+$('draft-hold').addEventListener('click',()=>{toggleDraft(run);updateDraftClock();checkpoint();});
 $('build-open').addEventListener('click',showBuild);$('draft-reroll').addEventListener('click',()=>{if(rerollEndless(run)){audio.play('click');showEndlessDraft();checkpoint();}});$('endless-retire').addEventListener('click',()=>{run.events=[];if(retireEndless(run)){closeDialogs();processEvents(run.events);}});
 $('difficulty-info').addEventListener('click',()=>showDialog('guide'));
 $('contract-select').addEventListener('change',e=>{settings.contract=e.target.value;saveSettings();updateSettings();});$('daily-setting').addEventListener('change',e=>{settings.daily=e.target.checked;saveSettings();updateSettings();});
@@ -231,7 +257,7 @@ $('records-open').addEventListener('click',()=>{updateMenu();showDialog('records
 $('start').addEventListener('click',()=>begin());$('continue').addEventListener('click',()=>begin(true));$('restart').addEventListener('click',()=>begin());
 $('game-hub').addEventListener('click',()=>isEndless(run)?showBuild():hub.show('inventory'));$('result-office').addEventListener('click',()=>hub.show('office'));$('interact').addEventListener('click',()=>hub.interact());$('potion').addEventListener('click',doPotion);
 $('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);$('save-exit').addEventListener('click',returnToMenu);$('upgrade-exit').addEventListener('click',returnToMenu);$('result-menu').addEventListener('click',returnToMenu);$('game-settings').addEventListener('click',()=>showDialog('settings'));
-$('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>e.preventDefault());$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
+$('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>{e.preventDefault();toggleDraft(run);updateDraftClock();checkpoint();});$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
 for(const b of document.querySelectorAll('.sound-toggle'))b.addEventListener('click',()=>{settings.sound=!settings.sound;saveSettings();updateSettings();});
 $('sound-setting').addEventListener('change',e=>{settings.sound=e.target.checked;saveSettings();updateSettings();});$('motion-setting').addEventListener('change',e=>{settings.lowMotion=e.target.checked;saveSettings();updateSettings();});
 $('touch-setting').addEventListener('change',e=>{settings.touch=e.target.checked;saveSettings();updateSettings();});
@@ -243,7 +269,7 @@ window.addEventListener('keydown',e=>{
   const modal=document.querySelector('dialog[open]');
   if(screen==='game'&&!modal&&['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(!e.repeat&&(e.code==='KeyP'||e.code==='Escape')&&screen==='game'){
-    if(modal&&modal.id!=='pause-dialog')return;
+    if(modal?.id==='upgrade-dialog'){e.preventDefault();toggleDraft(run);updateDraftClock();checkpoint();return;}if(modal&&modal.id!=='pause-dialog')return;
     e.preventDefault();paused?resumeGame():pauseGame();return;
   }
   if(modal){if(modal.id==='upgrade-dialog'){if(['Space','KeyE','KeyH','KeyF'].includes(e.code))e.preventDefault();if(!e.repeat&&['Digit1','Digit2','Digit3'].includes(e.code)){e.preventDefault();$('upgrade-options').children[Number(e.code.at(-1))-1]?.click();}}return;}
@@ -265,7 +291,7 @@ window.addEventListener('blur',()=>{clearInput();if(screen==='game')pauseGame();
 document.addEventListener('visibilitychange',()=>{if(document.hidden){checkpoint();pauseGame();audio.suspend();}});
 window.addEventListener('pagehide',checkpoint);
 function frame(now){
-  const dt=Math.min(.05,Math.max(0,(now-last)/1000));last=now;
+  const elapsed=Math.min(.25,Math.max(0,(now-last)/1000)),dt=Math.min(.05,elapsed);last=now;
   if(achievementUntil&&now>achievementUntil){$('achievement-toast').hidden=true;achievementUntil=0;}
   if(screen==='menu'){
     if(!document.hidden)drawTitle($('title-art'),now/1000,settings.lowMotion);
@@ -276,14 +302,15 @@ function frame(now){
       let y=joy.y+(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
       if(Math.hypot(x,y)>.08){destination=null;renderer.destination=null;}
       if(destination){const d=Math.hypot(destination.x-run.player.x,destination.y-run.player.y);if(d>10){x=(destination.x-run.player.x)/d;y=(destination.y-run.player.y)/d;}else{destination=null;renderer.destination=null;}}
-      const previous={x:run.player.x,y:run.player.y};processEvents(tick(run,{x,y},dt));saveTimer+=dt;hudTimer+=dt;
+      const previous={x:run.player.x,y:run.player.y};let budget=elapsed;while(budget>1e-6&&run.phase==='playing'&&!paused&&!document.querySelector('dialog[open]')){const step=Math.min(.05,budget);processEvents(tick(run,{x,y},step));saveTimer+=step;hudTimer+=step;budget-=step;}
       if(destination){stuckFor=Math.hypot(run.player.x-previous.x,run.player.y-previous.y)<.05?stuckFor+dt:0;if(stuckFor>.65){destination=null;renderer.destination=null;toast('换个落点，绕过前面的屋檐。',2);}}
       if(saveTimer>=8){checkpoint();saveTimer=0;}if(hudTimer>.08){updateHUD();hudTimer=0;}
       if(bannerUntil&&run.totalTime>bannerUntil){$('chapter-banner').hidden=true;bannerUntil=0;}
       if(letterUntil&&run.totalTime>letterUntil){$('letter-toast').hidden=true;letterUntil=0;}
       if(toastUntil&&run.totalTime>toastUntil){$('game-toast').hidden=true;toastUntil=0;}
     }
-    if(!document.hidden)renderer.draw(run,active?dt:0);
+    if(run.phase==='upgrade'&&$('upgrade-dialog').open){const auto=stepDraft(run,elapsed,{blocked:document.hidden||paused||document.querySelectorAll('dialog[open]').length>1});updateDraftClock();if(auto&&!applyDraftChoice(auto.id,auto.key,true)){const c=ensureDraft(run);if(c){c.fired=false;c.remaining=1;}}saveTimer+=elapsed;if(saveTimer>1){checkpoint();saveTimer=0;}}
+    if(!document.hidden)renderer.draw(run,active||run.phase==='upgrade'?dt:0);
     audio.update(active,run.chapter);
   }
   requestAnimationFrame(frame);
