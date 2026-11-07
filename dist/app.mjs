@@ -304,7 +304,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyM'){settings.sound=!settings.sound;saveSettings();updateSettings();}
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
-$('world').addEventListener('pointerdown',e=>{if(screen!=='game'||paused||run.phase!=='playing'||document.querySelector('dialog[open]')||e.button>0)return;const rect=$('world').getBoundingClientRect();destination={x:(e.clientX-rect.left)/renderer.zoom+renderer.camera.x,y:(e.clientY-rect.top)/renderer.zoom+renderer.camera.y};renderer.destination=destination;stuckFor=0;$('world').focus({preventScroll:true});});
+$('world').addEventListener('pointerdown',e=>{if(screen!=='game'||paused||(run.phase!=='playing'&&!interactiveDraft())||(document.querySelector('dialog[open]')&&!interactiveDraft())||e.button>0)return;const rect=$('world').getBoundingClientRect();destination={x:(e.clientX-rect.left)/renderer.zoom+renderer.camera.x,y:(e.clientY-rect.top)/renderer.zoom+renderer.camera.y};renderer.destination=destination;stuckFor=0;$('world').focus({preventScroll:true});});
 const stick=$('joystick');
 function updateJoy(e){const dx=e.clientX-joyCenter.x,dy=e.clientY-joyCenter.y,len=Math.hypot(dx,dy),max=38,f=Math.min(1,max/Math.max(1,len));joy={x:dx*f/max,y:dy*f/max};$('joystick-thumb').style.transform=`translate(${dx*f}px,${dy*f}px)`;}
 stick.addEventListener('pointerdown',e=>{if(joystickId!==null)return;e.preventDefault();joystickId=e.pointerId;const r=stick.getBoundingClientRect();joyCenter={x:r.left+r.width/2,y:r.top+r.height/2};stick.setPointerCapture(e.pointerId);updateJoy(e);audio.unlock();});
