@@ -11,7 +11,7 @@ import {validateDraft} from './draft.mjs';
 import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
 import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.8.1';
+export const VERSION = '1.8.2';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -33,7 +33,7 @@ function random(s) {
   return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 function event(s, type, data = {}) { s.events.push({ type, ...data }); }
-export function createGame({ seed = Date.now(), difficulty = 'normal',profile={},contract='lamps',daily='',id,mode='story',conditions=[],firstJourney=false,starter='cinder' } = {}) {
+export function createGame({ seed = Date.now(), difficulty = 'normal',profile={},contract='lamps',daily='',id,mode='story',conditions=[],firstJourney=false,starter='cinder',seamless=false } = {}) {
   const s = {
     version: SAVE_VERSION, seed: seed >>> 0, rng: seed >>> 0,
     difficulty: DIFFICULTIES[difficulty] ? difficulty : 'normal',
@@ -51,7 +51,7 @@ export function createGame({ seed = Date.now(), difficulty = 'normal',profile={}
   initExpedition(s,{mode:daily?'challenge':mode,conditions,firstJourney});
   if(s.v12.mode==='challenge'){profile={collection:['brass-lamp'],heirloom:'brass-lamp'};s.difficulty='normal';}
   initSystems(s,profile,{contract,daily,id});s.player.hp=s.player.maxHp;s.v12.minHp=s.player.hp;
-  if(mode==='endless'&&!daily){initEndless(s,starter);recalculate(s);s.player.hp=s.player.maxHp;}
+  if(mode==='endless'&&!daily){initEndless(s,starter);if(seamless)s.endless.flowVersion=1;recalculate(s);s.player.hp=s.player.maxHp;}
   if(s.v12.mode!=='challenge'){initGrowth(s,profile);if(!isEndless(s))initNarrative(s);recalculate(s);s.player.hp=s.player.maxHp;s.v12.minHp=s.player.hp;}
   loadChapter(s); return s;
 }
@@ -347,7 +347,7 @@ export function tick(s,input={},dt=1/60) {
   if(!isEndless(s)&&modern(s)&&s.phase==='playing'&&s.chapter===0&&!s.v12.buildTaken&&s.beacons.filter(b=>b.lit).length>=2){s.v12.buildTaken=true;s.v12.choiceKind='field';s.phase='upgrade';offerUpgrades(s);event(s,'upgrade');}
   for(const fx of s.effects) fx.life-=dt;
   s.effects=s.effects.filter(fx=>fx.life>0);
-  if(isEndless(s)){reviveEndless(s);if(s.phase==='playing')advanceEndlessChoices(s);s.effects=s.effects.slice(-120);s.projectiles=s.projectiles.slice(-250);}
+  if(isEndless(s)){reviveEndless(s);if(s.phase==='playing'&&advanceEndlessChoices(s)){checkEvolutions(s);loadChapter(s);}s.effects=s.effects.slice(-120);s.projectiles=s.projectiles.slice(-250);}
   if(p.hp<=0&&(s.phase==='playing'||liveDraft(s))){p.hp=0;s.phase='lost';event(s,'lost');}
   return s.events;
 }

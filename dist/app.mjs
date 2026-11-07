@@ -110,9 +110,11 @@ function announceChapter(){
 async function begin(resume=false){
   if(landscapeGate.check()){await landscapeGate.enter();if(landscapeGate.blocked)return;}
   audio.unlock();closeDialogs();
-  const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
+  const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,seamless:settings.mode==='endless',id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
+  // Upgrade active v1.8.x endless saves without discarding an existing selection.
+  if(isEndless(run)&&run.endless.draftSerial!==undefined)run.endless.flowVersion=1;
   ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;renderer.killMarks=[];renderer.killBurst=0;renderer.lastKillAt=0;
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
   if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
@@ -217,7 +219,9 @@ function processEvents(events){
     if(e.type==='tailwind')toast('顺风已起 · 3 秒加速。',2);
     if(e.type==='boss-defeated')toast(isEndless(run)?'首领击破！清掉余下敌人，领取奇物。':'长夜退去了。前往金色拱门，把黎明送达。',6);
     if(e.type==='level'&&!isEndless(run))toast(`信使等级 ${e.level} · 生命与光弹变得更强。`,3);
-    if(e.type==='room-clear')toast(`第 ${e.floor} 层清场！整理构筑，挑选下一条路。`,4);
+    if(e.type==='room-clear'&&run.endless?.flowVersion!==1)toast(`第 ${e.floor} 层清场！整理构筑，挑选下一条路。`,4);
+    if(e.type==='auto-floor')toast(`第 ${e.floor} 层已结算 · 自动进入第 ${e.nextFloor} 层`,2);
+    if(e.type==='pressure-warning')toast('停留过久 · 追踪落雷正在锁定！',1.5);
     if(e.type==='evolution')toast(`武器进化 · ${e.name}！`,6);
     if(e.type==='oath-gain')toast(`夜航刻印 · ${OATHS.find(o=>o.id===e.id)?.name} ${e.rank} 阶！`,4);
     if(e.type==='revive')toast('第二次黎明已燃尽 · 复起！',5);
