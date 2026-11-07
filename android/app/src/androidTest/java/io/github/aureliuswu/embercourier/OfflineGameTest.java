@@ -48,6 +48,21 @@ public final class OfflineGameTest {
     }
     private void capture(String name) throws Exception {
         assertTrue("Unexpected screenshot name", name.matches("draft-(portrait|landscape)\\.png"));
+        CountDownLatch rendered = new CountDownLatch(1);
+        getInstrumentation().runOnMainSync(() -> {
+            WebView web = activity.findViewById(R.id.game_webview);
+            web.postVisualStateCallback(SystemClock.uptimeMillis(), new WebView.VisualStateCallback() {
+                @Override public void onComplete(long requestId) {
+                    if (android.os.Build.VERSION.SDK_INT >= 29) {
+                        web.getViewTreeObserver().registerFrameCommitCallback(rendered::countDown);
+                        web.invalidate();
+                    } else {
+                        web.postOnAnimation(() -> web.postOnAnimation(rendered::countDown));
+                    }
+                }
+            });
+        });
+        assertTrue("Updated WebView frame did not reach the display", rendered.await(30, TimeUnit.SECONDS));
         // Gradle uninstalls the test target after connected tests. Shell-owned captures survive it.
         android.os.ParcelFileDescriptor output = getInstrumentation().getUiAutomation()
             .executeShellCommand("screencap -p /sdcard/Download/ember-" + name);
