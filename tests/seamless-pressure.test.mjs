@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {createGame,tick,chooseUpgrade,serialize,restore} from '../dist/core.mjs';
-import {advanceEndlessChoices,endlessEnemy,updateEndlessCombat} from '../dist/endless.mjs';
+import {advanceEndlessChoices,endlessEnemy,updateEndlessCombat,retireEndless} from '../dist/endless.mjs';
 
 const newRun=(seed=1221)=>createGame({seed,mode:'endless',starter:'cinder',seamless:true});
 const oldRun=()=>createGame({seed:1221,mode:'endless',starter:'cinder'});
@@ -74,4 +74,11 @@ test('landscape skill rail has nonoverlapping fixed rows and footer, combat noti
  assert.match(css,/height:46px;min-height:46px;max-height:46px/);
  assert.match(css,/draft-footer[\s\S]*?flex-wrap:nowrap/);
  assert.match(css,/\.game-view \.toast\{left:50%;bottom:/);
+});
+
+test('continuous runs can bank their earned result from pause after one completed floor',()=>{
+ const s=newRun();assert.equal(retireEndless(s),false);
+ clearWithRules(s);assert.equal(s.endless.cleared,1);assert.equal(s.phase,'playing');
+ assert.equal(retireEndless(s),true);assert.equal(s.phase,'won');assert.equal(s.endless.retired,true);
+ assert.equal(retireEndless(s),false);
 });

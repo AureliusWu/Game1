@@ -318,7 +318,7 @@ export function banishEndless(s,id){
  const g=s.growth,r=s.endless;if(!growthOn(s)||!r||s.phase!=='upgrade'||r.choice!=='skill'||g.banishes<=0||!s.offered.includes(id)||!Object.hasOwn(SKILL_BY_ID,id)||rankOf(s,id)>0)return false;
  g.banishes--;g.banished.push(id);delete s.selection;s.offered=draftSkills(s);emit(s,'banish',{id});return true;
 }
-export function retireEndless(s){if(!isEndless(s)||s.phase!=='upgrade'||s.endless.choice!=='route')return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
+export function retireEndless(s){if(!isEndless(s)||!((s.phase==='upgrade'&&s.endless.choice==='route')||(s.endless.flowVersion===1&&s.phase==='playing'&&s.endless.cleared>=1)))return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
 export function reviveEndless(s){const r=s.endless;if(s.player.hp>0||!hasRelic(s,'dawn')||r.revived)return false;r.revived=true;s.player.hp=s.player.maxHp*.5;s.player.invincible=3;s.projectiles=s.projectiles.filter(p=>!p.enemy);area(s,s.player,300,80*power(s),'blast');emit(s,'revive');return true;}
 /** Three boss patterns: clock beam, charging courier, and radial rain. Telegraphs lock before damage. */
 export function endlessBossCast(s,e,dt,hurt,move){
