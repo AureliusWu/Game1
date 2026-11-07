@@ -36,7 +36,7 @@
 <main id="menu" class="view menu-view">
   <header class="site-header">
     <a class="brand" href="./" aria-label="余烬信使首页"><img src="./icon.svg" width="38" height="38" alt=""><span>暮色邮局<small>NIGHTFALL POST OFFICE</small></span></a>
-    <nav aria-label="菜单"><button class="text-button" data-dialog="guide" aria-label="玩法手册"><svg><use href="#i-book"/></svg><span>玩法手册</span></button><button class="icon-button sound-toggle" aria-label="关闭声音"><svg><use href="#i-sound"/></svg></button><button class="icon-button" id="settings-open" aria-label="设置"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg></button></nav>
+    <nav aria-label="菜单"><button class="text-button menu-systems-trigger" id="menu-systems-open" aria-haspopup="dialog" aria-controls="menu-systems"><svg><use href="#i-bag"/></svg><span>扩展系统</span></button><button class="text-button" data-dialog="guide" aria-label="玩法手册"><svg><use href="#i-book"/></svg><span>玩法手册</span></button><button class="icon-button sound-toggle" aria-label="关闭声音"><svg><use href="#i-sound"/></svg></button><button class="icon-button" id="settings-open" aria-label="设置"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6m8 4v6"/></svg></button></nav>
   </header>
   <section class="hero">
     <div class="hero-copy">
@@ -48,8 +48,7 @@
       <div id="endless-prep"><p class="starter-label">选一件起始武器 <span>其余武器可在局内获得</span></p><div id="starter-options" class="starter-options"></div><p class="prep-note" id="endless-record">第 5 层迎战首领 · 3 武器 / 4 被动 · 组合进化</p></div>
       <div class="difficulty" role="group" aria-label="旅途难度"><span>旅途难度</span><div><button data-difficulty="wander" aria-pressed="false">漫游</button><button class="selected" data-difficulty="normal" aria-pressed="true">标准</button><button data-difficulty="night" aria-pressed="false">长夜</button></div><button class="difficulty-info" id="difficulty-info" aria-label="了解难度">?</button></div>
       <p class="difficulty-desc" id="difficulty-desc">有一点危险，也有足够的光。</p>
-      <div id="story-prep" hidden><div class="journey-prep"><label for="contract-select">本次委托</label><select id="contract-select" aria-label="选择本次邮局委托"></select><label class="daily-label"><input type="checkbox" id="daily-setting"> 公平每日航线</label></div>
-      <details class="route-options"><summary>为夜路加一点变化 <span>4 种可选条件</span></summary><div id="route-conditions"></div></details><p class="prep-note" id="prep-note">点灯之外，也带一封信去远方。</p></div>
+      <button class="menu-story-config secondary" id="story-config-open" aria-haspopup="dialog" aria-controls="story-config-dialog" hidden>委托与航线设置 <svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
       <button class="primary start-button" id="start"><span>开启无尽夜航<small>ONE MORE FLOOR</small></span><svg><use href="#i-arrow"/></svg></button>
       <button class="continue-button" id="continue" hidden>继续上次旅途 <span id="continue-chapter"></span><svg><use href="#i-arrow"/></svg></button>
       <div class="game-tags"><span>无尽肉鸽</span><b>·</b><span>随时保存续玩</span><b>·</b><span>支持离线</span></div>
@@ -61,6 +60,10 @@
       <div class="art-note"><svg><use href="#i-star"/></svg><span>在黑暗里，做一点微小的亮。</span></div>
     </div>
   </section>
+  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.7.1</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
+</main>
+<dialog id="menu-systems" class="modal menu-systems-modal" aria-label="暮色百事与扩展系统">
+  <button class="dialog-close icon-button" data-close aria-label="关闭扩展系统"><svg><use href="#i-close"/></svg></button>
   <section class="postoffice-hub" aria-label="暮色百事扩展系统">
     <div class="hub-section-heading"><span>暮色百事 <b>STAR LETTERS 1.6</b></span><small id="office-rank">见习信使</small><span class="stamp-wallet"><svg><use href="#i-letter"/></svg><strong id="menu-stamps">0</strong> 邮票</span></div>
     <div class="office-entry-grid"><button data-hub="inventory"><svg><use href="#i-bag"/></svg><span>行装工坊<small>装备 · 套装 · 锻造</small></span><b>→</b></button><button data-hub="journal"><svg><use href="#i-letter"/></svg><span>旅途手札<small>委托 · 居民 · 回信</small></span><b>→</b></button><button data-hub="tree"><svg><use href="#i-star"/></svg><span>夜航星图<small>技能树 · 熟练度 · 成长目标</small></span><b>→</b></button><button data-hub="office"><svg><use href="#i-sun"/></svg><span>暮色邮局<small>永久成长 · 启程藏品</small></span><b>→</b></button><button data-hub="achievements"><svg><use href="#i-star"/></svg><span>成就与收藏<small id="achievement-summary">0 / 28 成就</small></span><b>→</b></button></div>
@@ -71,8 +74,14 @@
     <div><span class="strip-number">02</span><p>组合进化<small>武器与被动搭配，变化看得见</small></p></div>
     <div><span class="strip-number">03</span><p>挑战更深层<small>每五层首领，路由你来选</small></p></div>
   </section>
-  <footer class="menu-footer"><span>独立原创游戏 <i>✦</i> v1.7.0</span><button id="records-open">旅途记录 <span id="record-summary">等待第一束光</span><svg><use href="#i-arrow"/></svg></button><span class="footer-tip">耳机里，藏着城市的呼吸</span></footer>
-</main>
+</dialog>
+<dialog id="story-config-dialog" class="modal story-config-modal" aria-label="剧情委托与航线设置">
+  <button class="dialog-close icon-button" data-close aria-label="关闭剧情配置"><svg><use href="#i-close"/></svg></button>
+  <div class="eyebrow">THE NEXT LETTER</div><h2>剧情委托与航线</h2>
+      <div id="story-prep" hidden><div class="journey-prep"><label for="contract-select">本次委托</label><select id="contract-select" aria-label="选择本次邮局委托"></select><label class="daily-label"><input type="checkbox" id="daily-setting"> 公平每日航线</label></div>
+      <details class="route-options"><summary>为夜路加一点变化 <span>4 种可选条件</span></summary><div id="route-conditions"></div></details><p class="prep-note" id="prep-note">点灯之外，也带一封信去远方。</p></div>
+  <button class="primary full-width" data-close>保存配置并返回 <svg><use href="#i-check"/></svg></button>
+</dialog>
 <section id="game" class="view game-view" hidden aria-label="余烬信使游戏区域">
   <canvas id="world" tabindex="0" aria-label="游戏画面。使用 WASD 或方向键移动，空格冲刺，E 释放光环，P 暂停。手机使用左侧摇杆和右侧技能键。"></canvas>
   <header class="hud">

@@ -32,6 +32,14 @@ export const RELICS=[
  {id:'dawn',name:'第二次黎明',symbol:'sun',desc:'本局首次致命伤时复起至 50% 生命，获得 3 秒无敌。'},
  {id:'hunger',name:'饥火徽章',symbol:'flame',desc:'每 20 连击获得 5 秒狂热：伤害与移速提高 30%。'}
 ];
+/** Every three floors: opt-in oath rewards. Existing saves without oaths keep their behavior. */
+export const OATHS=[
+ {id:'ember',name:'焚烬刻印',symbol:'flame',desc:'连续击败敌人后在目标处触发范围爆炸；阶级越高，触发越快。',detail:'爆焰行灯 Lv.3 后，爆炸留下火径。'},
+ {id:'gale',name:'疾风刻印',symbol:'wind',desc:'冲刺释放羽风震荡，缩短本次冲刺冷却；阶级越高，伤害和范围越大。',detail:'回旋护羽 Lv.3 后，羽风伤害再提高 35%。'},
+ {id:'storm',name:'雷鸣刻印',symbol:'star',desc:'光环额外触发连锁雷；阶级越高，跳跃次数和伤害越多。',detail:'连锁雷笺 Lv.3 后，雷电额外跳跃 2 次。'}
+];
+export const oathRank=(s,id)=>s.endless?.oaths?.ranks[id]||0;
+export const oathTotal=s=>s.endless?.oaths?Object.values(s.endless.oaths.ranks).reduce((a,b)=>a+b,0):0;
 export const ROUTES=[
  {id:'hunt',name:'巡灯猎场',symbol:'flame',desc:'常规敌群与奖励。稳步补齐构筑。'},
  {id:'elite',name:'危险押运',symbol:'shield',desc:'敌群更强，出现精英。击杀星砂与经验提高 35%。'},
@@ -51,7 +59,7 @@ export function initEndless(s,starter='cinder'){
  s.endless={version:1,floor:1,cleared:0,route:'hunt',rng:seedMix(s.seed,130),ranks:{[starter]:1},relics:[],starter,
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
-  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0};
+  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false}};
  initCombat(s);
  initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
@@ -106,12 +114,12 @@ function area(s,point,radius,damage,type='blast',slow=0){
  for(const e of s.enemies)if(e.hp>0&&dist(e,point)<radius+e.r)hit(s,e,damage,slow);
  s.effects.push({type,x:point.x,y:point.y,r:radius,life:.45,maxLife:.45});
 }
-function chain(s,extra=false){
+function chain(s,extra=false,bonus=0){
  const level=rankOf(s,'thunder');if(!level&&!extra)return;
- let from=s.player;const used=new Set(),evo=evolved(s,'thunder'),count=extra&&!level?3:2+level;
+ let from=s.player;const used=new Set(),evo=evolved(s,'thunder'),count=(extra&&!level?3:2+level)+bonus;
  for(let i=0;i<count;i++){
   const e=s.enemies.filter(e=>e.hp>0&&e.warning<=0&&!used.has(e.id)&&dist(e,from)<(i?evo?520:310:520)).sort((a,b)=>dist(a,from)-dist(b,from))[0];
-  if(!e)break;used.add(e.id);hit(s,e,(18+level*7)*power(s));s.effects.push({type:'lightning',x:from.x,y:from.y,toX:e.x,toY:e.y,r:1,life:.22,maxLife:.22});from=e;
+  if(!e)break;used.add(e.id);hit(s,e,(18+level*7+Math.max(0,bonus)*6)*power(s));s.effects.push({type:'lightning',x:from.x,y:from.y,toX:e.x,toY:e.y,r:1,life:.22,maxLife:.22});from=e;
  }
  if(evo&&used.size)area(s,from,120,28*power(s),'lightning-burst');
  if(used.size)emit(s,'thunder');
@@ -127,10 +135,16 @@ export function onEndlessBolt(s,target,bolt){
  if(evolved(s,'frost')&&(target.slowUntil||0)>s.totalTime)hit(s,target,bolt.damage*.35);
  if(!isCombat(s))emit(s,'damage-number',{x:target.x,y:target.y,damage:Math.round(bolt.damage),critical:bolt.critical});
 }
+export function onEndlessDash(s){
+ const lv=oathRank(s,'gale');if(!lv)return;
+ const p=s.player;p.dashCd=Math.max(.35,p.dashCd-lv*.15);
+ area(s,p,100+lv*25,(12+lv*12)*power(s)*(rankOf(s,'orbit')>=3?1.35:1),'feather');
+ emit(s,'oath-proc',{id:'gale'});
+}
 export function onEndlessPulse(s,hits){
  if(rankOf(s,'frost'))for(const e of s.enemies)if(dist(s.player,e)<s.player.pulseRadius+e.r)e.slowUntil=s.totalTime+3;
  if(rankOf(s,'thunder'))s.endless.thunderCd=0;
- if(hasRelic(s,'ink'))chain(s,true);
+ const storm=oathRank(s,'storm');if(hasRelic(s,'ink')||storm){chain(s,true,storm+(storm&&rankOf(s,'thunder')>=3?2:0));if(storm)emit(s,'oath-proc',{id:'storm'});}
  if(evolved(s,'orbit'))area(s,s.player,270,50*power(s),'feather');
  if(rankOf(s,'pulsecraft')&&hits>=3){s.v12.barrier=1;s.v12.barrierSource='paper';s.v12.barrierUntil=s.totalTime+2;}
 }
@@ -170,6 +184,11 @@ export function onEndlessKill(s,e){
  if(e.kind==='boss'){r.bosses++;r.rerolls=Math.min(3,r.rerolls+1);}
  if(rankOf(s,'sustain')&&s.kills%8===0)s.player.hp=Math.min(s.player.maxHp,s.player.hp+3*rankOf(s,'sustain'));
  if(hasRelic(s,'hunger')&&s.journal.combo>0&&s.journal.combo%20===0){r.feverMark++;r.feverUntil=s.totalTime+5;emit(s,'fever');}
+ const lv=oathRank(s,'ember');if(lv&&s.kills%(8-lv*2)===0){
+  area(s,e,105+lv*25,(18+lv*14)*power(s),'blast');
+  if(rankOf(s,'cinder')>=3){r.pools.push({x:e.x,y:e.y,until:s.totalTime+2.4});r.pools=r.pools.slice(-14);}
+  emit(s,'oath-proc',{id:'ember'});
+ }
 }
 function shuffle(s,items){for(let i=items.length-1;i>0;i--){const j=Math.floor(endlessRandom(s)*(i+1));[items[i],items[j]]=[items[j],items[i]];}return items;}
 function draftSkills(s){
@@ -187,6 +206,7 @@ export function advanceEndlessChoices(s){
  const r=s.endless;if(s.player.hp<=0)return;
  if(!r.clearedRoom&&r.remaining===0&&s.enemies.length===0){
   r.clearedRoom=true;r.cleared=r.floor;r.rewardPending=r.floor%5===0||r.route==='cache';
+  if(r.oaths)r.oaths.offerPending=r.floor%3===0&&oathTotal(s)<OATHS.length*3;
   s.score+=350+r.floor*50;const coins=10+(r.route==='curse'?25:0);s.journal.coins+=coins;s.metrics.coinsEarned+=coins;
   for(const e of s.embers){gainEndlessXP(s,e.xp||0);s.collected++;}s.embers=[];
   r.pending+=r.route==='curse'?2:1;s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.1+(hasRelic(s,'lodestone')?8:0));
@@ -195,12 +215,14 @@ export function advanceEndlessChoices(s){
  }
  if(r.pending>0){setChoice(s,'skill',draftSkills(s));return;}
  if(r.clearedRoom&&r.rewardPending){const pool=shuffle(s,RELICS.filter(x=>!r.relics.includes(x.id)));setChoice(s,'relic',pool.length?pool.slice(0,3).map(x=>x.id):['ash','mend','supplies']);return;}
+ if(r.clearedRoom&&r.oaths?.offerPending){const available=OATHS.filter(x=>oathRank(s,x.id)<3).map(x=>x.id);if(available.length){setChoice(s,'oath',available);return;}r.oaths.offerPending=false;}
  if(r.clearedRoom){const rest=shuffle(s,['elite','cache','rest','curse']).slice(0,2);setChoice(s,'route',['hunt',...rest]);}
 }
 export function choiceInfo(s,id){
  const r=s.endless;
  if(r.choice==='route'){const u=ROUTES.find(u=>u.id===id);return {...u,tag:`第 ${r.floor+1} 层${(r.floor+1)%5===0?' · 首领':''}`,desc:u.desc+(id==='rest'?` 费用 ${restCost(s)} 星砂。`:''),disabled:id==='rest'&&s.journal.coins<restCost(s)};}
  if(r.choice==='relic'&&RELICS.some(u=>u.id===id))return {...RELICS.find(u=>u.id===id),tag:'奇物 · 本局生效'};
+ if(r.choice==='oath'){const u=OATHS.find(u=>u.id===id);if(u)return {...u,tag:`流派刻印 · ${oathRank(s,id)} → ${oathRank(s,id)+1} 阶`,ready:oathRank(s,id)===1};}
  const u=SKILL_BY_ID[id];if(u){const level=rankOf(s,id),n=level+1;
   const nextWeapon=u.partner&&n===5&&rankOf(s,u.partner)>=2;
   const nextPartner=SKILLS.find(w=>w.partner===id&&rankOf(s,w.id)===5&&n===2);
@@ -227,15 +249,16 @@ export function pickEndless(s,id){
   if(id==='rest'){const cost=restCost(s);s.journal.coins-=cost;s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.35);s.journal.potions=Math.min(5,s.journal.potions+1);}
   r.route=id;r.floor++;s.chapter=(r.floor-1)%3;return {advance:true};
  }
- if(kind==='skill')r.pending--;else if(kind==='relic')r.rewardPending=false;
+ if(kind==='skill')r.pending--;else if(kind==='relic')r.rewardPending=false;else if(kind==='oath')r.oaths.offerPending=false;
  if(SKILL_BY_ID[id]&&kind==='skill'){r.ranks[id]=(r.ranks[id]||0)+1;if(id==='vitality')s.player.hp+=20;}
  else if(kind==='relic'&&RELICS.some(u=>u.id===id))r.relics.push(id);
+ else if(kind==='oath'&&r.oaths&&OATHS.some(u=>u.id===id)){r.oaths.ranks[id]=(r.oaths.ranks[id]||0)+1;emit(s,'oath-gain',{id,rank:r.oaths.ranks[id]});}
  else if(id==='ash')r.ash++;else if(id==='mend')s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.25);
  else if(id==='supplies'){if(s.journal.potions<5)s.journal.potions++;else{s.journal.coins+=12;s.metrics.coinsEarned+=12;}}
  return {advance:false};
 }
 export function checkEvolutions(s){for(const u of SKILLS.filter(u=>u.kind==='weapon'))if(evolved(s,u.id)&&!s.endless.evolutions.includes(u.id)){s.endless.evolutions.push(u.id);emit(s,'evolution',{id:u.id,name:u.evolution});}}
-export function rerollEndless(s){const r=s.endless;if(!r||s.phase!=='upgrade'||r.choice==='route'||r.rerolls<=0)return false;r.rerolls--;r.rerollsUsed++;delete s.selection;s.offered=r.choice==='skill'?draftSkills(s):shuffle(s,RELICS.filter(u=>!r.relics.includes(u.id))).slice(0,3).map(u=>u.id);if(!s.offered.length)s.offered=['ash','mend','supplies'];return true;}
+export function rerollEndless(s){const r=s.endless;if(!r||s.phase!=='upgrade'||['route','oath'].includes(r.choice)||r.rerolls<=0)return false;r.rerolls--;r.rerollsUsed++;delete s.selection;s.offered=r.choice==='skill'?draftSkills(s):shuffle(s,RELICS.filter(u=>!r.relics.includes(u.id))).slice(0,3).map(u=>u.id);if(!s.offered.length)s.offered=['ash','mend','supplies'];return true;}
 export function banishEndless(s,id){
  const g=s.growth,r=s.endless;if(!growthOn(s)||!r||s.phase!=='upgrade'||r.choice!=='skill'||g.banishes<=0||!s.offered.includes(id)||!Object.hasOwn(SKILL_BY_ID,id)||rankOf(s,id)>0)return false;
  g.banishes--;g.banished.push(id);delete s.selection;s.offered=draftSkills(s);emit(s,'banish',{id});return true;
@@ -278,10 +301,14 @@ export function validateEndless(s){
  if(!Object.hasOwn(WEATHERS,r.weather)||!Array.isArray(r.zones)||r.zones.length>4||r.zones.some(z=>['x','y','r','warning'].some(k=>!Number.isFinite(z[k]))||z.r!==85||z.warning<=0||z.warning>1.25))return false;
  if(!Array.isArray(r.market)||r.market.length>3||new Set(r.market).size!==r.market.length||r.market.some(id=>!['tea','potion','reroll'].includes(id)))return false;
  if(!Array.isArray(r.pools)||r.pools.length>14||r.pools.some(p=>['x','y','until'].some(k=>!Number.isFinite(p[k]))))return false;
- if(!['','skill','relic','route'].includes(r.choice))return false;
+ if(r.oaths!==undefined){
+  const o=r.oaths;if(!o||o.version!==1||typeof o.offerPending!=='boolean'||!o.ranks||Array.isArray(o.ranks)||typeof o.ranks!=='object')return false;
+  if(Object.entries(o.ranks).some(([id,lv])=>!OATHS.some(x=>x.id===id)||!Number.isInteger(lv)||lv<1||lv>3)||oathTotal(s)>9)return false;
+ }
+ if(!['','skill','relic','route','oath'].includes(r.choice)||r.choice==='oath'&&!r.oaths)return false;
  if(s.phase==='upgrade'){
   if(!r.choice||!s.offered.length||s.offered.length>3||new Set(s.offered).size!==s.offered.length)return false;
-  const allowed=r.choice==='route'?ROUTES.map(u=>u.id):r.choice==='relic'?RELICS.map(u=>u.id):SKILLS.map(u=>u.id);
+  const allowed=r.choice==='route'?ROUTES.map(u=>u.id):r.choice==='relic'?RELICS.map(u=>u.id):r.choice==='oath'?OATHS.filter(u=>oathRank(s,u.id)<3).map(u=>u.id):SKILLS.map(u=>u.id);
   if(s.offered.some(id=>!allowed.includes(id)&&!['ash','mend','supplies'].includes(id)))return false;
   if(r.choice==='skill'&&(r.pending<1||s.offered.some(id=>SKILL_BY_ID[id]&&rankOf(s,id)>=5)))return false;
  }else if(r.choice)return false;
