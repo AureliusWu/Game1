@@ -169,7 +169,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
  updateCombatBurst(s);
  r.spawnIn-=dt;if(isCombat(s)&&s.enemies.filter(e=>e.hp>0).length<3)r.spawnIn=Math.min(r.spawnIn,.22);
  if(r.remaining>0&&r.spawnIn<=0&&s.enemies.length<30){
-  let batch=Math.min((isCombat(s)?(r.draftSerial!==undefined?5:4):3)+Math.floor(r.floor/4),7,r.remaining,30-s.enemies.length);
+  let batch=Math.min((isCombat(s)?(r.draftSerial!==undefined?5:4):3)+Math.floor(r.floor/4),r.draftSerial!==undefined?7:6,r.remaining,30-s.enemies.length);
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
