@@ -271,7 +271,7 @@ function updateHUD(){
     $(id).classList.toggle('cooldown',cd>0);$(id).setAttribute('aria-disabled',String(cd>0));$(id).style.setProperty('--cooldown',`${cd/max*100}%`);
     $(`${id}-cd`).textContent=cd>0?cd.toFixed(1):label;$(`${id}-cd`).classList.toggle('counting',cd>0);
   }
-  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills}/${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 余敌 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}${active?' · 破风':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
+  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills}/${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 余敌 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}${run.endless.flow?.boostUntil>run.totalTime?' · 破风':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
   $('combat-meter').hidden=!isCombat(run);if(isCombat(run)){const burst=overdriving(run),c=run.endless.combat;$('combat-meter').classList.toggle('active',burst);$('combat-label').textContent=burst?'破晓超载 · '+(c.overdriveUntil-run.totalTime).toFixed(1)+'s':'破晓蓄能 · '+Math.floor(c.heat)+'%';$('combat-fill').style.width=(burst?(c.overdriveUntil-run.totalTime)/6*100:c.heat)+'%';}
   $('kill-hud').hidden=!isEndless(run);$('kill-count').textContent=run.kills;
   const flow=run.endless?.flow,active=flow?.version===1&&flow.boostUntil>run.totalTime,chain=flow?.version===1&&flow.chainUntil>run.totalTime?flow.chain:0,signal=$('flow-signal');
