@@ -75,3 +75,27 @@ body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-li
  body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{min-height:21px;padding:2px 5px}
  body[data-live-draft=true] #upgrade-dialog .draft-bottom{display:none}
 }
+
+/* v1.9: stronger combat hierarchy, quieter temporary prompts, compact active streak. */
+#game .flow-signal[hidden]{display:none}
+#game .flow-signal{display:inline-flex;align-items:center;width:max-content;max-width:194px;min-height:17px;box-sizing:border-box;
+ padding:3px 8px;border-radius:8px;color:#d0efca;border:1px solid #94d6af7a;background:#113d36e5;
+ font:600 10px/1.2 system-ui,sans-serif;letter-spacing:.3px;text-shadow:0 0 5px #07272c}
+#game .flow-signal.surging{color:#f5ffb5;border-color:#c1eaa4;background:linear-gradient(110deg,#194b3eea,#355b35e8);box-shadow:0 0 12px #c8f6ae44}
+#game .combat-meter.active i{background:linear-gradient(90deg,#f6bd6a,#fff6b1);box-shadow:0 0 9px #ffe5a680}
+#game .hp-track,#game .xp-track{box-shadow:inset 0 0 0 1px #e7df9c13}
+#game .toast{max-width:340px;box-sizing:border-box}
+@media (orientation:landscape) and (max-height:760px){
+ #game .toast{left:clamp(210px,21vw,350px);right:auto;top:clamp(190px,34dvh,285px);bottom:auto;
+   transform:none;max-width:min(30vw,340px);font-size:11px;line-height:1.5;padding:8px 11px;
+   border-radius:9px;background:#10313bda;backdrop-filter:blur(4px)}
+ #game .kill-hud{gap:4px}
+ #game .hud-center>span{max-width:42vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+ #game .objective,#game .run-status{background-color:#0b282dbf;backdrop-filter:blur(3px)}
+}
+@media (orientation:landscape) and (max-height:420px){
+ #game .toast{top:35%;max-width:min(29vw,290px);font-size:10px}
+ #game .flow-signal{min-height:14px;font-size:9px;padding:2px 5px}
+}
+body[data-live-draft=true] #game .toast{visibility:hidden}
+@media(prefers-reduced-motion:reduce){#game .flow-signal.surging{box-shadow:none}}

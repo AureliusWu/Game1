@@ -11,7 +11,7 @@ import {validateDraft} from './draft.mjs';
 import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
 import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.8.2';
+export const VERSION = '1.9.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -126,7 +126,7 @@ export function pulse(s) {
   let hits=0;
   for(const e of s.enemies) if(e.hp>0&&distance(p,e)<p.pulseRadius+e.r) {
     if(isCombat(s)&&e.warning>0)continue;
-    hits++;const damage=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1);
+    hits++;const damage=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1)*flowMultiplier(s);
     if(isCombat(s))damageEnemy(s,e,damage,{source:'pulse',stun:1});else{e.hp-=damage;e.stun=1;}
     if(modern(s)){
       if(isTactical(s)){if(interruptEnemy(s,e)){s.v12.interrupts++;event(s,'interrupt');}}
