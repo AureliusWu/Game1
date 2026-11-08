@@ -261,7 +261,7 @@ function updateHUD(){
   const lit=run.beacons.filter(b=>b.lit).length;
   const j=run.journal;$('level-label').textContent=`Lv.${j.level}`;$('coin-count').textContent=j.coins;
   const base=isEndless(run)?xpThreshold(j.level):XP_THRESHOLDS[j.level-1],next=isEndless(run)?xpThreshold(j.level+1):XP_THRESHOLDS[j.level];$('xp-bar').style.width=`${next?Math.min(100,(j.xp-base)/(next-base)*100):100}%`;
-  $('combo-label').hidden=j.combo<2;$('combo-label').textContent=`${j.combo} 连击`;
+  $('combo-label').hidden=j.combo<2;$('combo-label').textContent=`×${j.combo} 连击`;
   $('potion-count').textContent=j.potions;$('potion').disabled=j.potions<1||p.hp>=p.maxHp||j.potionCd>0;
   const poi=nearestPOI(run);$('interact').hidden=!poi;if(poi)$('interact-label').textContent=poiLabel(poi);
   $('objective').textContent=run.exit.open?(run.chapter===2?'前往金色拱门，把黎明送达':'灯塔已全部点亮 · 前往右侧金色拱门'):lit===3?'击败守夜者 · 看清预警，及时换位':p.embers>=4?'携带足够火种 · 靠近未点亮的灯塔':`收集火种点亮灯塔 · 每座需要 4 枚（${p.embers}/4）`;
@@ -271,9 +271,12 @@ function updateHUD(){
     $(id).classList.toggle('cooldown',cd>0);$(id).setAttribute('aria-disabled',String(cd>0));$(id).style.setProperty('--cooldown',`${cd/max*100}%`);
     $(`${id}-cd`).textContent=cd>0?cd.toFixed(1):label;$(`${id}-cd`).classList.toggle('counting',cd>0);
   }
-  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills} / ${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 剩余 ${r.remaining+run.enemies.length}${r.oaths&&Object.keys(r.oaths.ranks).length?' · 刻印 '+Object.entries(r.oaths.ranks).map(([id,lv])=>OATHS.find(o=>o.id===id).name.slice(0,2)+lv).join('/') :''}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
+  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills}/${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 余敌 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}${run.endless.flow?.boostUntil>run.totalTime?' · 破风':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
   $('combat-meter').hidden=!isCombat(run);if(isCombat(run)){const burst=overdriving(run),c=run.endless.combat;$('combat-meter').classList.toggle('active',burst);$('combat-label').textContent=burst?'破晓超载 · '+(c.overdriveUntil-run.totalTime).toFixed(1)+'s':'破晓蓄能 · '+Math.floor(c.heat)+'%';$('combat-fill').style.width=(burst?(c.overdriveUntil-run.totalTime)/6*100:c.heat)+'%';}
   $('kill-hud').hidden=!isEndless(run);$('kill-count').textContent=run.kills;
+  const flow=run.endless?.flow,active=flow?.version===1&&flow.boostUntil>run.totalTime,chain=flow?.version===1&&flow.chainUntil>run.totalTime?flow.chain:0,signal=$('flow-signal');
+  signal.hidden=!active&&!chain;signal.classList.toggle('surging',!!active);
+  if(!signal.hidden)signal.textContent=active?'破风觉醒 '+(flow.boostUntil-run.totalTime).toFixed(1)+'s · 伤害↑25%':'冲刺连斩 '+chain+'/4';
   const weaponKey=isEndless(run)?Object.entries(run.endless.ranks).filter(([id])=>SKILL_BY_ID[id].kind==='weapon').map(([id,lv])=>id+':'+lv+':'+evolved(run,id)).join('|'):'';
   if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`<svg><use href="#i-${u.symbol}"/></svg><b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
   if(boss&&isTactical(run))$('boss-subtitle').textContent=boss.enraged?'第二阶段 · 招式加速 · 光环可打断':'招式轮换 · 留意粉色预警';

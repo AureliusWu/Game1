@@ -49,9 +49,14 @@ jobs:
         run: node scripts/check.mjs
       - name: Validate workflow contracts with pinned actionlint
         run: |
-          curl -fsSL --retry 3 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"
-          echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
-          tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          if curl -fsSL --retry 3 --retry-delay 2 https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz -o "$RUNNER_TEMP/actionlint.tar.gz"; then
+            echo "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8  $RUNNER_TEMP/actionlint.tar.gz" | sha256sum -c -
+            tar -xzf "$RUNNER_TEMP/actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          else
+            echo "::warning::Pinned GitHub Release download unavailable; compiling the same pinned actionlint version with Go module checksum verification."
+            command -v go
+            GOBIN="$RUNNER_TEMP" GOPROXY=https://proxy.golang.org GOSUMDB=sum.golang.org go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+          fi
           "$RUNNER_TEMP/actionlint" -shellcheck="" -pyflakes=""
       - name: Build the canonical web archive once
         run: python3 scripts/package_web.py

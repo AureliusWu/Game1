@@ -5,13 +5,13 @@ import {applyLayout,pursuit,safePoint,seedMix} from './routes.mjs';
 import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPatrolReward,heal,receiveHit,updateExpedition,sanctuaryRate,tickCast,validateExpedition} from './expedition.mjs';
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
 import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
-import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash} from './combat.mjs';
+import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash,flowMultiplier,breakCombatFlow} from './combat.mjs';
 import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
 import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
 import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.8.2';
+export const VERSION = '1.9.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -126,7 +126,7 @@ export function pulse(s) {
   let hits=0;
   for(const e of s.enemies) if(e.hp>0&&distance(p,e)<p.pulseRadius+e.r) {
     if(isCombat(s)&&e.warning>0)continue;
-    hits++;const damage=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1);
+    hits++;const damage=p.pulseDamage*(modern(s)&&s.v12.pulseBoost>0?1.2:1)*flowMultiplier(s);
     if(isCombat(s))damageEnemy(s,e,damage,{source:'pulse',stun:1});else{e.hp-=damage;e.stun=1;}
     if(modern(s)){
       if(isTactical(s)){if(interruptEnemy(s,e)){s.v12.interrupts++;event(s,'interrupt');}}
@@ -170,7 +170,7 @@ function spawnEnemy(s,kind) {
 function hurt(s,amount,source='影兽接触') {
   const p=s.player;if(p.invincible>0) return;
   const dmg=amount*DIFFICULTIES[s.difficulty].damage*(1-p.armor);
-  if(modern(s)){receiveHit(s,dmg,source);return;}
+  if(modern(s)){const before=s.damageTaken;receiveHit(s,dmg,source);if(s.damageTaken>before)breakCombatFlow(s);return;}
   p.hp-=dmg;s.damageTaken+=dmg;p.invincible=1.2;
   event(s,'hurt',{damage:dmg});
 }
@@ -263,7 +263,7 @@ export function tick(s,input={},dt=1/60) {
         const d=Math.max(1,distance(p,e));
         const critical=p.crit>0&&random(s)<p.crit;
         const bonus=(modern(s)?(has(s,'focus')&&eligible.length===1?1.25:1)*(s.v12.dashChargeUntil>s.totalTime?1.25:1):1)*growthBoltBonus(s);
-        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?(isEndless(s)?2.1:1.75):1)*bonus*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1),r:critical?7:5,critical});
+        s.projectiles.push({x:p.x,y:p.y,vx:(e.x-p.x)/d*540,vy:(e.y-p.y)/d*540,target:e.id,enemy:false,life:1.1,damage:p.damage*(critical?(isEndless(s)?2.1:1.75):1)*bonus*(isEndless(s)&&s.endless.feverUntil>s.totalTime?1.3:1)*flowMultiplier(s),r:critical?7:5,critical});
       }
       consumeGrowthBolt(s);if(modern(s))s.v12.dashChargeUntil=0;p.attackCd=p.attackRate/(overdriving(s)?1.65:1);event(s,'shoot',{x:p.x,y:p.y,weapon:s.endless?.starter});
     }

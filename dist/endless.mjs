@@ -1,7 +1,7 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
 import {ENDLESS_MAPS,nextEndlessMap} from './endless-maps.mjs';
-import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
+import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat,validateFlow,flowMultiplier} from './combat.mjs';
 import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
 import {growthOn,growthPower,growthXP} from './growth.mjs';
 const TAU=Math.PI*2;
@@ -63,7 +63,7 @@ export function initEndless(s,starter='cinder'){
  s.endless={version:1,floor:1,cleared:0,route:'hunt',rng:seedMix(s.seed,130),ranks:{[starter]:1},relics:[],starter,
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
-  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0};
+  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0,flow:{version:1,chain:0,chainUntil:0,boostUntil:0,procs:0}};
  initCombat(s);
  initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
@@ -123,7 +123,7 @@ function hit(s,e,amount,slow=0){
  if(slow)e.slowUntil=Math.max(e.slowUntil||0,s.totalTime+slow);
  e.stun=Math.max(e.stun,.07);emit(s,'damage-number',{x:e.x,y:e.y,damage:Math.round(amount)});
 }
-function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1)*growthPower(s);}
+function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1)*growthPower(s)*flowMultiplier(s);}
 function area(s,point,radius,damage,type='blast',slow=0){
  for(const e of s.enemies)if(e.hp>0&&dist(e,point)<radius+e.r)hit(s,e,damage,slow);
  s.effects.push({type,x:point.x,y:point.y,r:radius,life:.45,maxLife:.45});
@@ -306,7 +306,7 @@ export function endlessBossCast(s,e,dt,hurt,move){
  return false;
 }
 export function validateEndless(s){
- if(!validateCombat(s))return false;
+ if(!validateCombat(s)||!validateFlow(s))return false;
  if(!validateTactics(s))return false;
  const r=s.endless;if(!r||r.version!==1||!Number.isInteger(r.floor)||r.floor<1||r.floor>1000000||s.chapter!==(r.floor-1)%3)return false;
  for(const k of ['cleared','rng','remaining','total','roomKills','pending','rerolls','rerollsUsed','bosses','ash','feverMark'])if(!Number.isInteger(r[k])||r[k]<0)return false;

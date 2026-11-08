@@ -20,8 +20,11 @@ export class AudioEngine {
   play(type,data={}){
     const interval=({impact:.07,death:.085,collect:.065,shoot:.06})[type];
     if(interval){const now=this.ctx?.currentTime||0;if(now-(this.lastSounds.get(type)??-Infinity)<interval)return;this.lastSounds.set(type,now);}
-    if(type==='impact'){this.tone(165,.055,'triangle',.085,0,75);this.tone(1000,.035,'sine',.03,0,350);}
+    if(type==='impact'){this.tone(data.heavy?205:165,.065,'triangle',data.critical?.11:.08,0,75);this.tone(data.critical?1220:1000,.04,'sine',data.critical?.055:.025,0,350);}
     if(type==='dash-hit'){this.tone(320,.13,'sawtooth',.055,0,85);this.tone(900,.08,'triangle',.07);}
+    if(type==='flow-charge'){this.tone(580+Math.min(3,data.chain||0)*65,.12,'triangle',.085,0,940);}
+    if(type==='flow-surge'){this.tone(130,.26,'sawtooth',.11,0,240);[523,659,880,1175].forEach((n,i)=>this.tone(n,.28,'triangle',.10,i*.055));}
+    if(type==='flow-break')this.tone(260,.16,'triangle',.065,0,130);
     if(type==='overdrive'){this.tone(80,.4,'triangle',.18,0,42);[392,523,784,1047].forEach((n,i)=>this.tone(n,.45,'triangle',.1,i*.07));}
     if(type==='perfect-clear'){this.tone(1047,.3,'sine',.1);this.tone(1568,.4,'sine',.07,.08);}
     if(type==='collect'){this.tone(880,.22,'sine',.17);this.tone(1320,.18,'sine',.07,.045);}

@@ -2,6 +2,22 @@
 import {clearLine} from './routes.mjs';
 export const isCombat=s=>s?.endless?.combat?.version===1;
 export const overdriving=s=>isCombat(s)&&s.endless.combat.overdriveUntil>s.totalTime;
+/** New-run active-play reward; saves created before v1.9 keep their original combat. */
+export const flowOn=s=>s?.endless?.flow?.version===1;
+export const flowing=s=>flowOn(s)&&s.endless.flow.boostUntil>s.totalTime;
+export const flowMultiplier=s=>flowing(s)?1.25:1;
+export const flowCharge=s=>flowOn(s)&&s.endless.flow.chainUntil>s.totalTime?s.endless.flow.chain:0;
+export function breakCombatFlow(s){
+ if(!flowOn(s))return;
+ const f=s.endless.flow,active=flowing(s);
+ f.chain=0;f.chainUntil=s.totalTime;f.boostUntil=s.totalTime;
+ if(active)s.events.push({type:'flow-break',x:s.player.x,y:s.player.y});
+}
+export function validateFlow(s){
+ const f=s.endless?.flow;if(f===undefined)return true;
+ if(!f||f.version!==1||!Number.isInteger(f.chain)||f.chain<0||f.chain>3||!Number.isSafeInteger(f.procs)||f.procs<0)return false;
+ return ['chainUntil','boostUntil'].every(k=>Number.isFinite(f[k])&&f[k]>=0&&f[k]<=s.totalTime+5.001);
+}
 const emit=(s,type,data={})=>s.events.push({type,...data});
 export function initCombat(s){s.endless.combat={version:1,heat:0,overdriveUntil:0,overdrives:0,dashSerial:0,dashHits:0,roomStart:0,lastClearTime:0,perfects:0,lastPerfect:false,burstPending:false};}
 export function combatStats(s,st){
@@ -30,9 +46,22 @@ export function strikeCombatDash(s,from){
   if(e.hp<=0||e.warning>0||e.lastDashSerial===c.dashSerial)continue;
   const t=Math.max(0,Math.min(1,((e.x-from.x)*dx+(e.y-from.y)*dy)/l2));
   if(Math.hypot(e.x-from.x-t*dx,e.y-from.y-t*dy)>e.r+33||!clearLine(s,p,e,2))continue;
-  e.lastDashSerial=c.dashSerial;damageEnemy(s,e,(p.damage*1.25+p.pulseDamage*.18)*(overdriving(s)?1.25:1),{source:'dash',stun:.28});hits++;
+  e.lastDashSerial=c.dashSerial;damageEnemy(s,e,(p.damage*1.25+p.pulseDamage*.18)*(overdriving(s)?1.25:1)*flowMultiplier(s),{source:'dash',stun:.28});hits++;
  }
- if(hits){c.dashHits+=hits;emit(s,'dash-hit',{x:p.x,y:p.y,hits});}
+ if(hits){
+  c.dashHits+=hits;emit(s,'dash-hit',{x:p.x,y:p.y,hits});
+  if(flowOn(s)){
+   const f=s.endless.flow;
+   if(f.chainUntil<=s.totalTime)f.chain=0;
+   f.chain+=Math.min(4,hits);f.chainUntil=s.totalTime+5;
+   if(f.chain>=4){
+    f.chain=0;f.boostUntil=s.totalTime+4;f.procs++;
+    p.pulseCd=Math.max(0,p.pulseCd-1.8);p.dashCd=Math.max(.35,p.dashCd-.6);
+    s.effects.push({type:'flow-burst',x:p.x,y:p.y,r:135,life:.38,maxLife:.38});
+    emit(s,'flow-surge',{x:p.x,y:p.y,hits});
+   }else emit(s,'flow-charge',{x:p.x,y:p.y,chain:f.chain});
+  }
+ }
  s.effects.push({type:'dash-cut',x:from.x,y:from.y,toX:p.x,toY:p.y,r:33,life:.22,maxLife:.22});
 }
 export function chargeCombat(s,e){
