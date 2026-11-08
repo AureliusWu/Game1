@@ -53,7 +53,7 @@ export function strikeCombatDash(s,from){
   if(flowOn(s)){
    const f=s.endless.flow;
    if(f.chainUntil<=s.totalTime)f.chain=0;
-   f.chain+=Math.min(3,hits);f.chainUntil=s.totalTime+5;
+   f.chain+=Math.min(4,hits);f.chainUntil=s.totalTime+5;
    if(f.chain>=4){
     f.chain=0;f.boostUntil=s.totalTime+4;f.procs++;
     p.pulseCd=Math.max(0,p.pulseCd-1.8);p.dashCd=Math.max(.35,p.dashCd-.6);
