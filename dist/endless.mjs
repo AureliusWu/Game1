@@ -169,19 +169,19 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
  updateCombatBurst(s);
  r.spawnIn-=dt;if(isCombat(s)&&s.enemies.filter(e=>e.hp>0).length<3)r.spawnIn=Math.min(r.spawnIn,.22);
  if(r.remaining>0&&r.spawnIn<=0&&s.enemies.length<30){
-  let batch=Math.min((isCombat(s)?4:3)+Math.floor(r.floor/4),6,r.remaining,30-s.enemies.length);
+  let batch=Math.min((isCombat(s)?(r.draftSerial!==undefined?5:4):3)+Math.floor(r.floor/4),7,r.remaining,30-s.enemies.length);
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
    else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
    else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
-   else if(r.draftSerial!==undefined&&r.floor>=3&&roll<.32)kind='charger';
-   else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
+   else if(r.draftSerial!==undefined&&r.floor>=3&&roll<.39)kind='charger';
+   else if(r.floor>=3&&roll<(r.route==='cache'?.48:r.draftSerial!==undefined?.21:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?Math.max(1.0,(r.draftSerial!==undefined?1.75:1.95)-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?Math.max(.72,(r.draftSerial!==undefined?1.38:1.95)-r.floor*.045):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  r.zoneCd-=dt;
  if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}
