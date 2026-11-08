@@ -181,7 +181,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?Math.max(.72,(r.draftSerial!==undefined?1.38:1.95)-r.floor*.045):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?(r.draftSerial!==undefined?Math.max(.72,1.38-r.floor*.045):Math.max(1.0,1.95-r.floor*.035)):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  r.zoneCd-=dt;
  if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}
