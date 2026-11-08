@@ -152,7 +152,22 @@ function appendDraftCards(infos){
     b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
   });
 }
+// Ordinary floor completion must not chain blocking route/reward panels.
+function autoResolveOrdinaryRoom(){
+ if(!isEndless(run)||!Number.isInteger(run.endless.draftSerial)||!run.endless.clearedRoom||run.endless.floor%5===0)return false;
+ const from=run.endless.floor;
+ for(let i=0;i<64&&run.endless.floor===from&&run.phase==='upgrade';i++){
+  const kind=run.endless.choice;
+  const id=kind==='route'?'hunt':recommendedChoice(run);
+  if(!id||!chooseUpgrade(run,id))break;
+ }
+ if(run.endless.floor===from)return false;
+ renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;
+ $('upgrade-dialog').close();announceChapter();updateHUD();checkpoint();
+ return true;
+}
 function showUpgrade(){
+  if(autoResolveOrdinaryRoom())return;
   $('draft-banish').hidden=true;
   if(isEndless(run)){showEndlessDraft();return;}
   $('endless-market').hidden=true;$('upgrade-title').textContent='选一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;
@@ -217,11 +232,11 @@ function processEvents(events){
     if(e.type==='tailwind')toast('顺风已起 · 3 秒加速。',2);
     if(e.type==='boss-defeated')toast(isEndless(run)?'首领击破！清掉余下敌人，领取奇物。':'长夜退去了。前往金色拱门，把黎明送达。',6);
     if(e.type==='level'&&!isEndless(run))toast(`信使等级 ${e.level} · 生命与光弹变得更强。`,3);
-    if(e.type==='room-clear')toast(`第 ${e.floor} 层清场！整理构筑，挑选下一条路。`,4);
+    if(e.type==='room-clear')toast(`第 ${e.floor} 层清场！${run.endless?.draftSerial!==undefined&&e.floor%5!==0?'自动前往下一层':'领取首领战利品，选择下一条路'}。`,2.2);
     if(e.type==='evolution')toast(`武器进化 · ${e.name}！`,6);
     if(e.type==='oath-gain')toast(`夜航刻印 · ${OATHS.find(o=>o.id===e.id)?.name} ${e.rank} 阶！`,4);
     if(e.type==='revive')toast('第二次黎明已燃尽 · 复起！',5);
-    if(e.type==='storm-warning')toast('雷雨锁定了脚下，离开紫色圆圈！',2);
+    if(e.type==='storm-warning')toast('危险区域锁定脚下！立即移动，避开落雷。',1.6);
     if(e.type==='overdrive')toast('破晓超载！技能刷新，武器极速攻击 6 秒。',2);
     if(e.type==='fever')toast('20 连击 · 狂热 5 秒！',3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);

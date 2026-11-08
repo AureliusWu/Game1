@@ -113,7 +113,8 @@ export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
- return {...stats,hp:stats.hp*scale*(elite?2:1)*armor,maxHp:stats.hp*scale*(elite?2:1)*armor,speed:Math.min(170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1),
+ const freshPressure=r.draftSerial!==undefined?1.1:1;
+ return {...stats,hp:stats.hp*scale*(elite?2:1)*armor*freshPressure,maxHp:stats.hp*scale*(elite?2:1)*armor*freshPressure,speed:Math.min(180,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)*freshPressure),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1)*freshPressure,
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
 function hit(s,e,amount,slow=0){
@@ -174,13 +175,13 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    if(r.floor%5===0&&!r.bossMade)kind='boss';
    else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
    else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
-   else if(r.draftSerial!==undefined&&r.floor>=5&&roll<.38)kind='charger';
+   else if(r.draftSerial!==undefined&&r.floor>=3&&roll<.32)kind='charger';
    else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?Math.max(1.1,1.95-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?Math.max(1.0,(r.draftSerial!==undefined?1.75:1.95)-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  r.zoneCd-=dt;
  if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}

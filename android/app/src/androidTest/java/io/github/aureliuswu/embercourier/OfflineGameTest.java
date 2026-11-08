@@ -171,6 +171,9 @@ public final class OfflineGameTest {
             getInstrumentation().waitForIdleSync();
             js("if(document.getElementById('pause-dialog').open)window.emberCourierNative.back()");
             // Measure coordinates only after the real window and reverse-landscape viewport are ready.
+            // A foreground transition may deliver an additional Android onPause after the rotation.
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
+            js("if(document.getElementById('pause-dialog').open)window.emberCourierNative.back()");
             await("innerWidth > innerHeight && !document.getElementById('pause-dialog').open");
             double beforeX = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).player.x"));
             JSONArray points = new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.getElementById('pulse').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,innerWidth,devicePixelRatio]})()"));
@@ -252,6 +255,7 @@ public final class OfflineGameTest {
             // New v1.8 live-draft rail lives at top-right; assert it leaves the lower-right action buttons unobstructed.
             await("document.getElementById('upgrade-dialog').open", 600);
             js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
+            android.util.Log.i("Game1Layout", "draft-layout: " + js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return JSON.stringify({viewport:[innerWidth,innerHeight],dialog:[r.left,r.top,r.right,r.bottom,r.height],pulse:[p.top,p.bottom],dash:[dash.top,dash.bottom],cards:document.querySelectorAll('#upgrade-options button').length,live:document.body.dataset.liveDraft,modal:document.getElementById('upgrade-dialog').matches(':modal'),overflow:document.documentElement.scrollWidth-innerWidth})})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return d.open && !d.matches(':modal') && document.body.dataset.liveDraft==='true' && r.top>=20 && r.top<innerHeight*.48 && r.height<=innerHeight*.69 && r.bottom<=Math.min(p.top,dash.top)+2 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape-reverse.png");
