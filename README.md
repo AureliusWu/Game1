@@ -6,7 +6,7 @@
 
 **[在线试玩](https://aureliuswu.github.io/Game1/)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/releases/v1.7.0-verification.json) · [部署说明](docs/DEPLOYMENT.md)
 
-当前源码版本：**v1.9.3「旅途续存」** · [存档修复说明](docs/releases/v1.9.3.md) · [v1.9 玩法说明](docs/releases/v1.9.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
+当前源码版本：**v1.9.4「夜航不停」** · [实机卡死修复](docs/releases/v1.9.4.md) · [存档修复说明](docs/releases/v1.9.3.md) · [v1.9 玩法说明](docs/releases/v1.9.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
 
 网页通过 GitHub Pages 自动发布；Android APK、Windows x64 免安装 EXE 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。构建说明见 [Android](docs/ANDROID.md) 与 [Windows](docs/WINDOWS.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
