@@ -113,6 +113,47 @@ public final class OfflineGameTest {
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
     }
 
+    @Test public void testOrdinaryRoomsKeepRenderingThroughFourthFloor() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
+            js("window.__roomErrors=[];window.addEventListener('error',e=>window.__roomErrors.push(e.message));document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
+            // Only real UI actions: earn three rooms, use ready pulse/potions and
+            // choose the displayed recommendation. Never edit simulation state.
+            boolean fourthFloor = false;
+            for (int attempt = 0; attempt < 1200; attempt++) {
+                assertEquals("A frame fault must never interrupt ordinary-room travel", "true", js("document.getElementById('runtime-error').hidden && window.__roomErrors.length===0 && !document.getElementById('result-dialog').open"));
+                if ("true".equals(js("document.getElementById('chapter-name').textContent.startsWith('第 4 层')"))) {
+                    fourthFloor = true;
+                    break;
+                }
+                js("document.getElementById('pulse').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));if(!document.getElementById('potion').disabled)document.getElementById('potion').click();if(document.getElementById('upgrade-dialog').open)document.querySelector('#upgrade-options [data-recommended=true]')?.click()");
+                Thread.sleep(100);
+            }
+            assertTrue("Real UI combat must progress through ordinary floors 1, 2 and 3", fourthFloor);
+            js("window.emberCourierNative.pause()");
+            String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
+            double before = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime"));
+            assertEquals("true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.endless.floor===4 && s.endless.cleared===3 && s.kills>0 && Object.values(s.endless.oaths.ranks).reduce((a,b)=>a+b,0)===1})()"));
+            js("document.getElementById('resume').click()");
+            Thread.sleep(700);
+            js("window.emberCourierNative.pause()");
+            double after = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime"));
+            assertTrue("The animation loop must keep simulating after a room transition", after > before + .2);
+            assertEquals("The actual world Canvas must contain a rendered scene", "true", js("(()=>{const c=document.getElementById('world'),ctx=c.getContext('2d');for(let y=Math.floor(c.height*.25);y<c.height*.75;y+=31)for(let x=Math.floor(c.width*.25);x<c.width*.75;x+=31){const p=ctx.getImageData(x,y,1,1).data;if(p[0]+p[1]+p[2]>40)return true;}return false;})()"));
+            js("document.getElementById('save-exit').click();document.getElementById('continue').click();window.emberCourierNative.pause()");
+            assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
+            js("document.getElementById('save-exit').click();document.getElementById('start').click()");
+            Thread.sleep(700);
+            js("window.emberCourierNative.pause()");
+            assertEquals("A new first-floor run must also keep advancing", "true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.endless.floor===1 && s.totalTime>.2 && document.getElementById('runtime-error').hidden && window.__roomErrors.length===0})()"));
+            js("document.getElementById('save-exit').click();document.querySelector('[data-difficulty=normal]').click()");
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
+    }
+
     @Test public void testOfflineLaunchSaveBackAndResume() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

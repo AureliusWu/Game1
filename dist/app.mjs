@@ -45,7 +45,7 @@ const storedStats=readJSON(STORE.stats,{}),stats={...statsDefaults};
 if(storedStats&&typeof storedStats==='object')for(const k of Object.keys(statsDefaults))if(Number.isFinite(storedStats[k])&&storedStats[k]>=0)stats[k]=storedStats[k];
 const profile=readProfile(storage.get(STORE.profile),stats);
 const renderer=new Renderer($('world'),$('minimap'));
-let run=null,screen='menu',paused=false,last=performance.now(),saveTimer=0,hudTimer=0,ended=false;
+let run=null,screen='menu',paused=false,last=performance.now(),saveTimer=0,hudTimer=0,ended=false,frameFault=false;
 let bannerUntil=0,letterUntil=0,toastUntil=0,achievementUntil=0;
 const keys=new Set();let joystickId=null,joy={x:0,y:0},joyCenter={x:0,y:0},destination=null,stuckFor=0;
 const difficultyCopy={wander:'慢一点也没关系。影兽更温和，灯火更长明。',normal:'有一点危险，也有足够的光。',night:'影兽更凶，长夜更漫长。得分 ×1.3。'};
@@ -113,13 +113,13 @@ async function begin(resume=false){
   const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
-  ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;renderer.killMarks=[];renderer.killBurst=0;renderer.lastKillAt=0;
+  ended=false;paused=false;frameFault=false;$('runtime-error').hidden=true;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;renderer.killMarks=[];renderer.killBurst=0;renderer.lastKillAt=0;
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
   if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
 }
 function pauseGame(){if(screen!=='game'||!run||ended)return;if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
-function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;clearInput();last=performance.now();$('world').focus({preventScroll:true});}
-function returnToMenu(){checkpoint();closeDialogs();paused=false;setScreen('menu');}
+function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;frameFault=false;$('runtime-error').hidden=true;clearInput();last=performance.now();if(run.phase==='upgrade')showUpgrade();$('world').focus({preventScroll:true});}
+function returnToMenu(){checkpoint();closeDialogs();paused=false;frameFault=false;$('runtime-error').hidden=true;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
 function doDash(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(dash(run)){processEvents(run.events);updateHUD();}}
 function doPulse(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(pulse(run)){processEvents(run.events);checkpoint();updateHUD();}}
@@ -155,7 +155,7 @@ function appendDraftCards(infos){
 // Ordinary floor completion must not chain blocking route/reward panels.
 function autoResolveOrdinaryRoom(){
  if(!isEndless(run)||!Number.isInteger(run.endless.draftSerial)||!run.endless.clearedRoom||run.endless.floor%5===0)return false;
- const from=run.endless.floor;
+ const from=run.endless.floor,eventStart=run.events.length;
  for(let i=0;i<64&&run.endless.floor===from&&run.phase==='upgrade';i++){
   const kind=run.endless.choice;
   const id=kind==='route'?'hunt':recommendedChoice(run);
@@ -164,9 +164,13 @@ function autoResolveOrdinaryRoom(){
  if(run.endless.floor===from)return false;
  renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;
  $('upgrade-dialog').close();announceChapter();updateHUD();checkpoint();
+ // Reward choices emit their own notifications. Present them once, after the
+ // transition settles, without replaying the tick that completed the room.
+ processEvents(run.events.slice(eventStart));
  return true;
 }
 function showUpgrade(){
+  if(run?.phase!=='upgrade'||!run.offered.length)return;
   if(autoResolveOrdinaryRoom())return;
   $('draft-banish').hidden=true;
   if(isEndless(run)){showEndlessDraft();return;}
@@ -217,6 +221,9 @@ function finish(){
   showDialog('result-dialog');
 }
 function processEvents(events){
+  // Choices can append to run.events while this batch is being presented.
+  // Never consume newly appended upgrade notifications against a later floor.
+  events=events.slice();let upgrade=false;
   for(const e of events){audio.play(e.type,e);
     if(e.type==='beacon'){
       const b=run.beacons[e.id];renderer.react([{type:'beacon',x:b.x,y:b.y}]);
@@ -248,11 +255,12 @@ function processEvents(events){
     if(e.type==='contract')toast('邮局委托已达成，结算时领取邮票。',4);
     if(e.type==='elite')toast('钟声唤醒了一只精英影兽，击败它取回行装。',5);
     if(e.type==='potion')toast('喝下一口热补给，继续赶路。',2);
-    if(e.type==='upgrade')showUpgrade();
+    if(e.type==='upgrade')upgrade=true;
     if(e.type==='won'||e.type==='lost')finish();
   }
   renderer.react(events);
   if(events.some(e=>['collect','death','beacon','delivery','gear','equip','forge','purchase','contract','level','story','followup','specialize'].includes(e.type)))syncProgress();
+  if(upgrade)showUpgrade();
 }
 function updateHUD(){
   if(!run)return;const p=run.player;
@@ -360,7 +368,19 @@ function frame(now){
     if(!document.hidden)renderer.draw(run,active||run.phase==='upgrade'?dt:0);
     audio.update(active,run.chapter);
   }
-  requestAnimationFrame(frame);
+}
+function animateFrame(now){
+  try{if(!frameFault)frame(now);}
+  catch(error){
+    console.error('Ember Courier frame failed',error);
+    frameFault=true;paused=true;clearInput();audio.suspend();
+    if(screen==='game'&&run&&!ended){
+      let saved=false;
+      try{const data=serialize(run);saved=!!data&&storage.set(STORE.save,data);}catch(saveError){console.error('Frame recovery save failed',saveError);}
+      try{persistProfile();}catch(profileError){console.error('Frame recovery profile failed',profileError);}
+      closeDialogs();$('runtime-error').textContent=saved?'画面遇到异常，旅途已保存。可以继续尝试，或返回邮局后重新进入。':'画面遇到异常。可以继续尝试，或返回邮局后重新进入。';$('runtime-error').hidden=false;showDialog('pause-dialog');
+    }
+  }finally{requestAnimationFrame(animateFrame);}
 }
 const landscapeGate=createLandscapeGate({
  viewport:()=>({width:window.innerWidth,height:window.innerHeight}),
@@ -373,7 +393,7 @@ $('orientation-enter').addEventListener('click',()=>landscapeGate.enter());
 $('orientation-dialog').addEventListener('cancel',e=>e.preventDefault());
 window.addEventListener('resize',()=>landscapeGate.check());
 window.screen.orientation?.addEventListener?.('change',()=>landscapeGate.check());
-updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAnimationFrame(frame);
+updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAnimationFrame(animateFrame);
 // The Android host calls these hooks without exposing a native JavaScript bridge.
 window.emberCourierNative=Object.freeze({
   pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
