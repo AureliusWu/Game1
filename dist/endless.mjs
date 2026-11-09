@@ -183,9 +183,22 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
   }
   r.spawnIn=(isCombat(s)?(r.draftSerial!==undefined?Math.max(.72,1.38-r.floor*.045):Math.max(1.0,1.95-r.floor*.035)):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
+ // New endless runs punish prolonged idling; Wander and legacy saves keep their lighter rules.
+ if(r.draftSerial!==undefined&&s.difficulty!=='wander'){
+  const st=r.stillness??(r.stillness={x:p.x,y:p.y,seconds:0,cooldown:3});
+  const traveled=Math.hypot(p.x-st.x,p.y-st.y);
+  st.x=p.x;st.y=p.y;
+  st.seconds=traveled>2.5||p.dash>0?0:Math.min(20,st.seconds+dt);
+  st.cooldown=Math.max(0,st.cooldown-dt);
+  if(st.seconds>=3&&st.cooldown===0){
+   r.zones.push({x:p.x,y:p.y,r:85,warning:1.25,pressure:true});
+   r.zones=r.zones.slice(-4);st.seconds=0;st.cooldown=4.6;
+   emit(s,'pressure-warning');
+  }
+ }
  r.zoneCd-=dt;
  if(r.weather==='storm'&&r.zoneCd<=0){r.zoneCd=5.2;r.zones.push({x:p.x,y:p.y,r:85,warning:1.25});emit(s,'storm-warning');}
- for(const z of r.zones){z.warning-=dt;if(z.warning<=0){if(dist(z,p)<z.r+p.r)hurt(s,(18+r.floor*.8),'雷雨·落雷');s.effects.push({type:'lightning-burst',x:z.x,y:z.y,r:z.r,life:.35,maxLife:.35});}}r.zones=r.zones.filter(z=>z.warning>0).slice(-4);
+ for(const z of r.zones){z.warning-=dt;if(z.warning<=0){if(dist(z,p)<z.r+p.r)hurt(s,z.pressure?(29+r.floor*2.4):(18+r.floor*.8),z.pressure?'追踪落雷·原地滞留':'雷雨·落雷');s.effects.push({type:'lightning-burst',x:z.x,y:z.y,r:z.r,life:.35,maxLife:.35});}}r.zones=r.zones.filter(z=>z.warning>0).slice(-4);
  const haste=Math.pow(.9,rankOf(s,'haste'));
  const weaponDt=dt*(overdriving(s)?1.65:1);r.frostCd-=weaponDt;r.thunderCd-=weaponDt;r.fireCd-=dt;
  if(rankOf(s,'frost')&&r.frostCd<=0){const lv=rankOf(s,'frost');r.frostCd=(3.7-lv*.3)*haste;area(s,p,115+lv*24,(18+lv*10)*power(s),'frost',evolved(s,'frost')?3:1.8);if(evolved(s,'frost'))for(const e of s.enemies)if(dist(p,e)<235)e.stun=Math.max(e.stun,.7);emit(s,'frost');}
@@ -319,6 +332,11 @@ export function validateEndless(s){
  if(!Array.isArray(r.relics)||r.relics.length>8||new Set(r.relics).size!==r.relics.length||r.relics.some(id=>!RELICS.some(u=>u.id===id)))return false;
  if(!Array.isArray(r.evolutions)||r.evolutions.length>3||r.evolutions.some(id=>!SKILL_BY_ID[id]?.partner||!evolved(s,id)))return false;
  if(!Object.hasOwn(WEATHERS,r.weather)||!Array.isArray(r.zones)||r.zones.length>4||r.zones.some(z=>['x','y','r','warning'].some(k=>!Number.isFinite(z[k]))||z.r!==85||z.warning<=0||z.warning>1.25))return false;
+ if(r.stillness!==undefined){
+  const st=r.stillness;
+  if(!st||['x','y','seconds','cooldown'].some(k=>!Number.isFinite(st[k]))||st.seconds<0||st.seconds>20||st.cooldown<0||st.cooldown>5)return false;
+ }
+ if(r.zones.some(z=>z.pressure!==undefined&&z.pressure!==true))return false;
  if(!Array.isArray(r.market)||r.market.length>3||new Set(r.market).size!==r.market.length||r.market.some(id=>!['tea','potion','reroll'].includes(id)))return false;
  if(!Array.isArray(r.pools)||r.pools.length>14||r.pools.some(p=>['x','y','until'].some(k=>!Number.isFinite(p[k]))))return false;
  if(r.draftSerial!==undefined&&(!Number.isSafeInteger(r.draftSerial)||r.draftSerial<0))return false;

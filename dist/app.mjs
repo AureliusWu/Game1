@@ -237,6 +237,7 @@ function processEvents(events){
     if(e.type==='oath-gain')toast(`夜航刻印 · ${OATHS.find(o=>o.id===e.id)?.name} ${e.rank} 阶！`,4);
     if(e.type==='revive')toast('第二次黎明已燃尽 · 复起！',5);
     if(e.type==='storm-warning')toast('危险区域锁定脚下！立即移动，避开落雷。',1.6);
+    if(e.type==='pressure-warning')toast('停留过久！追踪落雷即将命中，立即移动！',1.6);
     if(e.type==='overdrive')toast('破晓超载！技能刷新，武器极速攻击 6 秒。',2);
     if(e.type==='fever')toast('20 连击 · 狂热 5 秒！',3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);
