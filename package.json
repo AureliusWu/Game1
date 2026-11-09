@@ -1,6 +1,6 @@
 {
   "name": "ember-courier",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "private": true,
   "type": "module",
   "description": "余烬信使 — an original offline-ready survival adventure",

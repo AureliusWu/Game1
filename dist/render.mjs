@@ -185,9 +185,11 @@ export class Renderer{
     if(e.type==='flow-break')this.callout={text:'破风中断',detail:'受到攻击 · 重新积攒连斩',life:.7,compact:true};
     if(e.type==='boss-defeated'){if(!this.lowMotion)this.shake=7;this.callout={text:'首领击破',detail:'让这束光，继续向前',life:1.4};}
     if(e.type==='shoot')this.muzzle=.12;
+    if(e.type==='dash-hit'&&!this.lowMotion){this.shake=Math.max(this.shake,Math.min(5,2+e.hits*.65));if(this.impacts.length<46)this.impacts.push({x:e.x,y:e.y,critical:true,heavy:true,life:.22,maxLife:.22});}
     if(e.type==='death'){
       this.killMarks??=[];if(e.coins||e.elite)this.killMarks.push({...e,life:.75});this.killMarks=this.killMarks.slice(-12);
       const now=performance.now()/1000;this.killBurst=now-(this.lastKillAt||0)<.7?(this.killBurst||0)+1:1;this.lastKillAt=now;
+      if(!this.lowMotion&&this.killBurst>=3&&this.killBurst%3===0)this.shake=Math.max(this.shake,Math.min(3.5,1.5+this.killBurst*.12));
       if(this.killBurst>=4&&this.killBurst%3===1&&!e.boss&&!e.elite)this.callout={text:this.killBurst+' 连破',detail:'持续清场 · 火力不断',life:.72,compact:true};
       if(e.boss||e.elite){this.impacts.push({x:e.x,y:e.y,critical:true,heavy:true,life:.42,maxLife:.42});if(!this.lowMotion)this.shake=Math.max(this.shake,e.boss?9:5);}
     }
