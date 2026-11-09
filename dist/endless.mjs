@@ -1,7 +1,7 @@
 /** Endless Night Flight. Pure rules: seeded drafts, bounded combat and atomic room rewards. */
 import {seedMix,safePoint} from './routes.mjs';
 import {ENDLESS_MAPS,nextEndlessMap} from './endless-maps.mjs';
-import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat} from './combat.mjs';
+import {isCombat,overdriving,initCombat,combatStats,damageEnemy,chargeCombat,updateCombatBurst,finishCombatRoom,validateCombat,validateFlow,flowMultiplier} from './combat.mjs';
 import {initTactics,isTactical,rewardKill,validateTactics} from './tactics.mjs';
 import {growthOn,growthPower,growthXP} from './growth.mjs';
 const TAU=Math.PI*2;
@@ -63,7 +63,7 @@ export function initEndless(s,starter='cinder'){
  s.endless={version:1,floor:1,cleared:0,route:'hunt',rng:seedMix(s.seed,130),ranks:{[starter]:1},relics:[],starter,
   remaining:0,total:0,roomKills:0,spawnIn:0,pending:0,choice:'',clearedRoom:false,rewardPending:false,
   rerolls:2,rerollsUsed:0,evolutions:[],bosses:0,bossMade:false,revived:false,retired:false,
-  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0};
+  frostCd:1.3,thunderCd:1.8,fireCd:0,feverUntil:0,feverMark:0,ash:0,pools:[],zones:[],zoneCd:5,weather:'calm',market:[],roomDamage:0,oaths:{version:1,ranks:{},offerPending:false},draftSerial:0,flow:{version:1,chain:0,chainUntil:0,boostUntil:0,procs:0}};
  initCombat(s);
  initTactics(s);
  s.v12.conditions=[];s.v12.firstJourney=false;s.journal.level=1;s.journal.xp=0;
@@ -113,8 +113,8 @@ export function endlessEnemy(s,kind,stats){
  const r=s.endless,n=r.floor-1,elite=kind!=='boss'&&(r.route==='elite'&&r.remaining%7===0||isTactical(s)&&r.floor>=3&&(r.remaining%11===0||r.draftSerial!==undefined&&r.floor>=8&&r.remaining%9===0));
  const scale=(isCombat(s)?(1+n*.10+n*n*.008)*Math.pow(1.11,Math.min(400,Math.max(0,n-10)))*(kind==='boss'?1.65:['brute','warder'].includes(kind)?1:.72):(1+n*.12+n*n*.012)*Math.pow(1.115,Math.min(400,Math.max(0,n-7)))*(kind==='boss'?1.8:1))*(r.weather==='ash'?1.15:1);
  const armor=isTactical(s)&&kind==='boss'?1.25:1;
- const threat=r.flowVersion===1&&s.difficulty!=='wander'?1:0;
- return {...stats,hp:stats.hp*scale*(elite?2:1)*armor*(1+threat*.6),maxHp:stats.hp*scale*(elite?2:1)*armor*(1+threat*.6),speed:Math.min(threat?225:170,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)*(1+threat*.25)),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1)*(1+threat*.25),
+ const freshPressure=r.draftSerial!==undefined?1.1:1;
+ return {...stats,hp:stats.hp*scale*(elite?2:1)*armor*freshPressure,maxHp:stats.hp*scale*(elite?2:1)*armor*freshPressure,speed:Math.min(180,stats.speed*(1+Math.min(n,30)*.012)*(r.weather==='gale'?1.18:1)*freshPressure),damage:stats.damage*(1+n*.045)*(r.route==='curse'?1.25:1)*freshPressure,
   patrolElite:elite,rewardCoins:Math.ceil((kind==='boss'?35:elite?5:2)*(r.route==='elite'?1.35:1)*(hasRelic(s,'coin')?1.5:1)),rewardXP:Math.ceil((kind==='boss'?30:elite?12:6)*(r.route==='elite'?1.35:1)),bossType:Math.floor(r.floor/5)%(r.draftSerial!==undefined?5:3)};
 }
 function hit(s,e,amount,slow=0){
@@ -123,7 +123,7 @@ function hit(s,e,amount,slow=0){
  if(slow)e.slowUntil=Math.max(e.slowUntil||0,s.totalTime+slow);
  e.stun=Math.max(e.stun,.07);emit(s,'damage-number',{x:e.x,y:e.y,damage:Math.round(amount)});
 }
-function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1)*growthPower(s);}
+function power(s){return(1+rankOf(s,'might')*.18+s.endless.ash*.04)*(hasRelic(s,'glass')?1.4:1)*(s.totalTime<s.endless.feverUntil?1.3:1)*growthPower(s)*flowMultiplier(s);}
 function area(s,point,radius,damage,type='blast',slow=0){
  for(const e of s.enemies)if(e.hp>0&&dist(e,point)<radius+e.r)hit(s,e,damage,slow);
  s.effects.push({type,x:point.x,y:point.y,r:radius,life:.45,maxLife:.45});
@@ -169,32 +169,31 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
  updateCombatBurst(s);
  r.spawnIn-=dt;if(isCombat(s)&&s.enemies.filter(e=>e.hp>0).length<3)r.spawnIn=Math.min(r.spawnIn,.22);
  if(r.remaining>0&&r.spawnIn<=0&&s.enemies.length<30){
-  let batch=Math.min((isCombat(s)?4:3)+Math.floor(r.floor/4),6,r.remaining,30-s.enemies.length);
+  let batch=Math.min((isCombat(s)?(r.draftSerial!==undefined?5:4):3)+Math.floor(r.floor/4),r.draftSerial!==undefined?7:6,r.remaining,30-s.enemies.length);
   while(batch-->0){
    let kind='shade';const roll=endlessRandom(s);
    if(r.floor%5===0&&!r.bossMade)kind='boss';
-   else if(r.flowVersion===1&&r.floor>=6&&roll<.12)kind='bulwark';
-   else if(r.flowVersion===1&&r.floor>=3&&roll<.30)kind='sniper';
-   else if(r.flowVersion===1&&roll<.48)kind='charger';
-   else if(r.flowVersion===1&&roll<.62)kind='caster';
    else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
    else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
-   else if(r.draftSerial!==undefined&&r.floor>=5&&roll<.38)kind='charger';
-   else if(r.floor>=3&&roll<(r.route==='cache'?.3:.13))kind='caster';
+   else if(r.draftSerial!==undefined&&r.floor>=3&&roll<.39)kind='charger';
+   else if(r.floor>=3&&roll<(r.route==='cache'?.48:r.draftSerial!==undefined?.21:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?Math.max(r.flowVersion===1?.72:1.1,(r.flowVersion===1?1.15:1.95)-r.floor*.035):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?(r.draftSerial!==undefined?Math.max(.72,1.38-r.floor*.045):Math.max(1.0,1.95-r.floor*.035)):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
- if(r.flowVersion===1&&s.difficulty!=='wander'){
+ // New endless runs punish prolonged idling; Wander and legacy saves keep their lighter rules.
+ if(r.draftSerial!==undefined&&s.difficulty!=='wander'){
   const st=r.stillness??(r.stillness={x:p.x,y:p.y,seconds:0,cooldown:3});
-  const traveled=Math.hypot(p.x-st.x,p.y-st.y);st.x=p.x;st.y=p.y;
+  const traveled=Math.hypot(p.x-st.x,p.y-st.y);
+  st.x=p.x;st.y=p.y;
   st.seconds=traveled>2.5||p.dash>0?0:Math.min(20,st.seconds+dt);
   st.cooldown=Math.max(0,st.cooldown-dt);
   if(st.seconds>=3&&st.cooldown===0){
-   r.zones.push({x:p.x,y:p.y,r:85,warning:1.25,pressure:true});r.zones=r.zones.slice(-4);
-   st.seconds=0;st.cooldown=4.6;emit(s,'pressure-warning');
+   r.zones.push({x:p.x,y:p.y,r:85,warning:1.25,pressure:true});
+   r.zones=r.zones.slice(-4);st.seconds=0;st.cooldown=4.6;
+   emit(s,'pressure-warning');
   }
  }
  r.zoneCd-=dt;
@@ -212,7 +211,6 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
 const lvThunder=s=>rankOf(s,'thunder');
 export function onEndlessKill(s,e){
  const r=s.endless;r.roomKills++;
- if(r.flowVersion===1&&r.floor===1&&r.roomKills===2){r.pending++;emit(s,'early-draft',{kills:2});}
  chargeCombat(s,e);
  rewardKill(s,e);
  if(e.kind==='boss'){r.bosses++;r.rerolls=Math.min(3,r.rerolls+1);}
@@ -236,19 +234,6 @@ function draftSkills(s){
  for(const u of shuffled)if(picks.length<3&&!picks.includes(u.id))picks.push(u.id);
  if(picks.length===0)return ['ash','mend','supplies'];return picks;
 }
-function chooseSeamlessSkill(s,cards){
- const starter=s.endless.starter,partner=SKILL_BY_ID[starter]?.partner;
- return [...cards].sort((a,b)=>{
-  const rank=id=>id===starter&&rankOf(s,id)<5?1000:id===partner&&rankOf(s,id)<2?900:SKILL_BY_ID[id]?(rankOf(s,id)>0?700+rankOf(s,id)*25:300):id==='mend'&&s.player.hp<s.player.maxHp*.45?500:id==='ash'?200:id==='supplies'?150:100;
-  return rank(b)-rank(a);
- })[0]||'ash';
-}
-function grantSeamlessSkill(s,id){
- if(SKILL_BY_ID[id]){s.endless.ranks[id]=(s.endless.ranks[id]||0)+1;if(id==='vitality')s.player.hp+=20;}
- else if(id==='ash')s.endless.ash++;
- else if(id==='mend')s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.25);
- else if(id==='supplies'){if(s.journal.potions<5)s.journal.potions++;else{s.journal.coins+=12;s.metrics.coinsEarned+=12;}}
-}
 function setChoice(s,kind,offered){if(Number.isInteger(s.endless.draftSerial))s.endless.draftSerial++;s.endless.choice=kind;s.offered=offered;s.phase='upgrade';emit(s,'upgrade');}
 export function advanceEndlessChoices(s){
  const r=s.endless;if(s.player.hp<=0)return;
@@ -257,17 +242,9 @@ export function advanceEndlessChoices(s){
   if(r.oaths)r.oaths.offerPending=r.floor%3===0&&oathTotal(s)<OATHS.length*3;
   s.score+=350+r.floor*50;const coins=10+(r.route==='curse'?25:0);s.journal.coins+=coins;s.metrics.coinsEarned+=coins;
   for(const e of s.embers){gainEndlessXP(s,e.xp||0);s.collected++;}s.embers=[];
-  r.pending+=r.route==='curse'?2:1;s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*(r.flowVersion===1?.05:.1)+(hasRelic(s,'lodestone')?8:0));
+  r.pending+=r.route==='curse'?2:1;s.player.hp=Math.min(s.player.maxHp,s.player.hp+s.player.maxHp*.1+(hasRelic(s,'lodestone')?8:0));
   finishCombatRoom(s);
   emit(s,'room-clear',{floor:r.floor});
- }
- if(r.clearedRoom&&r.flowVersion===1){
-  const rewards={floor:r.floor,skill:null,relic:null,oath:null};
-  while(r.pending>0){const cards=draftSkills(s),id=chooseSeamlessSkill(s,cards);grantSeamlessSkill(s,id);r.pending--;rewards.skill=id;}
-  if(r.rewardPending){const pool=RELICS.filter(x=>!r.relics.includes(x.id));if(pool.length){const id=pool[Math.floor(endlessRandom(s)*pool.length)].id;r.relics.push(id);rewards.relic=id;}else r.ash++;r.rewardPending=false;}
-  if(r.oaths?.offerPending){const pool=draftOaths(s),id=pool[0];if(id){r.oaths.ranks[id]=(r.oaths.ranks[id]||0)+1;rewards.oath=id;emit(s,'oath-gain',{id,rank:r.oaths.ranks[id]});}r.oaths.offerPending=false;}
-  r.route=['hunt','hunt','elite','cache','curse'][Math.floor(endlessRandom(s)*5)];
-  r.floor++;s.chapter=(r.floor-1)%3;emit(s,'auto-floor',{...rewards,nextFloor:r.floor,route:r.route});return true;
  }
  if(r.pending>0){setChoice(s,'skill',draftSkills(s));return;}
  if(r.clearedRoom&&r.rewardPending){const pool=shuffle(s,RELICS.filter(x=>!r.relics.includes(x.id)));setChoice(s,'relic',pool.length?pool.slice(0,3).map(x=>x.id):['ash','mend','supplies']);return;}
@@ -319,7 +296,7 @@ export function banishEndless(s,id){
  const g=s.growth,r=s.endless;if(!growthOn(s)||!r||s.phase!=='upgrade'||r.choice!=='skill'||g.banishes<=0||!s.offered.includes(id)||!Object.hasOwn(SKILL_BY_ID,id)||rankOf(s,id)>0)return false;
  g.banishes--;g.banished.push(id);delete s.selection;s.offered=draftSkills(s);emit(s,'banish',{id});return true;
 }
-export function retireEndless(s){if(!isEndless(s)||!((s.phase==='upgrade'&&s.endless.choice==='route')||(s.endless.flowVersion===1&&s.phase==='playing'&&s.endless.cleared>=1)))return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
+export function retireEndless(s){if(!isEndless(s)||s.phase!=='upgrade'||s.endless.choice!=='route')return false;s.endless.retired=true;s.phase='won';emit(s,'won');return true;}
 export function reviveEndless(s){const r=s.endless;if(s.player.hp>0||!hasRelic(s,'dawn')||r.revived)return false;r.revived=true;s.player.hp=s.player.maxHp*.5;s.player.invincible=3;s.projectiles=s.projectiles.filter(p=>!p.enemy);area(s,s.player,300,80*power(s),'blast');emit(s,'revive');return true;}
 /** Three boss patterns: clock beam, charging courier, and radial rain. Telegraphs lock before damage. */
 export function endlessBossCast(s,e,dt,hurt,move){
@@ -342,7 +319,7 @@ export function endlessBossCast(s,e,dt,hurt,move){
  return false;
 }
 export function validateEndless(s){
- if(!validateCombat(s))return false;
+ if(!validateCombat(s)||!validateFlow(s))return false;
  if(!validateTactics(s))return false;
  const r=s.endless;if(!r||r.version!==1||!Number.isInteger(r.floor)||r.floor<1||r.floor>1000000||s.chapter!==(r.floor-1)%3)return false;
  for(const k of ['cleared','rng','remaining','total','roomKills','pending','rerolls','rerollsUsed','bosses','ash','feverMark'])if(!Number.isInteger(r[k])||r[k]<0)return false;
@@ -355,10 +332,13 @@ export function validateEndless(s){
  if(!Array.isArray(r.relics)||r.relics.length>8||new Set(r.relics).size!==r.relics.length||r.relics.some(id=>!RELICS.some(u=>u.id===id)))return false;
  if(!Array.isArray(r.evolutions)||r.evolutions.length>3||r.evolutions.some(id=>!SKILL_BY_ID[id]?.partner||!evolved(s,id)))return false;
  if(!Object.hasOwn(WEATHERS,r.weather)||!Array.isArray(r.zones)||r.zones.length>4||r.zones.some(z=>['x','y','r','warning'].some(k=>!Number.isFinite(z[k]))||z.r!==85||z.warning<=0||z.warning>1.25))return false;
+ if(r.stillness!==undefined){
+  const st=r.stillness;
+  if(!st||['x','y','seconds','cooldown'].some(k=>!Number.isFinite(st[k]))||st.seconds<0||st.seconds>20||st.cooldown<0||st.cooldown>5)return false;
+ }
+ if(r.zones.some(z=>z.pressure!==undefined&&z.pressure!==true))return false;
  if(!Array.isArray(r.market)||r.market.length>3||new Set(r.market).size!==r.market.length||r.market.some(id=>!['tea','potion','reroll'].includes(id)))return false;
  if(!Array.isArray(r.pools)||r.pools.length>14||r.pools.some(p=>['x','y','until'].some(k=>!Number.isFinite(p[k]))))return false;
- if(r.flowVersion!==undefined&&r.flowVersion!==1)return false;
- if(r.stillness!==undefined){const z=r.stillness;if(!z||['x','y','seconds','cooldown'].some(k=>!Number.isFinite(z[k]))||z.seconds<0||z.seconds>20||z.cooldown<0||z.cooldown>5)return false;}
  if(r.draftSerial!==undefined&&(!Number.isSafeInteger(r.draftSerial)||r.draftSerial<0))return false;
  if(r.mapIndex!==undefined&&(!Number.isInteger(r.mapIndex)||r.mapIndex<0||r.mapIndex>=ENDLESS_MAPS.length))return false;
  if(r.oaths!==undefined){

@@ -76,78 +76,35 @@ body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-li
  body[data-live-draft=true] #upgrade-dialog .draft-bottom{display:none}
 }
 
-/* v1.8.2: fixed-height non-modal right rail. Every draft card owns its rows; the footer never overlays card copy. */
+/* v1.9: stronger combat hierarchy, quieter temporary prompts, compact active streak. */
+#game .flow-signal[hidden]{display:none}
+#game .flow-signal{display:inline-flex;align-items:center;width:max-content;max-width:194px;min-height:17px;box-sizing:border-box;
+ padding:3px 8px;border-radius:8px;color:#d0efca;border:1px solid #94d6af7a;background:#113d36e5;
+ font:600 10px/1.2 system-ui,sans-serif;letter-spacing:.3px;text-shadow:0 0 5px #07272c}
+#game .flow-signal.surging{color:#f5ffb5;border-color:#c1eaa4;background:linear-gradient(110deg,#194b3eea,#355b35e8);box-shadow:0 0 12px #c8f6ae44}
+#game .combat-meter.active i{background:linear-gradient(90deg,#f6bd6a,#fff6b1);box-shadow:0 0 9px #ffe5a680}
+#game .hp-track,#game .xp-track{box-shadow:inset 0 0 0 1px #e7df9c13}
+#game .toast{max-width:340px;box-sizing:border-box}
 @media (orientation:landscape) and (max-height:760px){
- body[data-live-draft=true] #upgrade-dialog.upgrade-modal{
-  inset:calc(72px + env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) auto auto;
-  margin:0;box-sizing:border-box;width:min(350px,calc(100vw - 265px));
-  max-height:min(58dvh,calc(100dvh - 185px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
-  min-height:0;padding:9px 10px 8px;overflow:hidden;display:flex;flex-direction:column;gap:0;
- }
- body[data-live-draft=true] #upgrade-dialog .draft-heading{min-height:25px;max-height:38px;overflow:hidden;flex:0 0 auto}
- body[data-live-draft=true] #upgrade-dialog .draft-heading h2{font:600 15px/1.2 var(--serif);margin:0}
- body[data-live-draft=true] #upgrade-dialog .draft-heading p{display:none}
- body[data-live-draft=true] #upgrade-dialog .draft-time-track{flex:0 0 2px;margin:4px 0 6px}
- body[data-live-draft=true] #upgrade-dialog .upgrade-options{
-  display:flex;flex-direction:column;gap:4px;align-content:stretch;
-  flex:1 1 auto;overflow-y:auto;overflow-x:hidden;min-height:0;
-  scrollbar-width:thin;overscroll-behavior:contain;
- }
- body[data-live-draft=true] #upgrade-dialog .upgrade-card{
-  flex:0 0 auto;box-sizing:border-box;display:grid;grid-template-columns:25px minmax(0,1fr);
-  grid-template-rows:16px 14px;column-gap:8px;row-gap:2px;
-  align-content:center;align-items:center;width:100%;height:46px;min-height:46px;max-height:46px;
-  margin:0;padding:5px 8px;overflow:hidden;text-align:left;
- }
- body[data-live-draft=true] #upgrade-dialog .choice-icon{
-  position:static!important;grid-column:1;grid-row:1 / span 2;
-  align-self:center;display:flex;flex-direction:column;gap:2px;
-  width:25px;height:auto;justify-content:center;overflow:hidden;
- }
- body[data-live-draft=true] #upgrade-dialog .choice-icon svg{width:15px;height:15px;flex:none}
- body[data-live-draft=true] #upgrade-dialog .choice-icon kbd{font:8px/1 var(--sans);padding:1px 3px}
- body[data-live-draft=true] #upgrade-dialog .upgrade-card strong{
-  grid-column:2;grid-row:1;font:600 12px/16px var(--serif);padding:0;margin:0;
-  min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
- }
- body[data-live-draft=true] #upgrade-dialog .upgrade-card>span{
-  grid-column:2;grid-row:2;display:block;font:10px/14px var(--sans);
-  margin:0;padding:0;min-width:0;max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
- }
- body[data-live-draft=true] #upgrade-dialog .card-detail,
- body[data-live-draft=true] #upgrade-dialog .draft-tag,
- body[data-live-draft=true] #upgrade-dialog .draft-bottom{display:none!important}
- body[data-live-draft=true] #upgrade-dialog .draft-footer{
-  display:flex;flex:0 0 auto;flex-wrap:nowrap;gap:4px;
-  padding-top:5px;overflow:hidden;align-items:center;max-width:100%;
- }
- body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,
- body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{
-  font:9px/1.1 var(--sans);min-height:24px;max-height:26px;padding:4px 6px;
-  margin:0;white-space:nowrap;flex:0 1 auto;
- }
- body[data-live-draft=true] #upgrade-dialog .draft-footer #upgrade-exit{margin-left:auto}
- .game-view .toast{left:50%;bottom:calc(11px + env(safe-area-inset-bottom));top:auto;
-  transform:translateX(-50%);width:max-content;max-width:min(345px,42vw);
-  padding:5px 10px;font:10px/1.35 var(--sans);border-radius:8px;white-space:normal}
+ #game .toast{left:clamp(210px,21vw,350px);right:auto;top:clamp(190px,34dvh,285px);bottom:auto;
+   transform:none;max-width:min(30vw,340px);font-size:11px;line-height:1.5;padding:8px 11px;
+   border-radius:9px;background:#10313bda;backdrop-filter:blur(4px)}
+ #game .kill-hud{gap:4px}
+ #game .hud-center>span{max-width:42vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+ #game .objective,#game .run-status{background-color:#0b282dbf;backdrop-filter:blur(3px)}
 }
-@media (orientation:landscape) and (max-height:430px){
- body[data-live-draft=true] #upgrade-dialog.upgrade-modal{
-  top:calc(50px + env(safe-area-inset-top));
-  width:min(320px,calc(100vw - 255px));
-  max-height:calc(100dvh - 175px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  padding:6px 8px;
- }
- body[data-live-draft=true] #upgrade-dialog .upgrade-options{gap:2px}
- body[data-live-draft=true] #upgrade-dialog .draft-heading{min-height:17px;max-height:22px}
- body[data-live-draft=true] #upgrade-dialog .draft-time-track{margin:2px 0}
- body[data-live-draft=true] #upgrade-dialog .draft-footer{padding-top:3px}
- body[data-live-draft=true] #upgrade-dialog .upgrade-card{
-  height:35px;min-height:35px;max-height:35px;padding:2px 7px;
-  grid-template-rows:15px 12px;row-gap:1px;
- }
- body[data-live-draft=true] #upgrade-dialog .upgrade-card strong{font-size:11px;line-height:15px}
- body[data-live-draft=true] #upgrade-dialog .upgrade-card>span{font-size:9px;line-height:12px}
- body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,
- body[data-live-draft=true] #upgrade-dialog .draft-footer .text-button{min-height:22px;padding:3px 4px}
+@media (orientation:landscape) and (max-height:420px){
+ #game .toast{top:35%;max-width:min(29vw,290px);font-size:10px}
+ #game .flow-signal{min-height:14px;font-size:9px;padding:2px 5px}
 }
+body[data-live-draft=true] #game .toast{visibility:hidden}
+@media(prefers-reduced-motion:reduce){#game .flow-signal.surging{box-shadow:none}}
+
+/* v1.9.1: compact, high-contrast battle feedback without blocking the playfield. */
+body[data-screen="game"] .objective{border:1px solid #b6d6bc55;box-shadow:0 4px 18px #061d24a6;backdrop-filter:blur(5px)}
+body[data-screen="game"] .run-status{background:#0a252cbb;border:1px solid #9bb8ad3d;border-radius:999px;padding:5px 11px;box-shadow:0 3px 12px #031a2080}
+body[data-screen="game"] .weapon-chip{box-shadow:inset 0 0 9px color-mix(in srgb,var(--weapon-color) 12%,transparent);font-variant-numeric:tabular-nums}
+body[data-screen="game"] .skill-button:not(.cooldown){box-shadow:inset 0 0 18px #e5c9892e,0 0 16px #e7ba6140}
+body[data-screen="game"] .boss-panel{box-shadow:0 8px 24px #04171db8;border-color:#e8afc17a}
+@media (orientation:landscape) and (max-height:430px){body[data-screen="game"] .run-status{padding:3px 8px;font-size:9px;max-width:36vw}body[data-screen="game"] .objective{max-width:40vw}}
+@media(prefers-reduced-motion:reduce){body[data-screen="game"] .skill-button{animation:none;transition:none}}

@@ -76,7 +76,7 @@ test('a real cache route grants a relic and can continue with the same saved con
  const r=playEndless({seed:1313,starter:'thunder',route:'cache',floors:7,resume:true,maxTime:600});assert.equal(r.s.phase,'won');assert.ok(r.s.endless.relics.length>=2);assert.ok(r.s.endless.bosses>=1);assert.ok(r.s.endless.floor>3);
 });
 test('lamps in endless mode provide one finite heal; they neither repel enemies nor become a healing camp',()=>{
- const s=game();s.player.x=s.beacons[0].x;s.player.y=s.beacons[0].y;s.player.hp=40;s.player.embers=5;s.endless.remaining=0;
+ const s=game({difficulty:'wander'});s.player.x=s.beacons[0].x;s.player.y=s.beacons[0].y;s.player.hp=40;s.player.embers=5;s.endless.remaining=0;
  s.enemies=[{id:999,x:s.player.x+100,y:s.player.y,r:18,hp:10000,maxHp:10000,kind:'shade',warning:0,stun:0,speed:0,damage:0,attack:0,shotCd:2,angle:0}];
  for(let i=0;i<14;i++)tick(s,{},.05);assert.equal(s.litTotal,1);assert.equal(s.player.embers,0);assert.equal(s.player.hp,60);
  const hp=s.player.hp;for(let i=0;i<200;i++)tick(s,{},.05);assert.equal(s.player.hp,hp);assert.equal(s.exit.open,false);
@@ -117,6 +117,6 @@ for(const starter of ['cinder','frost','orbit','thunder'])test(`real endless jou
  assert.equal(r.s.phase,'won');assert.equal(r.s.endless.retired,true);assert.equal(r.s.endless.cleared,6);assert.ok(r.s.endless.bosses>=1);assert.ok(r.s.endless.evolutions.includes(starter));assert.ok(r.resumed);assert.ok(r.choices>=10);assert.equal(r.milestones.length,6);
  assert.ok(r.maxEnemies<=30&&r.maxProjectiles<=250&&r.maxEffects<=120);
 });
-test('real idle run eventually dies without input; an endless run never auto-wins after three chapters',()=>{
- const r=playEndless({seed:1309,starter:'cinder',idle:true,floors:50,maxTime:600});assert.equal(r.s.phase,'lost');assert.ok(r.s.damageTaken>=100);assert.ok(r.s.endless.floor>3);assert.equal(r.s.endless.retired,false);
+test('real idle run dies under anti-AFK pressure before the planned floor cap',()=>{
+ const r=playEndless({seed:1309,starter:'cinder',idle:true,floors:50,maxTime:600});assert.equal(r.s.phase,'lost');assert.ok(r.s.damageTaken>=100);assert.ok(r.s.endless.floor<50);assert.equal(r.s.endless.retired,false);
 });

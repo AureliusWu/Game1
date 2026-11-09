@@ -190,7 +190,7 @@ export function validateSystems(s){
     const ids=new Set();for(const g of s.gear.inventory){if(!GEAR_BY_ID[g.id]||ids.has(g.id)||!Number.isInteger(g.level)||g.level<1||g.level>3)return false;ids.add(g.id);}
     for(const slot of ['lamp','cape','bag'])if(!ids.has(s.gear.slots[slot])||GEAR_BY_ID[s.gear.slots[slot]].slot!==slot)return false;
     if(!Array.isArray(s.foundGear)||s.foundGear.length>12||s.foundGear.some(id=>!GEAR_BY_ID[id]))return false;
-    if(!Array.isArray(s.encountered)||s.encountered.some(id=>!['shade','runner','brute','boss','caster','warder'].includes(id)))return false;
+    if(!Array.isArray(s.encountered)||s.encountered.some(id=>!['shade','runner','brute','boss','caster','warder','charger','sniper','bulwark'].includes(id)))return false;
     if(!s.blessings||!Number.isFinite(s.blessings.hp)||s.blessings.hp<0||s.blessings.hp>150)return false;
     if(!s.talentSnapshot||TALENTS.some(t=>!Number.isInteger(s.talentSnapshot[t.id])||s.talentSnapshot[t.id]<0||s.talentSnapshot[t.id]>t.max))return false;
     const st=s.story;if(!st||!Array.isArray(st.choices)||!Array.isArray(st.tasks)||!Array.isArray(st.delivered)||st.choices.length>3||st.tasks.length>3||st.delivered.length>3||!Number.isInteger(st.trust)||st.trust<0||st.trust>6)return false;

@@ -110,16 +110,14 @@ function announceChapter(){
 async function begin(resume=false){
   if(landscapeGate.check()){await landscapeGate.enter();if(landscapeGate.blocked)return;}
   audio.unlock();closeDialogs();
-  const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,seamless:settings.mode==='endless',id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
+  const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
   run=resume?restore(storage.get(STORE.save)):createGame(options);
   if(!run)run=createGame(options);
-  // Upgrade active v1.8.x endless saves without discarding an existing selection.
-  if(isEndless(run)&&run.endless.draftSerial!==undefined)run.endless.flowVersion=1;
   ended=false;paused=false;saveTimer=0;renderer.chapter=-1;renderer.particles=[];renderer.numbers=[];renderer.flashes?.clear();renderer.callout=null;renderer.shake=0;renderer.killMarks=[];renderer.killBurst=0;renderer.lastKillAt=0;
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
   if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
 }
-function pauseGame(){if(screen!=='game'||!run||ended)return;if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();$('pause-retire').hidden=!(isEndless(run)&&run.endless.flowVersion===1&&run.endless.cleared>=1);showDialog('pause-dialog');}
+function pauseGame(){if(screen!=='game'||!run||ended)return;if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
 function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;clearInput();last=performance.now();$('world').focus({preventScroll:true});}
 function returnToMenu(){checkpoint();closeDialogs();paused=false;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
@@ -154,7 +152,22 @@ function appendDraftCards(infos){
     b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
   });
 }
+// Ordinary floor completion must not chain blocking route/reward panels.
+function autoResolveOrdinaryRoom(){
+ if(!isEndless(run)||!Number.isInteger(run.endless.draftSerial)||!run.endless.clearedRoom||run.endless.floor%5===0)return false;
+ const from=run.endless.floor;
+ for(let i=0;i<64&&run.endless.floor===from&&run.phase==='upgrade';i++){
+  const kind=run.endless.choice;
+  const id=kind==='route'?'hunt':recommendedChoice(run);
+  if(!id||!chooseUpgrade(run,id))break;
+ }
+ if(run.endless.floor===from)return false;
+ renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;
+ $('upgrade-dialog').close();announceChapter();updateHUD();checkpoint();
+ return true;
+}
 function showUpgrade(){
+  if(autoResolveOrdinaryRoom())return;
   $('draft-banish').hidden=true;
   if(isEndless(run)){showEndlessDraft();return;}
   $('endless-market').hidden=true;$('upgrade-title').textContent='选一束新的光';$('draft-reroll').hidden=true;$('endless-retire').hidden=true;
@@ -219,13 +232,12 @@ function processEvents(events){
     if(e.type==='tailwind')toast('顺风已起 · 3 秒加速。',2);
     if(e.type==='boss-defeated')toast(isEndless(run)?'首领击破！清掉余下敌人，领取奇物。':'长夜退去了。前往金色拱门，把黎明送达。',6);
     if(e.type==='level'&&!isEndless(run))toast(`信使等级 ${e.level} · 生命与光弹变得更强。`,3);
-    if(e.type==='room-clear'&&run.endless?.flowVersion!==1)toast(`第 ${e.floor} 层清场！整理构筑，挑选下一条路。`,4);
-    if(e.type==='auto-floor')toast(`第 ${e.floor} 层已结算 · 自动进入第 ${e.nextFloor} 层`,2);
-    if(e.type==='pressure-warning')toast('停留过久 · 追踪落雷正在锁定！',1.5);
+    if(e.type==='room-clear')toast(`第 ${e.floor} 层清场！${run.endless?.draftSerial!==undefined&&e.floor%5!==0?'自动前往下一层':'领取首领战利品，选择下一条路'}。`,2.2);
     if(e.type==='evolution')toast(`武器进化 · ${e.name}！`,6);
     if(e.type==='oath-gain')toast(`夜航刻印 · ${OATHS.find(o=>o.id===e.id)?.name} ${e.rank} 阶！`,4);
     if(e.type==='revive')toast('第二次黎明已燃尽 · 复起！',5);
-    if(e.type==='storm-warning')toast('雷雨锁定了脚下，离开紫色圆圈！',2);
+    if(e.type==='storm-warning')toast('危险区域锁定脚下！立即移动，避开落雷。',1.6);
+    if(e.type==='pressure-warning')toast('停留过久！追踪落雷即将命中，立即移动！',1.6);
     if(e.type==='overdrive')toast('破晓超载！技能刷新，武器极速攻击 6 秒。',2);
     if(e.type==='fever')toast('20 连击 · 狂热 5 秒！',3);
     if(e.type==='gear')toast(`发现装备：${GEAR_BY_ID[e.id].name}，可在背包穿戴。`,4);
@@ -250,7 +262,7 @@ function updateHUD(){
   const lit=run.beacons.filter(b=>b.lit).length;
   const j=run.journal;$('level-label').textContent=`Lv.${j.level}`;$('coin-count').textContent=j.coins;
   const base=isEndless(run)?xpThreshold(j.level):XP_THRESHOLDS[j.level-1],next=isEndless(run)?xpThreshold(j.level+1):XP_THRESHOLDS[j.level];$('xp-bar').style.width=`${next?Math.min(100,(j.xp-base)/(next-base)*100):100}%`;
-  $('combo-label').hidden=j.combo<2;$('combo-label').textContent=`${j.combo} 连击`;
+  $('combo-label').hidden=j.combo<2;$('combo-label').textContent=`×${j.combo} 连击`;
   $('potion-count').textContent=j.potions;$('potion').disabled=j.potions<1||p.hp>=p.maxHp||j.potionCd>0;
   const poi=nearestPOI(run);$('interact').hidden=!poi;if(poi)$('interact-label').textContent=poiLabel(poi);
   $('objective').textContent=run.exit.open?(run.chapter===2?'前往金色拱门，把黎明送达':'灯塔已全部点亮 · 前往右侧金色拱门'):lit===3?'击败守夜者 · 看清预警，及时换位':p.embers>=4?'携带足够火种 · 靠近未点亮的灯塔':`收集火种点亮灯塔 · 每座需要 4 枚（${p.embers}/4）`;
@@ -260,9 +272,12 @@ function updateHUD(){
     $(id).classList.toggle('cooldown',cd>0);$(id).setAttribute('aria-disabled',String(cd>0));$(id).style.setProperty('--cooldown',`${cd/max*100}%`);
     $(`${id}-cd`).textContent=cd>0?cd.toFixed(1):label;$(`${id}-cd`).classList.toggle('counting',cd>0);
   }
-  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills} / ${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 剩余 ${r.remaining+run.enemies.length}${r.oaths&&Object.keys(r.oaths.ranks).length?' · 刻印 '+Object.entries(r.oaths.ranks).map(([id,lv])=>OATHS.find(o=>o.id===id).name.slice(0,2)+lv).join('/') :''}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
+  if(isEndless(run)){const r=run.endless;$('objective').textContent=`清场 ${r.roomKills}/${r.total}${r.floor%5===0?' · 首领层':''}`;$('run-status').textContent=`${WEATHERS[r.weather].name} · 余敌 ${r.remaining+run.enemies.length}${run.v12.barrier?' · 屏障':''}${r.feverUntil>run.totalTime?' · 狂热':''}${run.endless.flow?.boostUntil>run.totalTime?' · 破风':''}`;$('build-count').textContent=Object.keys(r.ranks).length+' / 7';}
   $('combat-meter').hidden=!isCombat(run);if(isCombat(run)){const burst=overdriving(run),c=run.endless.combat;$('combat-meter').classList.toggle('active',burst);$('combat-label').textContent=burst?'破晓超载 · '+(c.overdriveUntil-run.totalTime).toFixed(1)+'s':'破晓蓄能 · '+Math.floor(c.heat)+'%';$('combat-fill').style.width=(burst?(c.overdriveUntil-run.totalTime)/6*100:c.heat)+'%';}
   $('kill-hud').hidden=!isEndless(run);$('kill-count').textContent=run.kills;
+  const flow=run.endless?.flow,active=flow?.version===1&&flow.boostUntil>run.totalTime,chain=flow?.version===1&&flow.chainUntil>run.totalTime?flow.chain:0,signal=$('flow-signal');
+  signal.hidden=!active&&!chain;signal.classList.toggle('surging',!!active);
+  if(!signal.hidden)signal.textContent=active?'破风觉醒 '+(flow.boostUntil-run.totalTime).toFixed(1)+'s · 伤害↑25%':'冲刺连斩 '+chain+'/4';
   const weaponKey=isEndless(run)?Object.entries(run.endless.ranks).filter(([id])=>SKILL_BY_ID[id].kind==='weapon').map(([id,lv])=>id+':'+lv+':'+evolved(run,id)).join('|'):'';
   if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`<svg><use href="#i-${u.symbol}"/></svg><b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
   if(boss&&isTactical(run))$('boss-subtitle').textContent=boss.enraged?'第二阶段 · 招式加速 · 光环可打断':'招式轮换 · 留意粉色预警';
@@ -285,7 +300,7 @@ $('start').addEventListener('click',()=>begin());$('continue').addEventListener(
 $('build-content').addEventListener('click',e=>{const b=e.target.closest('[data-action="specialize"]');if(!b||b.disabled)return;run.events=[];if(chooseSpecialization(run,b.dataset.id)){processEvents(run.events);checkpoint();updateHUD();showBuild();}});
 $('draft-banish').addEventListener('click',()=>{const panel=$('banish-panel');panel.replaceChildren();const key=ensureDraft(run)?.key;showDialog('banish-dialog');checkpoint();for(const id of run.offered.filter(id=>SKILL_BY_ID[id]&&!rankOf(run,id))){const b=document.createElement('button');b.className='secondary';b.textContent='放逐 '+SKILL_BY_ID[id].name;b.addEventListener('click',()=>{if(ensureDraft(run)?.key!==key)return;run.events=[];if(banishEndless(run,id)){$('banish-dialog').close();processEvents(run.events);showEndlessDraft();checkpoint();}});panel.append(b);}});
 $('game-hub').addEventListener('click',()=>isEndless(run)?showBuild():hub.show('inventory'));$('result-office').addEventListener('click',()=>hub.show('office'));$('interact').addEventListener('click',()=>hub.interact());$('potion').addEventListener('click',doPotion);
-$('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);$('save-exit').addEventListener('click',returnToMenu);$('pause-retire').addEventListener('click',()=>{run.events=[];if(retireEndless(run)){closeDialogs();processEvents(run.events);}});$('upgrade-exit').addEventListener('click',returnToMenu);$('result-menu').addEventListener('click',returnToMenu);$('game-settings').addEventListener('click',()=>showDialog('settings'));
+$('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);$('save-exit').addEventListener('click',returnToMenu);$('upgrade-exit').addEventListener('click',returnToMenu);$('result-menu').addEventListener('click',returnToMenu);$('game-settings').addEventListener('click',()=>showDialog('settings'));
 $('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>{e.preventDefault();toggleDraft(run);updateDraftClock();checkpoint();});$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
 for(const b of document.querySelectorAll('.sound-toggle'))b.addEventListener('click',()=>{settings.sound=!settings.sound;saveSettings();updateSettings();});
 $('sound-setting').addEventListener('change',e=>{settings.sound=e.target.checked;saveSettings();updateSettings();});$('motion-setting').addEventListener('change',e=>{settings.lowMotion=e.target.checked;saveSettings();updateSettings();});

@@ -26,14 +26,14 @@ export function drawProjectile(c,b,s){
 }
 export function drawBattleEffect(c,f,t,lowMotion=false){
  const k=Math.max(0,Math.min(1,1-f.life/f.maxLife)),a=1-k;
- if(!['ring','frost','blast','overdrive','feather','lightning','lightning-burst','dash-cut','hostile-ring'].includes(f.type))return false;
+ if(!['ring','frost','blast','overdrive','feather','lightning','lightning-burst','dash-cut','hostile-ring','flow-burst'].includes(f.type))return false;
  c.save();c.globalAlpha=a;c.lineCap='round';
  if(f.type==='lightning'){
   const dx=f.toX-f.x,dy=f.toY-f.y,len=Math.hypot(dx,dy)||1,points=[[f.x,f.y]];
   for(let i=1;i<7;i++){const n=lowMotion?0:Math.sin(i*16+t*35)*12*a;points.push([f.x+dx*i/7-dy/len*n,f.y+dy*i/7+dx/len*n]);}points.push([f.toX,f.toY]);line(c,points,'#be8aff55',12);line(c,points,'#cba4ff',5);line(c,points,'#fff4ff',1.5);
  }else if(f.type==='dash-cut'){line(c,[[f.x,f.y],[f.toX,f.toY]],'#ffbe6d44',f.r*2);line(c,[[f.x,f.y],[f.toX,f.toY]],'#ffe1a1',f.r);line(c,[[f.x,f.y],[f.toX,f.toY]],'#fff9e3',4);}
  else{
-  const color=f.type==='frost'?'#9ee8f4':f.type==='lightning-burst'?'#d0b3ff':f.type==='feather'?'#d1efa5':f.type==='hostile-ring'?'#ef8cbd':'#ffd18c';
+  const color=f.type==='frost'?'#9ee8f4':f.type==='lightning-burst'?'#d0b3ff':f.type==='feather'?'#d1efa5':f.type==='flow-burst'?'#b6f8d8':f.type==='hostile-ring'?'#ef8cbd':'#ffd18c';
   const radius=f.r*(f.type==='blast'?.4+k*.6:.35+Math.min(1,k*1.7)*.65);
   circle(c,f.x,f.y,radius,color+'22',1,true);circle(c,f.x,f.y,radius,color,Math.max(1,7*a));circle(c,f.x,f.y,radius*.9,color+'66',2);
   if(f.inner)circle(c,f.x,f.y,f.inner,'#fff0fa',2);
