@@ -79,14 +79,20 @@ public final class OfflineGameTest {
             await("typeof window.emberCourierNative === 'object'");
             // Earn stamps through actual kills; the game's pagehide autosave remains fully enabled.
             js("document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=normal]').click();document.getElementById('start').click()");
-            await("document.getElementById('upgrade-dialog').open", 600);
+            // Both the prerequisite and its child cost two stamps. Earn the whole budget
+            // through real combat rather than assuming that the first two-stamp award suffices.
+            await("document.getElementById('upgrade-dialog').open && JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps>=4", 600);
             js("window.emberCourierNative.pause();document.getElementById('upgrade-exit').click();document.querySelector('[data-hub=tree]').click()");
             await("document.querySelectorAll('.star-node').length===15");
             int before = Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertTrue("Real kills should earn at least one affordable star node", before >= 2);
+            assertTrue("Real combat must fund both prerequisite and child purchases", before >= 4);
             js("document.querySelector('[data-action=tree][data-id=light-step]').click()");
             assertEquals(Integer.toString(before - 2), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertEquals("true", js("!document.querySelector('[data-action=tree][data-id=wide-bag]').disabled"));
+            js("document.querySelector('[data-action=tree][data-id=wide-bag]').click()");
+            assertEquals(Integer.toString(before - 4), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
+            assertEquals("true", js("(()=>{const p=JSON.parse(localStorage.getItem('ember-courier.profile.v1'));return p.growth.tree['light-step']===1 && p.growth.tree['wide-bag']===1})()"));
             getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_REVERSE_LANDSCAPE));
             await("innerWidth > innerHeight");
             assertEquals("true", js("(()=>{const r=document.querySelector('.star-paths').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1&&document.documentElement.scrollWidth<=innerWidth+1})()"));
@@ -259,6 +265,9 @@ public final class OfflineGameTest {
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog'),r=d.getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return d.open && !d.matches(':modal') && document.body.dataset.liveDraft==='true' && r.top>=20 && r.top<innerHeight*.48 && r.height<=innerHeight*.69 && r.bottom<=Math.min(p.top,dash.top)+2 && document.querySelectorAll('#upgrade-options button').length===3 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape-reverse.png");
+            assertEquals("Held draft must remain a real, positive-time skill selection", "true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.phase==='upgrade' && s.endless.choice==='skill' && s.selection?.version===1 && s.selection.held===true && s.selection.remaining>0 && s.offered.length===3})()"));
+            String draftKey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.key");
+            String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
             String remaining = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining");
             Thread.sleep(700);
             js("window.emberCourierNative.pause()");
@@ -268,7 +277,12 @@ public final class OfflineGameTest {
             assertEquals("true", js("(()=>{const r=document.getElementById('upgrade-dialog').getBoundingClientRect(),p=document.getElementById('pulse').getBoundingClientRect(),dash=document.getElementById('dash').getBoundingClientRect();return r.top>=20 && r.top<innerHeight*.48 && r.height<=innerHeight*.69 && r.bottom<=Math.min(p.top,dash.top)+2 && document.documentElement.scrollWidth<=innerWidth+1})()"));
             assertEquals("true", js("(()=>{const d=document.getElementById('upgrade-dialog').getBoundingClientRect();return [...document.querySelectorAll('.draft-footer button')].filter(b=>b.getBoundingClientRect().height>0).every(b=>{const r=b.getBoundingClientRect();return r.top>=d.top&&r.bottom<=d.bottom-1})})()"));
             capture("draft-landscape.png");
-            js("document.getElementById('upgrade-exit').click(); document.getElementById('continue').click()");
+            js("document.getElementById('upgrade-exit').click()");
+            assertEquals("Held draft must be offered for real save continuation", "true", js("!document.getElementById('continue').hidden"));
+            js("document.getElementById('continue').click()");
+            await("document.getElementById('upgrade-dialog').open");
+            assertEquals(draftKey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.key"));
+            assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
             assertEquals(remaining, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.remaining"));
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection.held"));
             String before = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).metrics.autoChoices||0");
@@ -288,6 +302,7 @@ public final class OfflineGameTest {
             assertEquals("true", js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.starter === 'thunder'"));
             // The real auto-attacks and enemies produce this draft. No simulation state is edited.
             await("document.getElementById('upgrade-dialog').open", 600);
+            assertEquals("Fixture must be a genuine live skill draft", "true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.phase==='upgrade' && s.endless.choice==='skill' && s.selection?.version===1 && s.selection.remaining>0 && s.offered.length===3})()"));
             assertEquals("true", js("document.querySelectorAll('#upgrade-options button').length === 3"));
             // The same real earned draft exercises the new banish modal and its saved charge.
             assertEquals("false", js("document.getElementById('draft-banish').disabled"));
@@ -298,9 +313,12 @@ public final class OfflineGameTest {
             String before = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls");
             js("document.getElementById('draft-reroll').click()");
             assertTrue(Integer.parseInt(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.rerolls")) < Integer.parseInt(before));
-            String offered = js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered)");
+            // Capture before exiting in the same JS task, so no timer frame can intervene.
+            // Both the exit checkpoint and reload must preserve these exact earned offers.
+            String offered = js("(()=>{const offered=JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered);document.getElementById('upgrade-exit').click();return offered})()");
+            assertEquals("Exiting must not replace the earned offers", offered, js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).offered)"));
             String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
-            js("document.getElementById('upgrade-exit').click()");
+            assertEquals("Saved real draft must retain its selection and banish state", "true", js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.phase==='upgrade' && s.endless.choice==='skill' && s.selection?.version===1 && s.selection.remaining>0 && s.growth.banishes===1 && s.growth.banished.length===1})()"));
             assertEquals("true", js("!document.getElementById('continue').hidden"));
             js("document.getElementById('continue').click()");
             assertEquals("true", js("document.getElementById('upgrade-dialog').open"));
