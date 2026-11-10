@@ -1,0 +1,80 @@
+{
+  "generator": "OpenAI image generation",
+  "date": "2026-11-10",
+  "license": "Original project art; no external characters or sampled assets.",
+  "encoding": "WebP, resized only; transparent alpha retained.",
+  "assets": [
+    {
+      "file": "dist/skin-courier.webp",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "bytes": 56536,
+      "sha256": "3421e50e7a3899a4458abc89e5f87ec0aec3d40cb5a5dc42a9c7fc2e55b6980f",
+      "source": "exec-b60db673-acfe-4354-bac1-b9b87e672d51.png"
+    },
+    {
+      "file": "dist/skin-rain.webp",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "bytes": 54480,
+      "sha256": "31d5c005b3e0cd69befb30d97b9e4fd7662ec7de319ca1542149a169600473ba",
+      "source": "exec-ae2d46b4-f9d8-464b-a5be-31a1df3c7413.png"
+    },
+    {
+      "file": "dist/skin-ember.webp",
+      "width": 512,
+      "height": 512,
+      "alpha": true,
+      "bytes": 52902,
+      "sha256": "77d0e86ae165a6dfe57da136b32a2adb18745373faa22f2d1c3e4d19b42bd9af",
+      "source": "exec-eb68c49e-1a4d-435b-9f39-0a7bfab94b5b.png"
+    },
+    {
+      "file": "dist/weapon-cinder.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "bytes": 19080,
+      "sha256": "7615c0d6063131f2b671890ea71c87dc4b7f195def331aa508a4b68d11c1de1a",
+      "source": "exec-3ddf19c3-3362-4251-a9c3-de810dcc7286.png"
+    },
+    {
+      "file": "dist/weapon-frost.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "bytes": 25106,
+      "sha256": "1540af379f74d9ca37eb4e826c2e84de988bd799e46f71040adecfa6d0a65791",
+      "source": "exec-5b796d06-a7f5-409f-a137-9ca074cedc66.png"
+    },
+    {
+      "file": "dist/weapon-orbit.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "bytes": 15438,
+      "sha256": "9c624eda0bb112e1f19fa294420c98906929298a34add2e34694cb2adf780d46",
+      "source": "exec-6a5daa9f-b792-4bcc-b0cb-1204b98bc450.png"
+    },
+    {
+      "file": "dist/weapon-thunder.webp",
+      "width": 256,
+      "height": 256,
+      "alpha": true,
+      "bytes": 17546,
+      "sha256": "716028639ced3a961c7ac20e9f1c357f6a8c1f57ed65e7e74115cdabf76f0d1b",
+      "source": "exec-c58ee2ea-d47e-4627-aaea-0467df2b2d7b.png"
+    },
+    {
+      "file": "dist/fx-brush-atlas.webp",
+      "width": 1024,
+      "height": 1024,
+      "alpha": true,
+      "bytes": 651118,
+      "sha256": "694e62be9939a0f904dfc723e0d1972e31586d7d40acc602487f21af7477e68e",
+      "source": "exec-1b355413-3f4c-47ff-9594-7db464207013.png"
+    }
+  ]
+}

@@ -85,8 +85,8 @@ test('lightning jumps only once per enemy and cannot hit distant targets',()=>{
  const s=game({starter:'thunder'});s.endless.thunderCd=0;s.enemies=[0,1,2,3].map((i)=>({id:900+i,kind:'shade',x:i===3?1800:1000+i*90,y:690,r:18,hp:1000,maxHp:1000,warning:0,stun:0}));
  updateEndlessCombat(s,.05,{spawn:()=>false,hurt:()=>{}});assert.ok(s.enemies.slice(0,3).every(e=>e.hp===975));assert.equal(s.enemies[3].hp,1000);
 });
-test('storm warnings lock their target and allow moving out before damage',()=>{
- const make=()=>{const s=game();s.endless.weather='storm';s.endless.zoneCd=0;return s;};
+test('legacy storm warnings retain locked targets and dodge windows',()=>{
+ const make=()=>{const s=game();delete s.endless.draftSerial;s.endless.weather='storm';s.endless.zoneCd=0;return s;};
  let damage=0;const s=make();updateEndlessCombat(s,.05,{spawn:()=>false,hurt:(_,n)=>damage+=n});assert.equal(s.endless.zones.length,1);assert.equal(damage,0);const zone={...s.endless.zones[0]};s.player.x+=200;
  for(let i=0;i<26;i++)updateEndlessCombat(s,.05,{spawn:()=>false,hurt:(_,n)=>damage+=n});assert.equal(damage,0);assert.equal(zone.x,940);
  const t=make();for(let i=0;i<27;i++)updateEndlessCombat(t,.05,{spawn:()=>false,hurt:(_,n)=>damage+=n});assert.ok(damage>0);
@@ -117,6 +117,6 @@ for(const starter of ['cinder','frost','orbit','thunder'])test(`real endless jou
  assert.equal(r.s.phase,'won');assert.equal(r.s.endless.retired,true);assert.equal(r.s.endless.cleared,6);assert.ok(r.s.endless.bosses>=1);assert.ok(r.s.endless.evolutions.includes(starter));assert.ok(r.resumed);assert.ok(r.choices>=10);assert.equal(r.milestones.length,6);
  assert.ok(r.maxEnemies<=30&&r.maxProjectiles<=250&&r.maxEffects<=120);
 });
-test('real idle run dies under anti-AFK pressure before the planned floor cap',()=>{
+test('real idle run is defeated by actual enemy pressure before the planned floor cap',()=>{
  const r=playEndless({seed:1309,starter:'cinder',idle:true,floors:50,maxTime:600});assert.equal(r.s.phase,'lost');assert.ok(r.s.damageTaken>=100);assert.ok(r.s.endless.floor<50);assert.equal(r.s.endless.retired,false);
 });

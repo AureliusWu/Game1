@@ -19,6 +19,6 @@ if(!html.includes(`v${version}`)||!sw.includes(`ember-courier-v${version}`)||!fs
 const desktop=JSON.parse(fs.readFileSync('windows/package.json','utf8')),lock=JSON.parse(fs.readFileSync('windows/package-lock.json','utf8'));
 if(desktop.version!==version||lock.version!==version||lock.packages[''].version!==version)throw new Error('Windows package/lock and game versions must match');
 if(manifest.orientation!=='landscape'||!fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8').includes('android:screenOrientation="sensorLandscape"'))throw new Error('Web and Android must declare landscape orientation');
-for(const file of files)if(/\.(mjs|css|html|png|svg|webmanifest)$/.test(file)&&!sw.includes(`'./${file}'`))throw new Error('Asset not in offline cache: '+file);
+for(const file of files)if(/\.(mjs|css|html|png|webp|svg|webmanifest)$/.test(file)&&!sw.includes(`'./${file}'`))throw new Error('Asset not in offline cache: '+file);
 const total=files.reduce((n,f)=>n+fs.statSync(path.join(root,f)).size,0);
 console.log(`Validated ${files.length} static files, ${ids.length} unique UI IDs; ${(total/1024).toFixed(1)} KiB total. No build or runtime dependencies.`);

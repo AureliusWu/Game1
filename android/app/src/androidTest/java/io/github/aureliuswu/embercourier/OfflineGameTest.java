@@ -47,7 +47,7 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        assertTrue("Unexpected screenshot name", name.matches("(draft|star)-landscape(-reverse)?\\.png"));
+        assertTrue("Unexpected screenshot name", name.matches("(draft|star|art)-landscape(-reverse)?\\.png"));
         CountDownLatch rendered = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> {
             WebView web = activity.findViewById(R.id.game_webview);
@@ -111,6 +111,52 @@ public final class OfflineGameTest {
             assertEquals("true", js("document.querySelector('[data-action=reset-tree]').disabled"));
             assertEquals("true", js("window.emberCourierNative.back();!document.getElementById('hub-dialog').open"));
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
+    }
+
+    @Test public void testWardrobeArtAndTwoFingerLivePick() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
+            js("(async()=>{const {Renderer}=await import(new URL('./render.mjs',location.href).href);const draw=Renderer.prototype.draw,p=window.__artProbe={frames:0,painted:0};const paint=CanvasRenderingContext2D.prototype.drawImage;CanvasRenderingContext2D.prototype.drawImage=function(img,...args){if(img instanceof HTMLImageElement&&img.src.includes('.webp'))p.painted++;return paint.call(this,img,...args);};Renderer.prototype.draw=function(s,...a){p.x=s.player.x;p.y=s.player.y;p.time=s.totalTime;p.skin=this.skin;p.frames++;return draw.call(this,s,...a);};p.ready=true;})()");
+            await("window.__artProbe?.ready===true");
+            js("document.getElementById('settings-open').click();document.querySelector('#settings [data-dialog=skins]').click();document.querySelector('[data-skin=rain]').click();document.querySelector('#skins [data-close]').click();if(!document.getElementById('touch-setting').checked)document.getElementById('touch-setting').click();if(document.getElementById('hitstop-setting').checked)document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
+            await("window.__artProbe.painted>10&&window.__artProbe.skin==='rain'");
+            assertEquals("true",js("document.getElementById('player-portrait').complete&&document.getElementById('player-portrait').naturalWidth>0&&JSON.parse(localStorage.getItem('ember-courier.settings.v1')).skin==='rain'"));
+            await("document.getElementById('upgrade-dialog').open",600);
+            js("if(document.getElementById('draft-hold').getAttribute('aria-pressed')!=='true')document.getElementById('draft-hold').click()");
+            assertEquals("true",js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).endless.choice==='skill'&&!document.getElementById('upgrade-dialog').matches(':modal')"));
+            capture("art-landscape.png");
+            getInstrumentation().runOnMainSync(() -> activity.getWindow().getDecorView().requestFocus());
+            getInstrumentation().waitForIdleSync();
+            await("!document.getElementById('pause-dialog').open");
+            JSONArray points=new JSONArray(js("(()=>{const a=document.getElementById('joystick').getBoundingClientRect(),b=document.querySelector('#upgrade-options button').getBoundingClientRect();return [(a.left+a.right)/2,(a.top+a.bottom)/2,(b.left+b.right)/2,(b.top+b.bottom)/2,innerWidth]})()"));
+            final int[] origin=new int[2],width=new int[1];
+            getInstrumentation().runOnMainSync(()->{activity.findViewById(R.id.game_webview).getLocationOnScreen(origin);width[0]=activity.findViewById(R.id.game_webview).getWidth();});
+            float density=width[0]/(float)points.getDouble(4);
+            MotionEvent.PointerProperties[] props=new MotionEvent.PointerProperties[2];
+            MotionEvent.PointerCoords[] coords=new MotionEvent.PointerCoords[2];
+            for(int n=0;n<2;n++){props[n]=new MotionEvent.PointerProperties();props[n].id=n;props[n].toolType=MotionEvent.TOOL_TYPE_FINGER;coords[n]=new MotionEvent.PointerCoords();coords[n].pressure=1;coords[n].size=1;coords[n].x=origin[0]+(float)points.getDouble(n*2)*density;coords[n].y=origin[1]+(float)points.getDouble(n*2+1)*density;}
+            js("document.getElementById('draft-hold').click()");
+            long start=SystemClock.uptimeMillis();
+            touch(start,MotionEvent.ACTION_DOWN,1,props,coords);
+            coords[0].x+=28*density;touch(start,MotionEvent.ACTION_MOVE,1,props,coords);
+            Thread.sleep(160);
+            double before=Double.parseDouble(js("window.__artProbe.x"));
+            touch(start,MotionEvent.ACTION_POINTER_DOWN|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,coords);
+            touch(start,MotionEvent.ACTION_POINTER_UP|(1<<MotionEvent.ACTION_POINTER_INDEX_SHIFT),2,props,coords);
+            Thread.sleep(180);
+            double after=Double.parseDouble(js("window.__artProbe.x"));
+            assertTrue("First finger must keep moving while second finger picks: "+before+" -> "+after,after>before+4);
+            assertEquals("true",js("document.getElementById('joystick-thumb').style.transform!=='translate(0,0)'&&document.getElementById('runtime-error').hidden"));
+            touch(start,MotionEvent.ACTION_UP,1,props,coords);
+            js("window.emberCourierNative.pause()");
+            assertEquals("Second finger must commit an actual earned upgrade", "true",js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.metrics.upgradeChoices>0||Object.values(s.endless.ranks).reduce((a,b)=>a+b,0)>1})()"));
+            js("if(document.getElementById('upgrade-dialog').open)document.getElementById('upgrade-exit').click();else document.getElementById('save-exit').click();document.getElementById('settings-open').click();document.querySelector('#settings [data-dialog=skins]').click();document.querySelector('[data-skin=courier]').click();document.querySelector('#skins [data-close]').click();if(!document.getElementById('hitstop-setting').checked)document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-difficulty=normal]').click()");
+        } finally {getInstrumentation().runOnMainSync(()->activity.finish());getInstrumentation().waitForIdleSync();}
     }
 
     @Test public void testImpactFeedbackSettingsAndRealCombat() throws Exception {

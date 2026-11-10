@@ -4,7 +4,7 @@ import {rankOf,SKILL_BY_ID,choiceInfo,retireEndless} from '../dist/endless.mjs';
 import {findPath,clearLine} from '../dist/routes.mjs';
 import {specializationPoints} from '../dist/growth.mjs';
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
-export function playEndless({seed=1,starter='cinder',difficulty='normal',floors=10,maxTime=1500,resume=false,route='hunt',idle=false,profile={},discipline='',observe=()=>{}}={}){
+export function playEndless({seed=1,starter='cinder',difficulty='normal',floors=10,maxTime=1500,resume=false,route='hunt',idle=false,stationary=false,profile={},discipline='',observe=()=>{}}={}){
  let s=createGame({seed,mode:'endless',starter,difficulty,profile,id:`endless-${seed}-${starter}-${difficulty}`});
  let resumed=false,frames=0,choices=0,maxEnemies=0,maxProjectiles=0,maxEffects=0;const milestones=[];let lastFloor=1;
  const partner=SKILL_BY_ID[starter].partner;
@@ -48,8 +48,10 @@ export function playEndless({seed=1,starter='cinder',difficulty='normal',floors=
     if(cost<best){best=cost;input={x,y};}
    }
    if(near.length>=2||near.some(e=>e.kind==='boss'||e.cast>0))pulse(s);
-   if(closest&&distance(p,closest)<85&&p.dashCd<=0)dash(s);
+   const imminentBeam=enemies.some(e=>{if(e.castType!=='beam'||!(e.cast>0&&e.cast<.4))return false;const dx=e.castX-e.x,dy=e.castY-e.y,t=Math.max(0,Math.min(1,((p.x-e.x)*dx+(p.y-e.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-e.x-t*dx,p.y-e.y-t*dy)<70;});
+   if(!stationary&&(closest&&distance(p,closest)<85||imminentBeam)&&p.dashCd<=0)dash(s);
   }
+  if(stationary)input={x:0,y:0};
   tick(s,input,.05);frames++;
   maxEnemies=Math.max(maxEnemies,s.enemies.length);maxProjectiles=Math.max(maxProjectiles,s.projectiles.length);maxEffects=Math.max(maxEffects,s.effects.length);
   observe(s);

@@ -96,7 +96,7 @@ public final class MainActivity extends Activity {
         if (path.isEmpty() || path.contains("..") || path.contains("\\") || path.startsWith("/")) return rejected();
         String mime = path.endsWith(".mjs") || path.endsWith(".js") ? "application/javascript"
             : path.endsWith(".css") ? "text/css" : path.endsWith(".html") ? "text/html"
-            : path.endsWith(".svg") ? "image/svg+xml" : path.endsWith(".png") ? "image/png"
+            : path.endsWith(".webp") ? "image/webp" : path.endsWith(".svg") ? "image/svg+xml" : path.endsWith(".png") ? "image/png"
             : path.endsWith(".webmanifest") ? "application/manifest+json" : "application/octet-stream";
         try { return new WebResourceResponse(mime, "UTF-8", 200, "OK",
             Collections.singletonMap("Cache-Control", "no-store"), getAssets().open(path)); }

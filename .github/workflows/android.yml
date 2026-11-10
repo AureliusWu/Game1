@@ -40,6 +40,7 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon --console=plain :app:connectedDebugAndroidTest
       - name: Preserve actual landscape draft and skill-tree screenshots
+        if: always()
         run: |
           mkdir -p artifacts/android-qa
           for panel in draft star; do
@@ -47,6 +48,7 @@ jobs:
               adb pull "/sdcard/Download/ember-$panel-$orientation.png" "artifacts/android-qa/$panel-$orientation.png"
             done
           done
+          adb pull /sdcard/Download/ember-art-landscape.png artifacts/android-qa/art-landscape.png
           python3 scripts/check_draft_screenshots.py artifacts/android-qa
       - name: Build signed production APK
         if: inputs.sign_release

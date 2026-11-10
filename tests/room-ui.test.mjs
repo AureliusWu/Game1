@@ -10,6 +10,7 @@ import * as content from '../dist/content.mjs';
 import * as growth from '../dist/growth.mjs';
 import {playEndless} from './endless-bot.mjs';
 import {HitFeedback} from '../dist/feedback.mjs';
+import {skillIcon} from '../dist/art.mjs';
 import {ENDLESS_MAPS} from '../dist/endless-maps.mjs';
 
 // Execute the shipped UI functions, including reentrant reward processing. The
@@ -39,12 +40,12 @@ function ui(s){
  const nodes=new Map(),seen=[],sounds=[],frames=[],saved=[],scheduled=[],errors=[];
  const node=id=>{
   if(!nodes.has(id))nodes.set(id,{id,open:false,hidden:false,dataset:{},style:{},children:[],
-   classList:{toggle(){}},setAttribute(){},focus(){},addEventListener(){},
+   classList:{toggle(){}},setAttribute(){},focus(){},listeners:new Map(),setPointerCapture(){},addEventListener(type,fn){this.listeners.set(type,fn);},
    append(child){this.children.push(child);},replaceChildren(){this.children=[];},
    show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;}});
   return nodes.get(id);
  };
- const context=vm.createContext({...core,...endless,...draft,...combat,...content,...growth,ENDLESS_MAPS,
+ const context=vm.createContext({...core,...endless,...draft,...combat,...content,...growth,ENDLESS_MAPS,skillIcon,
   run:s,screen:'game',paused:false,ended:false,frameFault:false,saveTimer:0,hudTimer:0,
   last:0,bannerUntil:0,letterUntil:0,toastUntil:0,achievementUntil:0,
   joy:{x:0,y:0},keys:new Set(),destination:null,stuckFor:0,
@@ -64,7 +65,7 @@ function ui(s){
  });
  const names=['processEvents','autoResolveOrdinaryRoom','showUpgrade','showEndlessDraft','announceChapter',
   'appendDraftCards','openDraftPane','updateDraftClock','interactiveDraft','frame',
-  'animateFrame','resumeGame','returnToMenu'];
+  'animateFrame','applyDraftChoice','resumeGame','returnToMenu'];
  vm.runInContext(names.map(shippedFunction).join('\n'),context);
  return {context,node,seen,sounds,frames,saved,scheduled,errors,
   process:events=>context.processEvents(events),frame:now=>context.frame(now)};
@@ -158,5 +159,33 @@ test('portrait, background, manual pause and held drafts clear pending hit stop'
   if(mode==='background')view.context.document.hidden=true;
   if(mode==='pause')view.context.paused=true;
   const at=s.totalTime;view.frame(16);assert.equal(s.totalTime,at,mode);assert.equal(view.context.feedback.hold,0,mode);
+ }
+});
+
+test('earned live draft keeps held movement across opening and choosing without native focus changes',()=>{
+ const s=earnedRoom('live'),view=ui(s);let focusChanges=0,inputClears=0;
+ view.context.keys.add('KeyD');view.context.joy={x:.5,y:0};view.context.clearInput=()=>inputClears++;
+ view.node('upgrade-dialog').show=()=>{throw Error('Live drafts must not invoke native autofocus');};
+ view.node('upgrade-dialog').close=()=>{throw Error('Live drafts must not restore native focus');};
+ view.node('world').focus=()=>focusChanges++;
+ view.process(s.events);assert.equal(view.node('upgrade-dialog').open,true);
+ const x=s.player.x;view.frame(50);assert.ok(s.player.x>x);assert.equal(view.context.keys.has('KeyD'),true);
+ const choice=draft.recommendedChoice(s),key=draft.ensureDraft(s).key;
+ assert.equal(view.context.applyDraftChoice(choice,key),true);
+ assert.equal(inputClears,0);assert.equal(focusChanges,0);assert.equal(view.context.joy.x,.5);
+ const after=s.player.x;view.frame(100);assert.ok(s.player.x>after);assert.ok(core.restore(core.serialize(s)));
+});
+
+test('a second touch confirms the live card once while a slide or canceled touch leaves it open',()=>{
+ for(const action of ['tap','slide','cancel']){
+  const s=earnedRoom('live'),view=ui(s);view.process(s.events);const c=view.node('upgrade-options').children[0],key=draft.ensureDraft(s).key;
+  const e={pointerType:'touch',pointerId:2,clientX:200,clientY:100,preventDefault(){}};
+  c.listeners.get('pointerdown')(e);
+  if(action==='cancel')c.listeners.get('pointercancel')(e);
+  c.listeners.get('pointerup')({...e,clientX:action==='slide'?240:200});
+  if(action==='tap'){
+   assert.ok(s.phase==='playing'||draft.ensureDraft(s).key!==key);const saved=core.serialize(s);
+   c.listeners.get('pointerup')(e);c.listeners.get('click')();assert.equal(core.serialize(s),saved);
+  }else assert.equal(draft.ensureDraft(s).key,key);
  }
 });

@@ -1,6 +1,7 @@
 # All platforms embed exactly the same bytes from the canonical web artifact.
 * text=auto eol=lf
 *.png -text
+*.webp -text
 *.jar -text
 *.zip -text
 *.apk -text
