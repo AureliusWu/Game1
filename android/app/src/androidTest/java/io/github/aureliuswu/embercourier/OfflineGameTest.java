@@ -135,7 +135,7 @@ public final class OfflineGameTest {
             js("document.querySelector('#hub-panel .equipment-slots').scrollIntoView({block:'start'})");
             await("(()=>{const p=document.getElementById('hub-panel').getBoundingClientRect();return Array.from(document.querySelectorAll('.equipped-slot .gear-art')).every(i=>{const r=i.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom&&r.left>=p.left&&r.right<=p.right;});})()");
             capture("inventory-landscape.png");
-            js("document.querySelector('[data-hub-tab=codex]').click()");
+            js("document.querySelector('[data-hub-tab=codex]').click();document.getElementById('hub-panel').scrollTop=0");
             assertEquals("9",js("document.querySelectorAll('#hub-panel .codex-art').length"));
             assertEquals("true",js("document.documentElement.scrollWidth<=innerWidth+1&&document.querySelector('#hub-panel .codex-art i').getBoundingClientRect().width>0"));
             capture("codex-landscape.png");
