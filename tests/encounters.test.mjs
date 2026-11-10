@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,serialize,restore} from '../dist/core.mjs';
+import {createGame,tick,pulse,serialize,restore} from '../dist/core.mjs';
 import {encounterGoal,prepareEnemy,tickEnemy} from '../dist/tactics.mjs';
 import {playEndless} from './endless-bot.mjs';
 const game=()=>createGame({seed:1301,mode:'endless'});
@@ -37,5 +37,19 @@ test('actual enemy pressure defeats stationary play while active play clears the
   const active=playEndless({seed,starter:'cinder',floors:6,maxTime:600,resume:true});
   assert.equal(idle.s.phase,'lost',String(seed));assert.equal(idle.s.endless.bosses,0);
   assert.equal(active.s.phase,'won',String(seed));assert.ok(active.s.endless.bosses>=1);assert.ok(active.resumed);
+ }
+});
+
+test('brief bolt recoil cannot indefinitely hold a locked windup; frost and pulse retain control',()=>{
+ const s=game(),e=actor(s,'sniper');e.x=s.player.x+100;s.enemies=[e];s.player.attackCd=100;
+ tickEnemy(s,e,.05,()=>{},()=>{});const before=e.cast;
+ for(let i=0;i<5;i++){e.stun=.1;tick(s,{x:0,y:0},.05);}
+ assert.ok(e.cast<before-.2);const frozen=e.cast;e.stun=.8;tick(s,{x:0,y:0},.05);assert.equal(e.cast,frozen);
+ assert.ok(pulse(s));assert.equal(e.cast,0);assert.equal(e.aiCd,2.5);
+});
+test('stationary play with real pulse and potion use still faces enemy pressure across all four starters',()=>{
+ for(const starter of ['cinder','frost','orbit','thunder']){
+  const r=playEndless({seed:1301,starter,floors:12,maxTime:600,stationary:true});
+  assert.equal(r.s.phase,'lost',starter);assert.ok(r.s.endless.floor<=5,starter);assert.ok(r.s.metrics.pulses>0,starter);
  }
 });

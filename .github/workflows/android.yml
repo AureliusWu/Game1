@@ -40,6 +40,7 @@ jobs:
         working-directory: android
         run: ./gradlew --no-daemon --console=plain :app:connectedDebugAndroidTest
       - name: Preserve actual landscape draft and skill-tree screenshots
+        if: always()
         run: |
           mkdir -p artifacts/android-qa
           for panel in draft star; do

@@ -159,7 +159,10 @@ function appendDraftCards(infos){
   const container=$('upgrade-options');container.replaceChildren();const key=ensureDraft(run).key,recommended=recommendedChoice(run);
   infos.forEach((u,index)=>{const b=document.createElement('button');b.className='upgrade-card'+(u.ready?' evolution-card':'');b.disabled=!!u.disabled;b.dataset.recommended=String(u.id===recommended);b.title=(u.tag||'')+' '+u.desc+' '+(u.detail||'');const shortTag=SKILL_BY_ID[u.id]&&isEndless(run)?`Lv.${rankOf(run,u.id)}→${rankOf(run,u.id)+1}`:u.tag||'本局强化';
     b.innerHTML=`<div class="choice-icon">${skillIcon(u.id,u.symbol)}<kbd>${index+1}</kbd></div><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small class="draft-tag">${u.disabled?'星砂不足':u.ready?'✦ 立即进化':u.id===recommended?'✦ '+shortTag+' · 推荐':shortTag}</small>`;
-    b.setAttribute('aria-label',u.name+'，'+u.desc);b.addEventListener('pointerdown',e=>{if(liveDraft(run))e.preventDefault();});
+    b.setAttribute('aria-label',u.name+'，'+u.desc);let press=null;
+    b.addEventListener('pointerdown',e=>{if(!liveDraft(run))return;e.preventDefault();if(e.pointerType!=='mouse'&&!b.disabled){press={id:e.pointerId,x:e.clientX,y:e.clientY};b.setPointerCapture(e.pointerId);}});
+    b.addEventListener('pointerup',e=>{const held=press;press=null;if(!held||held.id!==e.pointerId)return;e.preventDefault();if(liveDraft(run)&&Math.hypot(e.clientX-held.x,e.clientY-held.y)<14&&!b.disabled)applyDraftChoice(u.id,key);});
+    for(const type of ['pointercancel','lostpointercapture'])b.addEventListener(type,()=>{press=null;});
     b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
   });
 }

@@ -1,13 +1,13 @@
 {
-  "policy": "tests/endless-bot.mjs: actual actions, no state grants",
+  "policy": "tests/endless-bot.mjs: actual actions, no state grants; active policy uses dash against imminent locked beams.",
   "records": [
     {
       "seed": 1301,
       "idle": true,
       "phase": "lost",
-      "time": 46.3,
+      "time": 43.35,
       "floor": 4,
-      "kills": 98,
+      "kills": 86,
       "damage": 176.418,
       "bosses": 0
     },
@@ -15,39 +15,39 @@
       "seed": 1301,
       "idle": false,
       "phase": "won",
-      "time": 82.15,
+      "time": 89.1,
       "floor": 6,
       "kills": 158,
-      "damage": 31.046,
+      "damage": 18.896,
       "bosses": 1
     },
     {
       "seed": 1309,
       "idle": true,
       "phase": "lost",
-      "time": 23.5,
+      "time": 20.65,
       "floor": 2,
-      "kills": 46,
-      "damage": 129.083,
+      "kills": 30,
+      "damage": 119.011,
       "bosses": 0
     },
     {
       "seed": 1309,
       "idle": false,
       "phase": "won",
-      "time": 73.65,
+      "time": 108.6,
       "floor": 6,
-      "kills": 156,
-      "damage": 94.712,
+      "kills": 157,
+      "damage": 90.29,
       "bosses": 1
     },
     {
       "seed": 1313,
       "idle": true,
       "phase": "lost",
-      "time": 20.45,
+      "time": 20.8,
       "floor": 2,
-      "kills": 31,
+      "kills": 36,
       "damage": 138.277,
       "bosses": 0
     },
@@ -55,31 +55,65 @@
       "seed": 1313,
       "idle": false,
       "phase": "won",
-      "time": 83,
+      "time": 87.75,
       "floor": 6,
-      "kills": 157,
-      "damage": 69.254,
+      "kills": 156,
+      "damage": 49.526,
       "bosses": 1
     },
     {
       "seed": 982,
       "idle": true,
       "phase": "lost",
-      "time": 28.4,
+      "time": 28.35,
       "floor": 3,
       "kills": 58,
-      "damage": 136.316,
+      "damage": 148.73,
       "bosses": 0
     },
     {
       "seed": 982,
       "idle": false,
       "phase": "won",
-      "time": 70.55,
+      "time": 106.7,
       "floor": 6,
-      "kills": 157,
-      "damage": 50.774,
+      "kills": 158,
+      "damage": 34.059,
       "bosses": 1
+    }
+  ],
+  "stationaryWithSkills": [
+    {
+      "starter": "cinder",
+      "phase": "lost",
+      "time": 47.6,
+      "floor": 4,
+      "pulses": 4,
+      "potions": 1
+    },
+    {
+      "starter": "frost",
+      "phase": "lost",
+      "time": 47.2,
+      "floor": 4,
+      "pulses": 6,
+      "potions": 1
+    },
+    {
+      "starter": "orbit",
+      "phase": "lost",
+      "time": 35.2,
+      "floor": 3,
+      "pulses": 6,
+      "potions": 1
+    },
+    {
+      "starter": "thunder",
+      "phase": "lost",
+      "time": 63.8,
+      "floor": 4,
+      "pulses": 8,
+      "potions": 1
     }
   ]
 }

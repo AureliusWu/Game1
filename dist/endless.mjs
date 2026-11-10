@@ -175,7 +175,7 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    if(r.floor%5===0&&!r.bossMade)kind='boss';
    else if(isEncounterAI(s)){
     if(r.floor>=6&&roll<.10)kind='bulwark';
-    else if(r.floor>=4&&roll<.24)kind='sniper';
+    else if(r.floor>=4&&roll<.14)kind='sniper';
     else if(r.floor>=2&&roll<.42)kind='charger';
     else if(roll<(r.floor>=2?(r.route==='cache'?.68:.62):.24))kind='caster';
     else if(r.floor>=4&&roll<.70)kind='warder';

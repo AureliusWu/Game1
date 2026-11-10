@@ -154,7 +154,7 @@ public final class OfflineGameTest {
             assertEquals("true",js("document.getElementById('joystick-thumb').style.transform!=='translate(0,0)'&&document.getElementById('runtime-error').hidden"));
             touch(start,MotionEvent.ACTION_UP,1,props,coords);
             js("window.emberCourierNative.pause()");
-            assertEquals("true",js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.metrics.upgradeChoices>0||Object.values(s.endless.ranks).reduce((a,b)=>a+b,0)>1})()"));
+            assertEquals("Second finger must commit an actual earned upgrade", "true",js("(()=>{const s=JSON.parse(localStorage.getItem('ember-courier.save.v1'));return s.metrics.upgradeChoices>0||Object.values(s.endless.ranks).reduce((a,b)=>a+b,0)>1})()"));
             js("if(document.getElementById('upgrade-dialog').open)document.getElementById('upgrade-exit').click();else document.getElementById('save-exit').click();document.getElementById('settings-open').click();document.querySelector('#settings [data-dialog=skins]').click();document.querySelector('[data-skin=courier]').click();document.querySelector('#skins [data-close]').click();if(!document.getElementById('hitstop-setting').checked)document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-difficulty=normal]').click()");
         } finally {getInstrumentation().runOnMainSync(()->activity.finish());getInstrumentation().waitForIdleSync();}
     }

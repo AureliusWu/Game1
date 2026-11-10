@@ -22,8 +22,8 @@ export function encounterGoal(s,e){
  const p=s.player;if(!isEncounterAI(s)||e.kind==='boss'||e.patrolElite)return p;
  const dx=p.x-e.x,dy=p.y-e.y,d=Math.max(1,Math.hypot(dx,dy)),side=e.id%2?1:-1;
  let goal=p;
- if(['caster','sniper','warder'].includes(e.kind)&&d<440){
-  const range=e.kind==='sniper'?360:280;
+ const range=e.kind==='sniper'?620:280;
+ if(['caster','sniper','warder'].includes(e.kind)&&d<range+140){
   goal={x:p.x-dx/d*range-dy/d*side*100,y:p.y-dy/d*range+dx/d*side*100};
  }else if(['shade','runner','charger'].includes(e.kind)&&d>120){
   const flank=Math.min(155,(d-120)*.5);

@@ -6,7 +6,7 @@ import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPat
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
 import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash,flowMultiplier,breakCombatFlow} from './combat.mjs';
-import {isTactical,encounterGoal,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
+import {isTactical,isEncounterAI,encounterGoal,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
 import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
 import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
@@ -150,7 +150,7 @@ function spawnEnemy(s,kind) {
   let stats = kind==='boss' ? {hp:500,r:44,speed:70,damage:22} : kind==='charger'?{hp:72,r:17,speed:138,damage:16}:kind==='sniper'?{hp:64,r:18,speed:46,damage:15}:kind==='bulwark'?{hp:165,r:29,speed:38,damage:23}:kind==='caster'?{hp:48,r:18,speed:52,damage:12}:kind==='warder'?{hp:92,r:23,speed:44,damage:12}:kind==='runner' ? {hp:34,r:14,speed:116,damage:12} : kind==='brute' ? {hp:105,r:25,speed:52,damage:18} : {hp:45,r:18,speed:76,damage:13};
   if(isEndless(s))stats=endlessEnemy(s,kind,stats);
   const margin=65+stats.r+10;
-  const p=s.player, a=random(s)*Math.PI*2, d=isCombat(s)?325+random(s)*125:450+random(s)*180;
+  const p=s.player, a=random(s)*Math.PI*2, d=isEncounterAI(s)&&kind==='sniper'?640+random(s)*100:isCombat(s)?325+random(s)*125:450+random(s)*180;
   let x=clamp(p.x+Math.cos(a)*d,margin,WORLD.width-margin);
   let y=clamp(p.y+Math.sin(a)*d,margin,WORLD.height-margin);
   for(let n=0;n<30&&(collides(s,x,y,stats.r+4)||distance(p,{x,y})<240||s.beacons.some(b=>b.lit&&distance(b,{x,y})<170));n++) {
@@ -279,7 +279,9 @@ export function tick(s,input={},dt=1/60) {
   for(const e of s.enemies) {
     e.warning=Math.max(0,e.warning-dt);e.stun=Math.max(0,e.stun-dt);e.attack=Math.max(0,e.attack-dt);
     if(e.warning>0||e.hp<=0) continue;
-    if(isTactical(s)&&(e.stun<=0||e.kind==='boss'&&(e.cast>0||e.charging>0))&&tickEnemy(s,e,dt,hurt,moveEntity))continue;
+    // A normal bolt's brief recoil cannot indefinitely freeze a new enemy's locked windup.
+    // Pulse interruption and longer frost stuns still stop the action. Legacy tactics stay identical.
+    if(isTactical(s)&&(e.stun<=0||(e.kind==='boss'||isEncounterAI(s)&&e.stun<=.12)&&(e.cast>0||e.charging>0))&&tickEnemy(s,e,dt,hurt,moveEntity))continue;
     if(e.stun>0)continue;
     if(!isTactical(s)&&(isEndless(s)&&e.kind==='boss'?endlessBossCast(s,e,dt,hurt,moveEntity):modern(s)&&tickCast(s,e,dt,hurt)))continue;
     const d=Math.max(1,distance(p,e));

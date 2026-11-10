@@ -40,7 +40,7 @@ function ui(s){
  const nodes=new Map(),seen=[],sounds=[],frames=[],saved=[],scheduled=[],errors=[];
  const node=id=>{
   if(!nodes.has(id))nodes.set(id,{id,open:false,hidden:false,dataset:{},style:{},children:[],
-   classList:{toggle(){}},setAttribute(){},focus(){},addEventListener(){},
+   classList:{toggle(){}},setAttribute(){},focus(){},listeners:new Map(),setPointerCapture(){},addEventListener(type,fn){this.listeners.set(type,fn);},
    append(child){this.children.push(child);},replaceChildren(){this.children=[];},
    show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;}});
   return nodes.get(id);
@@ -174,4 +174,18 @@ test('earned live draft keeps held movement across opening and choosing without 
  assert.equal(view.context.applyDraftChoice(choice,key),true);
  assert.equal(inputClears,0);assert.equal(focusChanges,0);assert.equal(view.context.joy.x,.5);
  const after=s.player.x;view.frame(100);assert.ok(s.player.x>after);assert.ok(core.restore(core.serialize(s)));
+});
+
+test('a second touch confirms the live card once while a slide or canceled touch leaves it open',()=>{
+ for(const action of ['tap','slide','cancel']){
+  const s=earnedRoom('live'),view=ui(s);view.process(s.events);const c=view.node('upgrade-options').children[0],key=draft.ensureDraft(s).key;
+  const e={pointerType:'touch',pointerId:2,clientX:200,clientY:100,preventDefault(){}};
+  c.listeners.get('pointerdown')(e);
+  if(action==='cancel')c.listeners.get('pointercancel')(e);
+  c.listeners.get('pointerup')({...e,clientX:action==='slide'?240:200});
+  if(action==='tap'){
+   assert.ok(s.phase==='playing'||draft.ensureDraft(s).key!==key);const saved=core.serialize(s);
+   c.listeners.get('pointerup')(e);c.listeners.get('click')();assert.equal(core.serialize(s),saved);
+  }else assert.equal(draft.ensureDraft(s).key,key);
+ }
 });
