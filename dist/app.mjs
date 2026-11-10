@@ -412,8 +412,7 @@ window.addEventListener('resize',()=>landscapeGate.check());
 window.screen.orientation?.addEventListener?.('change',()=>landscapeGate.check());
 updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAnimationFrame(animateFrame);
 // The Android host calls these hooks without exposing a native JavaScript bridge.
-await artReady;
-window.emberCourierNative=Object.freeze({
+artReady.then(()=>{window.emberCourierNative=Object.freeze({
   pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
   back(){
     if(landscapeGate.check())return true;
@@ -422,6 +421,7 @@ window.emberCourierNative=Object.freeze({
     if(screen==='game'){pauseGame();return true;}
     return false;
   }
+});
 });
 // Native packages use their own protected update paths. Web/PWA stages assets in a waiting service worker.
 const updatePlatform=nativePlatform(location.protocol,location.hostname);
