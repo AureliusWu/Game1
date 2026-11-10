@@ -16,7 +16,7 @@ let updater;
 const root=path.join(__dirname,'game');
 const info=JSON.parse(fs.readFileSync(path.join(__dirname,'build-info.json'),'utf8'));
 const ownURL=value=>{try{const u=new URL(value);return u.protocol==='ember:'&&u.host==='game';}catch{return false;}};
-const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
+const mime={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.js':'text/javascript; charset=utf-8','.webp':'image/webp','.svg':'image/svg+xml','.png':'image/png','.webmanifest':'application/manifest+json'};
 function verifyBundle(){
  const hashes={};for(const [name,expected]of Object.entries(info.web_asset_sha256)){
   if(path.basename(name)!==name)throw new Error('Invalid bundled asset name');

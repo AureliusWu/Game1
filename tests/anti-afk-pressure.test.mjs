@@ -15,17 +15,18 @@ function simulate(s,{move=false,duration=12}={}){
  return {warnings,hits};
 }
 
-test('staying still in standard endless triggers repeated warned hits',()=>{
- const s=createGame({seed:982,mode:'endless',starter:'cinder'});
- const result=simulate(s);
- assert.ok(result.warnings>=2,'stationary warnings repeat after a cooldown');
- assert.ok(result.hits>30,'warned zones eventually cause damage');
- assert.ok(restore(serialize(s)),'pressure state survives validated saving');
+test('standing still with no enemies never produces tracking hazards or damage',()=>{
+ for(const difficulty of ['normal','night'])for(const weather of ['calm','storm']){
+  const s=createGame({seed:982,mode:'endless',starter:'cinder',difficulty});s.endless.weather=weather;
+  const result=simulate(s,{duration:30});assert.equal(result.warnings,0);assert.equal(result.hits,0);assert.equal(s.endless.zones.length,0);
+  assert.ok(restore(serialize(s)));
+ }
 });
-
-test('moving prevents anti-idle tracking warnings',()=>{
- const s=createGame({seed:982,mode:'endless',starter:'cinder'});
- assert.equal(simulate(s,{move:true}).warnings,0);
+test('queued tracking strikes from an existing modern save are canceled',()=>{
+ const s=createGame({seed:982,mode:'endless'});delete s.endless.encounters;
+ s.endless.stillness={x:940,y:690,seconds:4,cooldown:0};s.endless.zones=[{x:940,y:690,r:85,warning:.01,pressure:true}];
+ const loaded=restore(serialize(s));assert.ok(loaded);const result=simulate(loaded);
+ assert.equal(result.hits,0);assert.equal(result.warnings,0);assert.equal(loaded.endless.zones.length,0);
 });
 
 test('Wander and legacy endless runs remain free of new anti-idle hazards',()=>{

@@ -1,6 +1,7 @@
 /** v1.5 telegraphed enemy actions, elite affixes and earned kill milestones. */
-import {seedMix} from './routes.mjs';
+import {seedMix,clearLine,safePoint} from './routes.mjs';
 export const isTactical=s=>s?.endless?.tactics?.version===1;
+export const isEncounterAI=s=>isTactical(s)&&s.endless.draftSerial!==undefined&&s.endless.encounters?.version===1;
 export const AFFIXES=['迅袭','震地','散射','震爆','追光'];
 const emit=(s,type,data={})=>s.events.push({type,...data});
 const distance=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -15,6 +16,20 @@ export function interruptEnemy(s,e){
  if(e.kind==='warder'){e.shieldBrokenUntil=s.totalTime+3;emit(s,'ward-break',{x:e.x,y:e.y});}
  if(!(e.cast>0||e.charging>0))return false;
  e.cast=0;e.charging=0;e.aiCd=2.5;return true;
+}
+/** Mixed enemy paths retain the existing cover-aware navigation. No player-idle state. */
+export function encounterGoal(s,e){
+ const p=s.player;if(!isEncounterAI(s)||e.kind==='boss'||e.patrolElite)return p;
+ const dx=p.x-e.x,dy=p.y-e.y,d=Math.max(1,Math.hypot(dx,dy)),side=e.id%2?1:-1;
+ let goal=p;
+ if(['caster','sniper','warder'].includes(e.kind)&&d<440){
+  const range=e.kind==='sniper'?360:280;
+  goal={x:p.x-dx/d*range-dy/d*side*100,y:p.y-dy/d*range+dx/d*side*100};
+ }else if(['shade','runner','charger'].includes(e.kind)&&d>120){
+  const flank=Math.min(155,(d-120)*.5);
+  goal={x:p.x-dy/d*side*flank,y:p.y+dx/d*side*flank};
+ }
+ const safe=safePoint(s,goal,e.r+4);return safe&&clearLine(s,p,safe,e.r+2)?safe:p;
 }
 function begin(s,e,type,duration){
  const p=s.player,d=Math.max(1,distance(e,p)),range=type==='charge'?Math.min(520,d+90):type==='lunge'?Math.min(290,d+60):1100;
@@ -33,11 +48,12 @@ function resolve(s,e,hurt){
   const radius=type==='nova'?270:175,d=distance(e,s.player);
   if(d<radius+s.player.r&&(type!=='nova'||d>86-s.player.r))hurt(s,e.damage*1.15,type==='nova'?'首领·震荡光环':'重装影兽·震地');
   s.effects.push({type:'hostile-ring',x:e.x,y:e.y,r:radius,inner:type==='nova'?86:0,life:.45,maxLife:.45});
- }else if(type==='volley')volley(s,e,e.kind==='boss'?e.enraged?7:5:3,e.kind==='boss'?205:215,.19);
+ }else if(type==='volley')volley(s,e,e.kind==='boss'?e.enraged?7:5:isEncounterAI(s)&&s.endless.weather==='storm'?5:3,e.kind==='boss'?205:215,.19);
  else if(type==='beam'){
   const dx=e.castX-e.x,dy=e.castY-e.y,t=Math.max(0,Math.min(1,((s.player.x-e.x)*dx+(s.player.y-e.y)*dy)/(dx*dx+dy*dy||1)));
-  if(Math.hypot(s.player.x-e.x-dx*t,s.player.y-e.y-dy*t)<34+s.player.r)hurt(s,e.damage*1.4,'首领·锁线光束');
-  s.effects.push({type:'beam',x:e.x,y:e.y,toX:e.castX,toY:e.castY,r:34,life:.3,maxLife:.3});
+  const radius=e.kind==='sniper'?18:34;
+  if(Math.hypot(s.player.x-e.x-dx*t,s.player.y-e.y-dy*t)<radius+s.player.r&&(!isEncounterAI(s)||clearLine(s,e,s.player,2)))hurt(s,e.damage*1.4,e.kind==='sniper'?'远望影兽·锁线狙击':'首领·锁线光束');
+  s.effects.push({type:'beam',x:e.x,y:e.y,toX:e.castX,toY:e.castY,r:radius,life:.3,maxLife:.3});
  }else if(type==='rain'){
   const count=e.enraged?18:14;
   for(let i=0;i<count;i++){const a=e.angle+i*Math.PI*2/count;s.projectiles.push({x:e.x,y:e.y,vx:Math.cos(a)*165,vy:Math.sin(a)*165,r:7,enemy:true,life:3.7,damage:e.damage*.6,source:'首领·环形弹幕'});}e.angle+=.31;
@@ -48,7 +64,7 @@ export function tickEnemy(s,e,dt,hurt,move){
  if(!isTactical(s))return false;
  if(e.kind==='boss'&&!e.enraged&&e.hp<=e.maxHp*.5){e.enraged=true;s.endless.tactics.phaseChanges++;emit(s,'boss-enrage',{x:e.x,y:e.y});}
  if(e.charging>0){e.charging=Math.max(0,e.charging-dt);move(s,e,e.chargeVX,e.chargeVY,dt);if(distance(e,s.player)<e.r+s.player.r+6)hurt(s,e.damage*1.2,e.kind==='boss'?'首领·冲锋':'迅袭影兽·扑击');return true;}
- if(e.cast>0){e.cast=Math.max(0,e.cast-dt);if(e.cast===0){resolve(s,e,hurt);e.aiCd=(e.kind==='boss'?(e.enraged?2.6:3.7):e.patrolElite?4:5.2);}return true;}
+ if(e.cast>0){e.cast=Math.max(0,e.cast-dt);if(e.cast===0){resolve(s,e,hurt);e.aiCd=(e.kind==='boss'?(e.enraged?2.6:3.7):e.patrolElite?4:isEncounterAI(s)?(['caster','sniper','warder'].includes(e.kind)?3.1:3.8):5.2);}return true;}
  e.aiCd=(e.aiCd??1.6)-dt;if(e.aiCd>0)return false;
  const d=distance(e,s.player);let type='';
  if(e.kind==='boss'){
@@ -56,14 +72,14 @@ export function tickEnemy(s,e,dt,hurt,move){
   type=patterns[(e.aiSeq||0)%patterns.length];e.aiSeq=(e.aiSeq||0)+1;
  }else if(e.patrolElite){type=({0:'lunge',1:'slam',2:'volley',3:'nova',4:'beam'})[e.affix]||'volley';if(['slam','nova'].includes(type)&&d>360)return false;}
  else if(e.kind==='charger'&&d<470)type='lunge';
- else if(e.kind==='sniper'&&d<930)type='volley';
+ else if(e.kind==='sniper'&&d<930)type=isEncounterAI(s)?'beam':'volley';
  else if(e.kind==='bulwark'&&d<350)type='nova';
  else if(e.kind==='runner'&&d<330)type='lunge';
  else if(e.kind==='brute'&&d<285)type='slam';
  else if(e.kind==='caster'&&d<600)type='volley';
  else if(e.kind==='warder'&&d<480)type='volley';
  if(!type)return false;
- begin(s,e,type,e.kind==='boss'?1.05:type==='lunge'?.72:.95);return true;
+ begin(s,e,type,e.kind==='boss'?1.05:type==='beam'?1.15:type==='lunge'?.72:.95);return true;
 }
 export function rewardKill(s,e){
  if(!isTactical(s))return;

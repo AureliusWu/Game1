@@ -6,12 +6,12 @@ import {modern,has,condition,randomStream,initExpedition,beginDistrict,assignPat
 export {equip,forge,salvage,usePotion,nearestPOI,poiLabel,openPOI,chooseStory,buy,chooseEvent,grantGear,contractProgress} from './systems.mjs';
 import {isEndless,initEndless,configureEndlessRoom,endlessEnemy,updateEndlessCombat,onEndlessBolt,onEndlessPulse,onEndlessDash,liveDraft,onEndlessKill,gainEndlessXP,advanceEndlessChoices,pickEndless,checkEvolutions,reviveEndless,validateEndless,endlessBossCast} from './endless.mjs';
 import {isCombat,overdriving,damageEnemy,beginCombatDash,strikeCombatDash,flowMultiplier,breakCombatFlow} from './combat.mjs';
-import {isTactical,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
+import {isTactical,encounterGoal,prepareEnemy,tickEnemy,interruptEnemy} from './tactics.mjs';
 import {validateDraft} from './draft.mjs';
 import {initGrowth,growthDash,growthPulse,growthBoltBonus,consumeGrowthBolt,validateGrowth,specialize} from './growth.mjs';
 import {initNarrative,validateNarrative,chooseFollowup} from './narrative.mjs';
 export {rerollEndless,retireEndless} from './endless.mjs';
-export const VERSION = '1.10.0';
+export const VERSION = '1.11.0';
 export const SAVE_VERSION = 3;
 export const WORLD = { width: 1880, height: 1380 };
 export const DIFFICULTIES = {
@@ -283,7 +283,7 @@ export function tick(s,input={},dt=1/60) {
     if(e.stun>0)continue;
     if(!isTactical(s)&&(isEndless(s)&&e.kind==='boss'?endlessBossCast(s,e,dt,hurt,moveEntity):modern(s)&&tickCast(s,e,dt,hurt)))continue;
     const d=Math.max(1,distance(p,e));
-    const target=modern(s)?pursuit(s,e,p):p,td=Math.max(1,distance(e,target));
+    const target=modern(s)?pursuit(s,e,encounterGoal(s,e)):p,td=Math.max(1,distance(e,target));
     let vx=(target.x-e.x)/td,vy=(target.y-e.y)/td;
     // Slide around rectangular cover rather than freezing against its near edge.
     if(!modern(s)&&collides(s,e.x+vx*35,e.y+vy*35,e.r)) {

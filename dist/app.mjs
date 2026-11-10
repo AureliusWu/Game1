@@ -1,3 +1,4 @@
+import {SKINS,validSkin,skinArt,skillIcon,artReady} from './art.mjs';
 import {createLandscapeGate} from './orientation.mjs';
 import {ensureDraft,recommendedChoice,stepDraft,toggleDraft} from './draft.mjs';
 import {AFFIXES,isTactical} from './tactics.mjs';
@@ -31,10 +32,12 @@ const storage={
 };
 function warnStorage(){if(storageWarned)return;storageWarned=true;$('storage-warning').hidden=false;setTimeout(()=>$('storage-warning').hidden=true,6500);}
 function readJSON(key,fallback){try{return JSON.parse(storage.get(key))??fallback;}catch{return fallback;}}
-const defaults={mode:'endless',starter:'cinder',difficulty:'normal',sound:true,hitstop:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false,conditions:[]};
+let artLoaded=false;artReady.then(()=>{artLoaded=true;});
+const defaults={skin:'courier',mode:'endless',starter:'cinder',difficulty:'normal',sound:true,hitstop:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false,conditions:[]};
 const storedSettings=readJSON(STORE.settings,{});
 const settings={...defaults};
 if(storedSettings&&typeof storedSettings==='object'){
+  if(validSkin(storedSettings.skin))settings.skin=storedSettings.skin;
   if(['endless','story'].includes(storedSettings.mode))settings.mode=storedSettings.mode;
   if(SKILLS.some(u=>u.kind==='weapon'&&u.id===storedSettings.starter))settings.starter=storedSettings.starter;
   if(DIFFICULTIES[storedSettings.difficulty])settings.difficulty=storedSettings.difficulty;
@@ -53,7 +56,7 @@ const keys=new Set();let joystickId=null,joy={x:0,y:0},joyCenter={x:0,y:0},desti
 const difficultyCopy={wander:'慢一点也没关系。影兽更温和，灯火更长明。',normal:'有一点危险，也有足够的光。',night:'影兽更凶，长夜更漫长。得分 ×1.3。'};
 for(const c of CONTRACTS){const option=document.createElement('option');option.value=c.id;option.textContent=c.name;$('contract-select').append(option);}
 for(const c of CONDITIONS){const label=document.createElement('label');label.className='route-condition';const input=document.createElement('input');input.type='checkbox';input.value=c.id;input.checked=settings.conditions.includes(c.id);input.addEventListener('change',()=>{settings.conditions=[...document.querySelectorAll('#route-conditions input:checked')].map(i=>i.value);saveSettings();updateSettings();});const text=document.createElement('span');text.textContent=c.name;const small=document.createElement('small');small.textContent=c.desc;label.append(input,text,small);$('route-conditions').append(label);}
-for(const u of SKILLS.filter(u=>u.kind==='weapon')){const b=document.createElement('button');b.dataset.starter=u.id;b.innerHTML=`<svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><strong>${u.name}</strong><small>${u.id==='cinder'?'命中爆炸':u.id==='frost'?'范围减速':u.id==='orbit'?'环绕羽刃':'连锁闪电'}</small>`;b.addEventListener('click',()=>{settings.starter=u.id;saveSettings();updateSettings();audio.play('click');});$('starter-options').append(b);}
+for(const u of SKILLS.filter(u=>u.kind==='weapon')){const b=document.createElement('button');b.dataset.starter=u.id;b.innerHTML=`${skillIcon(u.id,u.symbol)}<strong>${u.name}</strong><small>${u.id==='cinder'?'命中爆炸':u.id==='frost'?'范围减速':u.id==='orbit'?'环绕羽刃':'连锁闪电'}</small>`;b.addEventListener('click',()=>{settings.starter=u.id;saveSettings();updateSettings();audio.play('click');});$('starter-options').append(b);}
 const hub=new Hub({getRun:()=>screen==='game'&&!ended?run:null,getProfile:()=>profile,commit:events=>{processEvents(events);syncProgress();checkpoint();updateHUD();},persist:()=>{persistProfile();refreshOfficeLabels();},onOpen:()=>{clearInput();audio.unlock();audio.play('click');checkpoint();},toast});
 function today(){const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());const part=t=>parts.find(p=>p.type===t).value;return `${part('year')}-${part('month')}-${part('day')}`;}
 function refreshOfficeLabels(){$('menu-stamps').textContent=profile.stamps;$('office-rank').textContent=rank(profile);$('achievement-summary').textContent=`${profile.achievements.length} / ${ACHIEVEMENTS.length} 成就`;}
@@ -65,6 +68,8 @@ function syncProgress(final=false){
 }
 function saveSettings(){storage.set(STORE.settings,JSON.stringify(settings));}
 function updateSettings(){
+  renderer.skin=settings.skin;$('player-portrait').src=skinArt(settings.skin);
+  for(const b of document.querySelectorAll('[data-skin]')){const selected=b.dataset.skin===settings.skin;b.classList.toggle('selected',selected);b.setAttribute('aria-pressed',String(selected));b.querySelector('.skin-status').textContent=selected?'已穿戴':'点击穿戴';}
   if(settings.mode==='endless')settings.daily=false;
   $('story-prep').hidden=settings.mode!=='story';$('story-config-open').hidden=settings.mode!=='story';$('endless-prep').hidden=settings.mode!=='endless';
   for(const b of document.querySelectorAll('[data-mode]')){b.classList.toggle('selected',b.dataset.mode===settings.mode);b.setAttribute('aria-pressed',String(b.dataset.mode===settings.mode));}
@@ -112,6 +117,7 @@ function announceChapter(){
   $('letter-toast').hidden=true;$('game-toast').hidden=true;letterUntil=0;toastUntil=0;
 }
 async function begin(resume=false){
+  if(!artLoaded)await artReady;
   if(landscapeGate.check()){await landscapeGate.enter();if(landscapeGate.blocked)return;}
   audio.unlock();closeDialogs();
   const day=settings.daily?today():'',options={mode:settings.mode,starter:settings.starter,difficulty:settings.daily?'normal':settings.difficulty,profile,contract:settings.daily?'swift':settings.contract,daily:day,conditions:settings.conditions,firstJourney:!settings.daily&&profile.totals.runs===0,id:window.crypto?.randomUUID?.()||`${Date.now()}-${Math.floor(Math.random()*1e8)}`};if(day)options.seed=dailySeed(day);
@@ -130,7 +136,7 @@ function doPulse(){if(screen!=='game'||paused||(document.querySelector('dialog[o
 function doPotion(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(usePotion(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function openDraftPane(){
   const live=liveDraft(run);if(!live){feedback.cancel();clearInput();}renderer.selection=!live;document.body.dataset.draft=run.endless?.choice||'story';if(live)document.body.dataset.liveDraft='true';else delete document.body.dataset.liveDraft;$('chapter-banner').hidden=true;$('game-toast').hidden=true;
-  const d=$('upgrade-dialog');if(!d.open)d.show();ensureDraft(run);updateDraftClock();updateHUD();checkpoint();
+  const d=$('upgrade-dialog');if(!d.open){if(live)d.open=true;else d.show();}ensureDraft(run);updateDraftClock();updateHUD();checkpoint();
 }
 function updateDraftClock(){
   if(run?.phase!=='upgrade')return;const c=ensureDraft(run),id=recommendedChoice(run);if(!c)return;
@@ -142,17 +148,18 @@ function updateDraftClock(){
 }
 function applyDraftChoice(id,key,automatic=false){
   if(run?.phase!=='upgrade'||ensureDraft(run)?.key!==key)return false;
-  run.events=[];const oldChapter=run.chapter,oldFloor=run.endless?.floor;
+  const wasLive=liveDraft(run);run.events=[];const oldChapter=run.chapter,oldFloor=run.endless?.floor;
   if(!chooseUpgrade(run,id))return false;
   if(automatic)run.metrics.autoChoices=(run.metrics.autoChoices||0)+1;
-  $('upgrade-dialog').close();renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;paused=false;audio.unlock();audio.play('upgrade-pick');
+  if(wasLive)$('upgrade-dialog').open=false;else $('upgrade-dialog').close();renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;paused=false;audio.unlock();audio.play('upgrade-pick');
   if(oldChapter!==run.chapter||oldFloor!==run.endless?.floor)announceChapter();
-  processEvents(run.events);updateHUD();checkpoint();if(run.phase==='playing')$('world').focus({preventScroll:true});return true;
+  processEvents(run.events);updateHUD();checkpoint();if(!wasLive&&run.phase==='playing')$('world').focus({preventScroll:true});return true;
 }
 function appendDraftCards(infos){
   const container=$('upgrade-options');container.replaceChildren();const key=ensureDraft(run).key,recommended=recommendedChoice(run);
   infos.forEach((u,index)=>{const b=document.createElement('button');b.className='upgrade-card'+(u.ready?' evolution-card':'');b.disabled=!!u.disabled;b.dataset.recommended=String(u.id===recommended);b.title=(u.tag||'')+' '+u.desc+' '+(u.detail||'');const shortTag=SKILL_BY_ID[u.id]&&isEndless(run)?`Lv.${rankOf(run,u.id)}→${rankOf(run,u.id)+1}`:u.tag||'本局强化';
-    b.innerHTML=`<div class="choice-icon"><svg aria-hidden="true"><use href="#i-${u.symbol}"/></svg><kbd>${index+1}</kbd></div><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small class="draft-tag">${u.disabled?'星砂不足':u.ready?'✦ 立即进化':u.id===recommended?'✦ '+shortTag+' · 推荐':shortTag}</small>`;
+    b.innerHTML=`<div class="choice-icon">${skillIcon(u.id,u.symbol)}<kbd>${index+1}</kbd></div><strong>${u.name}</strong><span>${u.desc}</span>${u.detail?`<span class="card-detail">${u.detail}</span>`:''}<small class="draft-tag">${u.disabled?'星砂不足':u.ready?'✦ 立即进化':u.id===recommended?'✦ '+shortTag+' · 推荐':shortTag}</small>`;
+    b.setAttribute('aria-label',u.name+'，'+u.desc);b.addEventListener('pointerdown',e=>{if(liveDraft(run))e.preventDefault();});
     b.addEventListener('click',()=>applyDraftChoice(u.id,key));container.append(b);
   });
 }
@@ -167,7 +174,7 @@ function autoResolveOrdinaryRoom(){
  }
  if(run.endless.floor===from)return false;
  renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;
- $('upgrade-dialog').close();announceChapter();updateHUD();checkpoint();
+ $('upgrade-dialog').open=false;announceChapter();updateHUD();checkpoint();
  // Reward choices emit their own notifications. Present them once, after the
  // transition settles, without replaying the tick that completed the room.
  processEvents(run.events.slice(eventStart));
@@ -197,7 +204,7 @@ function showBuild(){
  if(!isEndless(run))return;checkpoint();const r=run.endless,c=$('build-content');c.replaceChildren();
  const spec=document.createElement('div');spec.innerHTML=specializationView(run);c.append(spec);
  const target=SKILL_BY_ID[r.starter],plan=document.createElement('div');plan.className='build-plan';plan.innerHTML=`<strong>下一步 · ${target.evolution}</strong>${target.name} ${rankOf(run,target.id)}/5 + ${SKILL_BY_ID[target.partner].name} ${rankOf(run,target.partner)}/2${evolved(run,target.id)?' · 已进化，试试第二件武器':' · 优先补齐伙伴，再完成武器五级'}<br>放逐余 ${run.growth?.banishes??0} 次 · 已放逐 ${run.growth?.banished.map(id=>SKILL_BY_ID[id].name).join(' / ')||'无'}`;c.append(plan);
- for(const u of SKILLS){const level=rankOf(run,u.id);if(!level)continue;const card=document.createElement('article');card.className='build-entry';const evo=evolved(run,u.id);card.innerHTML=`<strong>${evo?'✦ '+u.evolution:u.name}<small>Lv.${level} / 5 · ${u.kind==='weapon'?'武器':'被动'}</small></strong><p>${evo?u.evo:u.desc}</p>${u.partner?`<small>进化：${u.name} 5 + ${SKILL_BY_ID[u.partner].name} 2（当前 ${rankOf(run,u.partner)}）</small>`:''}`;c.append(card);}
+ for(const u of SKILLS){const level=rankOf(run,u.id);if(!level)continue;const card=document.createElement('article');card.className='build-entry';const evo=evolved(run,u.id);card.innerHTML=`${u.kind==='weapon'?skillIcon(u.id,u.symbol):''}<strong>${evo?'✦ '+u.evolution:u.name}<small>Lv.${level} / 5 · ${u.kind==='weapon'?'武器':'被动'}</small></strong><p>${evo?u.evo:u.desc}</p>${u.partner?`<small>进化：${u.name} 5 + ${SKILL_BY_ID[u.partner].name} 2（当前 ${rankOf(run,u.partner)}）</small>`:''}`;c.append(card);}
  if(r.oaths){const h=document.createElement('h3');h.textContent='夜航刻印 · 每 3 层解锁';c.append(h);for(const o of OATHS){const lv=oathRank(run,o.id);const card=document.createElement('article');card.className='build-entry';card.innerHTML=`<strong>${o.name} <small>${lv} / 3 阶</small></strong><p>${o.desc}</p><small>${o.detail}</small>`;c.append(card);}}
  const weather=document.createElement('p');weather.textContent=`本层天气 · ${WEATHERS[r.weather].name}：${WEATHERS[r.weather].desc}`;c.append(weather);
  const title=document.createElement('h3');title.textContent=`奇物 · ${r.relics.length} / 8`;c.append(title);
@@ -293,10 +300,12 @@ function updateHUD(){
   signal.hidden=!active&&!chain;signal.classList.toggle('surging',!!active);
   if(!signal.hidden)signal.textContent=active?'破风觉醒 '+(flow.boostUntil-run.totalTime).toFixed(1)+'s · 伤害↑25%':'冲刺连斩 '+chain+'/4';
   const weaponKey=isEndless(run)?Object.entries(run.endless.ranks).filter(([id])=>SKILL_BY_ID[id].kind==='weapon').map(([id,lv])=>id+':'+lv+':'+evolved(run,id)).join('|'):'';
-  if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`<svg><use href="#i-${u.symbol}"/></svg><b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
+  if($('weapon-strip').dataset.key!==weaponKey){$('weapon-strip').dataset.key=weaponKey;$('weapon-strip').replaceChildren();if(isEndless(run))for(const [id,lv]of Object.entries(run.endless.ranks)){const u=SKILL_BY_ID[id];if(u.kind!=='weapon')continue;const b=document.createElement('span');b.className='weapon-chip';b.style.setProperty('--weapon-color',u.color);b.title=(evolved(run,id)?u.evolution:u.name)+' Lv.'+lv;b.innerHTML=`${skillIcon(id,u.symbol)}<b>${evolved(run,id)?'✦':lv}</b>`;$('weapon-strip').append(b);}}
   if(boss&&isTactical(run))$('boss-subtitle').textContent=boss.enraged?'第二阶段 · 招式加速 · 光环可打断':'招式轮换 · 留意粉色预警';
   $('build-open').hidden=!isEndless(run);$('game-hub').title=specializationPoints(run)>0?'可用 '+specializationPoints(run)+' 点本局专精':'背包与成长';if(isEndless(run))$('build-count').textContent=specializationPoints(run)>0?'专精 +'+specializationPoints(run):Object.keys(run.endless.ranks).length+' / 7';document.body.dataset.phase=run.phase;
 }
+for(const skin of SKINS){const b=document.createElement('button');b.className='skin-card';b.dataset.skin=skin.id;b.innerHTML=`<img src="${skin.src}" alt="烛羽 · ${skin.name}" draggable="false"><strong>${skin.name}</strong><small>${skin.desc}</small><small class="skin-status"></small>`;b.addEventListener('click',()=>{settings.skin=skin.id;saveSettings();updateSettings();audio.play('click');});$('skin-options').append(b);}
+$('upgrade-dialog').addEventListener('pointerdown',e=>{if(liveDraft(run)&&e.target.closest('button'))e.preventDefault();});
 for(const b of document.querySelectorAll('[data-mode]'))b.addEventListener('click',()=>{settings.mode=b.dataset.mode;saveSettings();updateSettings();});
 for(const b of document.querySelectorAll('[data-difficulty]'))b.addEventListener('click',()=>{settings.difficulty=b.dataset.difficulty;audio.play('click');saveSettings();updateSettings();});
 for(const b of document.querySelectorAll('[data-dialog]'))b.addEventListener('click',()=>showDialog(b.dataset.dialog));
@@ -355,7 +364,7 @@ function frame(now){
   const elapsed=Math.min(.25,Math.max(0,(now-last)/1000)),dt=Math.min(.05,elapsed);last=now;
   if(achievementUntil&&now>achievementUntil){$('achievement-toast').hidden=true;achievementUntil=0;}
   if(screen==='menu'){
-    if(!document.hidden)drawTitle($('title-art'),now/1000,settings.lowMotion);
+    if(!document.hidden)drawTitle($('title-art'),now/1000,settings.lowMotion,settings.skin);
   }else if(run){
     const playing=run.phase==='playing'&&!document.querySelector('dialog[open]');
     const active=!landscapeGate.blocked&&!paused&&!document.hidden&&(playing||interactiveDraft());
@@ -403,6 +412,7 @@ window.addEventListener('resize',()=>landscapeGate.check());
 window.screen.orientation?.addEventListener?.('change',()=>landscapeGate.check());
 updateSettings();updateMenu();setScreen('menu');landscapeGate.check();requestAnimationFrame(animateFrame);
 // The Android host calls these hooks without exposing a native JavaScript bridge.
+await artReady;
 window.emberCourierNative=Object.freeze({
   pause(){clearInput();checkpoint();pauseGame();audio.suspend();return true;},
   back(){

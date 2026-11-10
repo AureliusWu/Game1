@@ -1,0 +1,85 @@
+{
+  "policy": "tests/endless-bot.mjs: actual actions, no state grants",
+  "records": [
+    {
+      "seed": 1301,
+      "idle": true,
+      "phase": "lost",
+      "time": 46.3,
+      "floor": 4,
+      "kills": 98,
+      "damage": 176.418,
+      "bosses": 0
+    },
+    {
+      "seed": 1301,
+      "idle": false,
+      "phase": "won",
+      "time": 82.15,
+      "floor": 6,
+      "kills": 158,
+      "damage": 31.046,
+      "bosses": 1
+    },
+    {
+      "seed": 1309,
+      "idle": true,
+      "phase": "lost",
+      "time": 23.5,
+      "floor": 2,
+      "kills": 46,
+      "damage": 129.083,
+      "bosses": 0
+    },
+    {
+      "seed": 1309,
+      "idle": false,
+      "phase": "won",
+      "time": 73.65,
+      "floor": 6,
+      "kills": 156,
+      "damage": 94.712,
+      "bosses": 1
+    },
+    {
+      "seed": 1313,
+      "idle": true,
+      "phase": "lost",
+      "time": 20.45,
+      "floor": 2,
+      "kills": 31,
+      "damage": 138.277,
+      "bosses": 0
+    },
+    {
+      "seed": 1313,
+      "idle": false,
+      "phase": "won",
+      "time": 83,
+      "floor": 6,
+      "kills": 157,
+      "damage": 69.254,
+      "bosses": 1
+    },
+    {
+      "seed": 982,
+      "idle": true,
+      "phase": "lost",
+      "time": 28.4,
+      "floor": 3,
+      "kills": 58,
+      "damage": 136.316,
+      "bosses": 0
+    },
+    {
+      "seed": 982,
+      "idle": false,
+      "phase": "won",
+      "time": 70.55,
+      "floor": 6,
+      "kills": 157,
+      "damage": 50.774,
+      "bosses": 1
+    }
+  ]
+}
