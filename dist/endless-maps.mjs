@@ -1,4 +1,4 @@
-/** Seven deterministic traversable night-city arenas. No external art assets. */
+/** Seven deterministic traversable night-city arenas. Original presentation atlases do not alter geometry. */
 import {seedMix} from './routes.mjs';
 export const ENDLESS_MAPS=[
  {id:'clock',name:'残钟广场',tone:'#183b3d',lamps:[[650,430],[1230,430],[940,1040]],covers:[[490,590,100,100],[1290,800,110,90]]},
