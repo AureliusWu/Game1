@@ -132,6 +132,8 @@ public final class OfflineGameTest {
             js("document.getElementById('game-hub').click()");
             await("document.getElementById('hub-dialog').open&&document.querySelectorAll('#hub-panel .gear-art').length>=3");
             assertEquals("true",js("Array.from(document.querySelectorAll('#hub-panel .gear-art i')).every(i=>i.getBoundingClientRect().width>0&&getComputedStyle(i).backgroundImage.includes('world-gear.webp'))"));
+            js("document.querySelector('#hub-panel .equipment-slots').scrollIntoView({block:'start'})");
+            await("(()=>{const p=document.getElementById('hub-panel').getBoundingClientRect();return Array.from(document.querySelectorAll('.equipped-slot .gear-art')).every(i=>{const r=i.getBoundingClientRect();return r.top>=p.top&&r.bottom<=p.bottom&&r.left>=p.left&&r.right<=p.right;});})()");
             capture("inventory-landscape.png");
             js("document.querySelector('[data-hub-tab=codex]').click()");
             assertEquals("9",js("document.querySelectorAll('#hub-panel .codex-art').length"));
