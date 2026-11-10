@@ -35,3 +35,19 @@ body[data-live-draft=true] #upgrade-dialog .draft-footer .secondary,body[data-li
 .build-entry>.weapon-art{float:left;width:52px;height:52px;margin:0 10px 4px 0}
 @media(orientation:landscape) and (max-height:650px){#menu #starter-options .weapon-art{width:24px;height:24px}}
 @media(orientation:landscape) and (max-height:350px){#menu #starter-options .weapon-art{width:18px;height:18px}}
+
+/* Atlas icons keep each painted silhouette at its original aspect ratio. */
+.painted-icon{display:inline-flex;width:54px;height:54px;align-items:center;justify-content:center;flex:0 0 auto;vertical-align:middle;pointer-events:none;user-select:none}
+.painted-icon i{display:block;flex:none;background-repeat:no-repeat;filter:drop-shadow(0 3px 3px #07151b66)}
+.card-top .gear-art{width:62px;height:62px}
+.equipped-slot .gear-art{width:48px;height:48px}
+.loot-display>.gear-art{width:128px;height:128px;margin:10px auto}
+.codex-card{position:relative;min-height:150px;padding-right:100px}
+.codex-card .codex-art{position:absolute;right:12px;top:18px;width:82px;height:98px}
+.codex-card.locked .codex-art{filter:brightness(0) opacity(.35)}
+@media(orientation:landscape) and (max-height:450px){.card-top .gear-art{width:48px;height:48px}.codex-card{padding-right:84px}.codex-card .codex-art{width:66px;height:82px;right:8px}}
+
+.choice-icon .skill-art{width:48px;height:48px}
+body[data-live-draft=true] #upgrade-dialog .choice-icon .skill-art{width:32px;height:32px}
+.build-entry>.skill-art{float:left;width:52px;height:52px;margin:0 10px 4px 0}
+@media(orientation:landscape) and (max-height:350px){body[data-live-draft=true] #upgrade-dialog .choice-icon .skill-art{width:25px;height:25px}}

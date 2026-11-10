@@ -6,7 +6,7 @@
 
 **[在线试玩](https://aureliuswu.github.io/Game1/)** · [游戏设计](docs/DESIGN.md) · [验证记录](docs/releases/v1.7.0-verification.json) · [部署说明](docs/DEPLOYMENT.md)
 
-当前源码版本：**v1.11.0「巡猎与远行衣橱」** · [本轮玩法与美术升级](docs/releases/v1.11.0.md) · [打击反馈升级](docs/releases/v1.10.0.md) · [实机卡死修复](docs/releases/v1.9.4.md) · [存档修复说明](docs/releases/v1.9.3.md) · [v1.9 玩法说明](docs/releases/v1.9.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
+当前源码版本：**v1.12.0「长夜入画」** · [全美术检阅与实装](docs/art/v1.12-review.md) · [发布说明](docs/releases/v1.12.0.md) · [上轮玩法与美术升级](docs/releases/v1.11.0.md) · [打击反馈升级](docs/releases/v1.10.0.md) · [实机卡死修复](docs/releases/v1.9.4.md) · [存档修复说明](docs/releases/v1.9.3.md) · [v1.9 玩法说明](docs/releases/v1.9.0.md) · [无尽规则](docs/ENDLESS.md) · [144 次无尽策略实验](docs/balance/v1.5.0-endless-summary.json)。
 
 网页通过 GitHub Pages 自动发布；Android APK、Windows x64 免安装 EXE 与完整网页 ZIP 从 [GitHub Releases](https://github.com/AureliusWu/Game1/releases) 下载。构建说明见 [Android](docs/ANDROID.md) 与 [Windows](docs/WINDOWS.md)。仓库里的静态游戏可以独立托管，不依赖 ChatGPT、任何 API 或在线服务。
 
@@ -150,4 +150,4 @@ GitHub Actions 在每次 main 推送和 PR 时执行测试、检查资源完整�
 
 ## 版本与授权
 
-v1.5.0 · 2026-11-07。代码、角色、剧情、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。
+v1.12.0 · 2026-11-10。代码、角色、剧情、原创生成美术、程序绘制画面与合成音频均在本项目中创作，无外部素材或商业 SDK。Android 容器使用 AndroidX WebKit（Apache 2.0）。MIT License。没有广告、内购、埋点或账号系统；进度保存在设备浏览器中，清理站点数据会清除记录。

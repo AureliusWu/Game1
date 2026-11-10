@@ -1,0 +1,205 @@
+{
+  "generator": "OpenAI image generation (built-in)",
+  "date": "2026-11-10",
+  "version": "1.12.0",
+  "encoding": "WebP quality 84, alpha quality 100; no resizing or repainting. Atlas crops are explicit runtime metadata.",
+  "reference": "dist/skin-courier.webp from v1.11.0; original project style.",
+  "license": "Original generated project art; no external characters or sampled assets.",
+  "sprites": 74,
+  "assets": [
+    {
+      "file": "dist/world-enemies.webp",
+      "source": "exec-39ba967a-47e3-4082-84b2-95390eb579e4.png",
+      "source_sha256": "f391a279723996ebae6c98b33e9b1d2e1ba09bcbb10a299ca4f90f79473b38b7",
+      "sha256": "b1cba18d5451cfff14b989665fedaba9167e84cfbf7d4bac85b32d51615e3b65",
+      "width": 1774,
+      "height": 887,
+      "bytes": 390964,
+      "alpha": true,
+      "sprites": [
+        "shade",
+        "runner",
+        "brute",
+        "caster",
+        "warder",
+        "charger",
+        "sniper",
+        "bulwark"
+      ]
+    },
+    {
+      "file": "dist/world-bosses.webp",
+      "source": "exec-4904eff3-4679-42a2-a3fe-1f78560aebd0.png",
+      "source_sha256": "1a12e15c465d567228a634d0008678c165a07cec103543a157514e8fccbd8c95",
+      "sha256": "dbdc171fc8c0f0f6e980e56dac603c735f9f973ed576e920f1c1eb4adc76122e",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 449206,
+      "alpha": true,
+      "sprites": [
+        "boss-3",
+        "boss-1",
+        "boss-2",
+        "boss-4",
+        "boss-0"
+      ]
+    },
+    {
+      "file": "dist/world-props.webp",
+      "source": "exec-21d23702-8261-434d-b5f7-d73fa6053132.png",
+      "source_sha256": "55667cc659350ab4e10b8ceccf077f82dcbefaf9f4b3876d63da8816248f0e8b",
+      "sha256": "9e84d6f0cbfbe572da3795eb23dca648f0c781ffee99813d423818618461a3e3",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 443866,
+      "alpha": true,
+      "sprites": [
+        "cottage",
+        "garden-house",
+        "clock-house",
+        "beacon",
+        "chest",
+        "chest-open",
+        "shop",
+        "well",
+        "bell",
+        "mailbox",
+        "risk",
+        "gate"
+      ]
+    },
+    {
+      "file": "dist/world-residents.webp",
+      "source": "exec-495ac9f7-b3ea-40ed-bc35-bd7b58e80065.png",
+      "source_sha256": "14691fb2b2a01009b000da513c15f346fcbf611a0177ee916b7b2741daa91e0a",
+      "sha256": "b63f12dc29e9c17376f5b0c64bd11d6bd1ad25d00c64c6438666c576371aaa28",
+      "width": 2172,
+      "height": 724,
+      "bytes": 435456,
+      "alpha": true,
+      "sprites": [
+        "resident-0",
+        "resident-1",
+        "resident-2"
+      ]
+    },
+    {
+      "file": "dist/world-gear.webp",
+      "source": "exec-edcfe795-e853-420f-8cf9-062490c3c956.png",
+      "source_sha256": "55028ec711c5976f7f77b50c3f6464237a80ea763ea3e1a6e3529ebdec74c6de",
+      "sha256": "97cee51a7ff7d2bad199d1eb764f801196ff49077f612611e24cdb234df0f430",
+      "width": 1448,
+      "height": 1086,
+      "bytes": 476624,
+      "alpha": true,
+      "sprites": [
+        "paper-lamp",
+        "worn-cape",
+        "canvas-bag",
+        "brass-lamp",
+        "wind-cape",
+        "post-bag",
+        "hearth-lamp",
+        "sentry-cape",
+        "herb-bag",
+        "prism-lamp",
+        "dawn-cape",
+        "echo-bag"
+      ]
+    },
+    {
+      "file": "dist/world-decor.webp",
+      "source": "exec-fa5b421a-bde4-45cc-823d-8318f087fb12.png",
+      "source_sha256": "c1352948de3ce06f44d1989f417235c5e060c1c2dd7268c612ea1df7381adec9",
+      "sha256": "bda0f6f20d024d62e4e4f9e1342747f96fc4903eff576ca7853cc736cb24f907",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 390070,
+      "alpha": true,
+      "sprites": [
+        "shrub",
+        "tree",
+        "moss",
+        "flowers",
+        "stones",
+        "letters",
+        "ember",
+        "tea",
+        "coins"
+      ]
+    },
+    {
+      "file": "dist/world-grounds-a.webp",
+      "source": "exec-6af7ccdf-0666-4402-97d5-6967fd54d90a.png",
+      "source_sha256": "45b4580d0871385722c745cfdce8b1508e1732cb054b40041a5151c783aee3f3",
+      "sha256": "31901e7ae7af19da30c392f951ee58299429a455f1cd6ddb4aa047b039e317cc",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 338470,
+      "alpha": false,
+      "sprites": [
+        "ground-clock",
+        "ground-alley",
+        "ground-square",
+        "ground-orchard"
+      ]
+    },
+    {
+      "file": "dist/world-grounds-b.webp",
+      "source": "exec-d2bf435c-c166-49f1-8940-f3c3cd40276f.png",
+      "source_sha256": "725dcb4efccd15e2db6f1ee2cc0c11d94402c72bee301428bd7a29bb95aed048",
+      "sha256": "af38b8129c898ce7d9b0744ababc8854171d642ee37e233a8bd651bdd91f3c48",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 375602,
+      "alpha": false,
+      "sprites": [
+        "ground-canal",
+        "ground-arcade",
+        "ground-roof",
+        "ground-tower"
+      ]
+    },
+    {
+      "file": "dist/world-title.webp",
+      "source": "exec-3af70cf0-30e0-4eaa-8212-9c4667b8c812.png",
+      "source_sha256": "8cf2114a130a93f0a0f1955c1f9e5ce61669bd7f47026a9294fbfe1c7e9394f8",
+      "sha256": "b5f38d51f7b414b4961c6556d89dd41f5bc1d721b65bbf7d88eba5108dd88796",
+      "width": 1151,
+      "height": 1367,
+      "bytes": 475152,
+      "alpha": false,
+      "sprites": [
+        "title-world"
+      ]
+    },
+    {
+      "file": "dist/world-charms.webp",
+      "source": "exec-97833014-5d55-4803-8ea3-e0cf11d49c05.png",
+      "source_sha256": "85264f20e6982e45540b46e8283d33107b1ded51e72e258ee80adddf3dbb61c2",
+      "sha256": "ed9408112ddf28f492dd1a3dcd651a7e3067ab97cd3be8ccd2b8d85316eaebdb",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 418162,
+      "alpha": true,
+      "sprites": [
+        "haste",
+        "might",
+        "vitality",
+        "magnet",
+        "wing",
+        "focus",
+        "sustain",
+        "pulsecraft",
+        "glass",
+        "hourglass",
+        "ink",
+        "lodestone",
+        "coin",
+        "moon",
+        "dawn",
+        "hunger"
+      ]
+    }
+  ]
+}

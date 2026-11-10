@@ -47,7 +47,7 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        assertTrue("Unexpected screenshot name", name.matches("(draft|star|art)-landscape(-reverse)?\\.png"));
+        assertTrue("Unexpected screenshot name", name.matches("(draft|star|art|world|inventory|codex)-landscape(-reverse)?\\.png"));
         CountDownLatch rendered = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> {
             WebView web = activity.findViewById(R.id.game_webview);
@@ -110,6 +110,39 @@ public final class OfflineGameTest {
             assertEquals(Integer.toString(before), js("JSON.parse(localStorage.getItem('ember-courier.profile.v1')).stamps"));
             assertEquals("true", js("document.querySelector('[data-action=reset-tree]').disabled"));
             assertEquals("true", js("window.emberCourierNative.back();!document.getElementById('hub-dialog').open"));
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
+    }
+
+    @Test public void testPaintedWorldAndInventoryOffline() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            getInstrumentation().runOnMainSync(() -> activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE));
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
+            // Observe the shipped draw path during an ordinary story start; do not modify game state.
+            js("(async()=>{const {Renderer}=await import(new URL('./render.mjs',location.href).href);const p=window.__worldArtProbe={seen:{},frames:0,decoded:0},paint=CanvasRenderingContext2D.prototype.drawImage,draw=Renderer.prototype.draw;CanvasRenderingContext2D.prototype.drawImage=function(img,...args){if(img instanceof HTMLImageElement){const key=img.src.split('/').pop();p.seen[key]=(p.seen[key]||0)+1;}return paint.call(this,img,...args);};Renderer.prototype.draw=function(s,...args){p.frames++;p.time=s.totalTime;p.scene=this.sceneArt;p.ground=this.paintedGround;return draw.call(this,s,...args);};const {ART_FILES,artReady}=await import(new URL('./art.mjs',location.href).href);await artReady;await Promise.all(ART_FILES.filter(src=>src.includes('world-')).map(src=>new Promise((ok,fail)=>{const img=new Image();img.onload=()=>{p.decoded++;ok();};img.onerror=fail;img.src=new URL(src,location.href).href;})));p.ready=true;})()");
+            await("window.__worldArtProbe?.ready===true");
+            assertEquals("10",js("window.__worldArtProbe.decoded"));
+            js("document.querySelector('[data-mode=story]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
+            await("window.__worldArtProbe.frames>12&&window.__worldArtProbe.ground===true&&window.__worldArtProbe.time>3.2");
+            assertEquals("true",js("['world-enemies.webp','world-props.webp','world-residents.webp','world-grounds-a.webp','world-decor.webp'].every(src=>window.__worldArtProbe.seen[src]>0)"));
+            capture("world-landscape.png");
+            js("document.getElementById('game-hub').click()");
+            await("document.getElementById('hub-dialog').open&&document.querySelectorAll('#hub-panel .gear-art').length>=3");
+            assertEquals("true",js("Array.from(document.querySelectorAll('#hub-panel .gear-art i')).every(i=>i.getBoundingClientRect().width>0&&getComputedStyle(i).backgroundImage.includes('world-gear.webp'))"));
+            capture("inventory-landscape.png");
+            js("document.querySelector('[data-hub-tab=codex]').click()");
+            assertEquals("9",js("document.querySelectorAll('#hub-panel .codex-art').length"));
+            assertEquals("true",js("document.documentElement.scrollWidth<=innerWidth+1&&document.querySelector('#hub-panel .codex-art i').getBoundingClientRect().width>0"));
+            capture("codex-landscape.png");
+            js("window.emberCourierNative.back()");
+            await("!document.getElementById('hub-dialog').open");
+            double time = Double.parseDouble(js("window.__worldArtProbe.time"));
+            await("window.__worldArtProbe.time>" + (time + 0.2));
+            js("window.emberCourierNative.pause()");
+            assertEquals("true",js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).version===3"));
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
     }
 
