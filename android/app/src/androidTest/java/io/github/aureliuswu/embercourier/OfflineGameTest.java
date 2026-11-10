@@ -113,6 +113,45 @@ public final class OfflineGameTest {
         } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
     }
 
+    @Test public void testImpactFeedbackSettingsAndRealCombat() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
+            // Observe the shipped presenter; the probe never modifies actors,
+            // health, damage, rewards, time or the pause budget.
+            js("(async()=>{const {HitFeedback}=await import(new URL('./feedback.mjs',location.href).href),{Renderer}=await import(new URL('./render.mjs',location.href).href);const p=window.__impactProbe={accepted:0,frames:0,trails:0,recoils:0,bursts:0,hold:0,near:false};const react=HitFeedback.prototype.react,draw=Renderer.prototype.draw;HitFeedback.prototype.react=function(...a){const r=react.apply(this,a);if(r>0)p.accepted++;p.hold=Math.max(p.hold,this.hold);return r;};Renderer.prototype.draw=function(s,...a){const r=draw.call(this,s,...a);p.frames++;p.trails=Math.max(p.trails,this.trails.length);p.recoils=Math.max(p.recoils,this.recoils.size);p.bursts=Math.max(p.bursts,this.deathBursts.length);p.near=s.enemies.some(e=>e.hp>0&&e.warning<=0&&Math.hypot(e.x-s.player.x,e.y-s.player.y)<s.player.pulseRadius);return r;};p.ready=true;})().catch(e=>console.error('Impact probe initialization failed',String(e)))");
+            await("window.__impactProbe?.ready===true");
+            js("document.getElementById('settings-open').click();if(document.getElementById('motion-setting').checked)document.getElementById('motion-setting').click();if(!document.getElementById('hitstop-setting').checked)document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
+            boolean hit = false;
+            for (int attempt = 0; attempt < 400; attempt++) {
+                assertEquals("Feedback must not interrupt the real renderer", "true", js("document.getElementById('runtime-error').hidden && !document.getElementById('result-dialog').open"));
+                if ("true".equals(js("window.__impactProbe.accepted>0 && window.__impactProbe.recoils>0"))) { hit = true;break; }
+                js("if(window.__impactProbe.near)document.getElementById('pulse').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}));if(document.getElementById('upgrade-dialog').open)document.querySelector('#upgrade-options [data-recommended=true]')?.click()");
+                Thread.sleep(100);
+            }
+            assertTrue("Actual weapon/pulse hits must produce recoil and hit stop", hit);
+            js("window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyD'}));window.dispatchEvent(new KeyboardEvent('keydown',{code:'Space'}))");
+            Thread.sleep(120);
+            js("window.dispatchEvent(new KeyboardEvent('keyup',{code:'Space'}));window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyD'}))");
+            await("window.__impactProbe.trails>0");
+            assertEquals("Effects must remain inside their per-frame limits", "true", js("(()=>{const p=window.__impactProbe;return p.frames>10&&p.trails<=8&&p.recoils<=48&&p.bursts<=16&&p.hold<=.058001})()"));
+            js("window.emberCourierNative.pause();if(document.getElementById('upgrade-dialog').open)document.getElementById('upgrade-exit').click();else document.getElementById('save-exit').click();document.getElementById('settings-open').click();document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.getElementById('continue').click();if(document.getElementById('upgrade-dialog').open&&document.getElementById('draft-hold').getAttribute('aria-pressed')==='true')document.getElementById('draft-hold').click()");
+            int stops = Integer.parseInt(js("window.__impactProbe.accepted"));
+            double before = Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime"));
+            Thread.sleep(700);
+            js("window.emberCourierNative.pause()");
+            assertEquals(stops, Integer.parseInt(js("window.__impactProbe.accepted")));
+            assertEquals("false", js("JSON.parse(localStorage.getItem('ember-courier.settings.v1')).hitstop"));
+            assertTrue("Disabling hit stop must keep the actual game clock advancing", Double.parseDouble(js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime")) > before + .2);
+            js("if(document.getElementById('upgrade-dialog').open)document.getElementById('upgrade-exit').click();else document.getElementById('save-exit').click();document.getElementById('settings-open').click();document.getElementById('hitstop-setting').click();document.getElementById('motion-setting').click()");
+            assertEquals("Reduced motion overrides hit stop without erasing its preference", "true", js("document.getElementById('hitstop-setting').checked&&document.getElementById('hitstop-setting').disabled&&JSON.parse(localStorage.getItem('ember-courier.settings.v1')).hitstop===true"));
+            js("document.getElementById('motion-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-difficulty=normal]').click()");
+        } finally { getInstrumentation().runOnMainSync(() -> activity.finish());getInstrumentation().waitForIdleSync(); }
+    }
+
     @Test public void testOrdinaryRoomsKeepRenderingThroughFourthFloor() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -213,6 +252,15 @@ public final class OfflineGameTest {
                 getInstrumentation().runOnMainSync(() -> hasFocus.set(activity.hasWindowFocus()));
                 if (hasFocus.get()) { focused = true; break; }
                 Thread.sleep(100);
+            }
+            if (!focused) {
+                android.os.ParcelFileDescriptor dump = getInstrumentation().getUiAutomation().executeShellCommand("dumpsys window windows");
+                try (java.io.InputStream in = new android.os.ParcelFileDescriptor.AutoCloseInputStream(dump)) {
+                    String windows = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    for (String line : windows.split("\\n")) {
+                        if (line.contains("mCurrentFocus") || line.contains("mFocusedApp") || line.contains("mTopFocusedDisplayId")) android.util.Log.e("Game1Focus", line.trim());
+                    }
+                }
             }
             assertTrue("Touch test activity never received window focus", focused);
             getInstrumentation().waitForIdleSync();

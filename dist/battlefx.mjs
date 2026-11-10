@@ -17,7 +17,8 @@ export function drawWeapons(c,s,t,lowMotion=false){
 export function drawProjectile(c,b,s){
  const type=b.enemy?'hostile':s.endless?.starter||'cinder',color=b.enemy?'#f093bf':WEAPON_COLORS[type]||'#ffe3a0';
  const speed=Math.hypot(b.vx,b.vy)||1,dx=b.vx/speed,dy=b.vy/speed;
- c.save();c.lineCap='round';line(c,[[b.x-dx*28,b.y-dy*28],[b.x,b.y]],color+'66',b.r*2.5);line(c,[[b.x-dx*17,b.y-dy*17],[b.x,b.y]],color,b.r*1.1);
+ const tail=b.enemy?28:Math.min(48,20+speed*.045);
+ c.save();c.lineCap='round';line(c,[[b.x-dx*tail,b.y-dy*tail],[b.x,b.y]],color+'33',b.r*3);line(c,[[b.x-dx*tail*.7,b.y-dy*tail*.7],[b.x,b.y]],color+'99',b.r*1.8);line(c,[[b.x-dx*tail*.4,b.y-dy*tail*.4],[b.x,b.y]],color,b.r*1.1);
  if(b.enemy){circle(c,b.x,b.y,b.r+2,'#ffa7d3',1.3);circle(c,b.x,b.y,b.r*.7,'#fadae9',1,true);}
  else if(type==='frost'){c.translate(b.x,b.y);c.rotate(Math.atan2(dy,dx));c.fillStyle='#d1fcff';c.beginPath();c.moveTo(11,0);c.lineTo(-6,-5);c.lineTo(-2,0);c.lineTo(-6,5);c.fill();}
  else if(type==='thunder')line(c,[[b.x-dx*11+dy*3,b.y-dy*11-dx*3],[b.x+dy*4,b.y-dx*4],[b.x-dy*4,b.y+dx*4],[b.x+dx*8,b.y+dy*8]],'#f6edff',2.5);
