@@ -20,6 +20,20 @@ test('every shipped monster, boss, gear, passive and relic has a bounded, nonemp
  }
 });
 
+test('all three resident dialogue portraits keep their painted ears, antlers and feet inside the frame',()=>{
+ const src=SPRITES['resident-0'].src,[width,height]=WORLD_ART_FILES[src];registerArt(src,{src,width,height});
+ for(let index=0;index<3;index++){
+  let m={x:0,y:0,sx:1,sy:1};const stack=[],bounds=[];
+  const target={save(){stack.push({...m});},restore(){m=stack.pop();},translate(x,y){m.x+=x*m.sx;m.y+=y*m.sy;},scale(x,y){m.sx*=x;m.sy*=y;},
+   createRadialGradient:()=>({addColorStop(){}}),
+   drawImage(img,...args){const [x,y,w,h]=args.slice(4);bounds.push({x:m.x+x*m.sx,y:m.y+y*m.sy,w:w*m.sx,h:h*m.sy});}};
+  const c=new Proxy(target,{get:(o,k)=>k in o?o[k]:()=>{}});
+  drawResidentPortrait({width:144,height:144,getContext:()=>c},index);
+  assert.equal(bounds.length,1);const b=bounds[0];
+  assert.ok(b.x>=8&&b.y>=8&&b.x+b.w<=136&&b.y+b.h<=136,JSON.stringify({index,...b}));
+ }
+});
+
 test('immutable atlas evidence matches the exact shipped WebP bytes and offline cache',()=>{
  const audit=JSON.parse(fs.readFileSync(new URL('../docs/art/v1.12-assets.json',import.meta.url)));
  const sw=fs.readFileSync(new URL('../dist/sw.js',import.meta.url),'utf8');

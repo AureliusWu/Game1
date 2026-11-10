@@ -64,7 +64,7 @@ function drawResidentFallback(c,index,x,y,t=0,scale=1){
   c.restore();
 }
 export function drawResidentPortrait(canvas,index){
-  const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#294d43';c.fillRect(0,0,canvas.width,canvas.height);glow(c,72,70,73,'#d1bb7c33');drawResident(c,index,72,88,0,1.55);
+  const c=canvas.getContext('2d');c.clearRect(0,0,canvas.width,canvas.height);c.fillStyle='#294d43';c.fillRect(0,0,canvas.width,canvas.height);glow(c,72,70,73,'#d1bb7c33');drawResident(c,index,72,100,0,1.1);
 }
 function drawPOI(c,p,t,s){
   c.save();if(p.used&&p.kind!=='npc')c.globalAlpha=.5;
