@@ -122,7 +122,7 @@ public final class OfflineGameTest {
             await("innerWidth > innerHeight && !document.getElementById('orientation-dialog').open");
             // Observe the shipped presenter; the probe never modifies actors,
             // health, damage, rewards, time or the pause budget.
-            js("(async()=>{const {HitFeedback}=await import('./feedback.mjs'),{Renderer}=await import('./render.mjs');const p=window.__impactProbe={accepted:0,frames:0,trails:0,recoils:0,bursts:0,hold:0,near:false};const react=HitFeedback.prototype.react,draw=Renderer.prototype.draw;HitFeedback.prototype.react=function(...a){const r=react.apply(this,a);if(r>0)p.accepted++;p.hold=Math.max(p.hold,this.hold);return r;};Renderer.prototype.draw=function(s,...a){const r=draw.call(this,s,...a);p.frames++;p.trails=Math.max(p.trails,this.trails.length);p.recoils=Math.max(p.recoils,this.recoils.size);p.bursts=Math.max(p.bursts,this.deathBursts.length);p.near=s.enemies.some(e=>e.hp>0&&e.warning<=0&&Math.hypot(e.x-s.player.x,e.y-s.player.y)<s.player.pulseRadius);return r;};p.ready=true;})()");
+            js("(async()=>{const {HitFeedback}=await import(new URL('./feedback.mjs',location.href).href),{Renderer}=await import(new URL('./render.mjs',location.href).href);const p=window.__impactProbe={accepted:0,frames:0,trails:0,recoils:0,bursts:0,hold:0,near:false};const react=HitFeedback.prototype.react,draw=Renderer.prototype.draw;HitFeedback.prototype.react=function(...a){const r=react.apply(this,a);if(r>0)p.accepted++;p.hold=Math.max(p.hold,this.hold);return r;};Renderer.prototype.draw=function(s,...a){const r=draw.call(this,s,...a);p.frames++;p.trails=Math.max(p.trails,this.trails.length);p.recoils=Math.max(p.recoils,this.recoils.size);p.bursts=Math.max(p.bursts,this.deathBursts.length);p.near=s.enemies.some(e=>e.hp>0&&e.warning<=0&&Math.hypot(e.x-s.player.x,e.y-s.player.y)<s.player.pulseRadius);return r;};p.ready=true;})().catch(e=>console.error('Impact probe initialization failed',String(e)))");
             await("window.__impactProbe?.ready===true");
             js("document.getElementById('settings-open').click();if(document.getElementById('motion-setting').checked)document.getElementById('motion-setting').click();if(!document.getElementById('hitstop-setting').checked)document.getElementById('hitstop-setting').click();document.querySelector('#settings [data-close]').click();document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=wander]').click();document.getElementById('start').click()");
             boolean hit = false;
@@ -252,6 +252,15 @@ public final class OfflineGameTest {
                 getInstrumentation().runOnMainSync(() -> hasFocus.set(activity.hasWindowFocus()));
                 if (hasFocus.get()) { focused = true; break; }
                 Thread.sleep(100);
+            }
+            if (!focused) {
+                android.os.ParcelFileDescriptor dump = getInstrumentation().getUiAutomation().executeShellCommand("dumpsys window windows");
+                try (java.io.InputStream in = new android.os.ParcelFileDescriptor.AutoCloseInputStream(dump)) {
+                    String windows = new String(in.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                    for (String line : windows.split("\\n")) {
+                        if (line.contains("mCurrentFocus") || line.contains("mFocusedApp") || line.contains("mTopFocusedDisplayId")) android.util.Log.e("Game1Focus", line.trim());
+                    }
+                }
             }
             assertTrue("Touch test activity never received window focus", focused);
             getInstrumentation().waitForIdleSync();
