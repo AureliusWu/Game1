@@ -1,0 +1,166 @@
+{
+  "version": "1.12.0",
+  "status": "released-and-verified",
+  "source_commit": "33b6ebcbcb14eb0c3afb60e72eeb96e47106f38f",
+  "source_tree": "5728ab26de26b16c178ed339f0f6a21b40fba12a",
+  "pr": 12,
+  "pr_head": "b4d018548e035043ac25f959f67dedf6c09635c8",
+  "pr_run": 42858422183,
+  "release_run": 42859775461,
+  "release_url": "https://github.com/AureliusWu/Game1/releases/tag/v1.12.0",
+  "published_at": "2026-11-10T17:04:38Z",
+  "web_url": "https://aureliuswu.github.io/Game1/",
+  "tests": {
+    "node": {
+      "passed": 259,
+      "failed": 0,
+      "skipped": 0
+    },
+    "android": {
+      "environment": "Android 15 emulator, actual packaged WebView",
+      "passed": 10,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "windows": {
+      "actual_portable_exe": true,
+      "startup": true,
+      "render": true,
+      "save_resume": true,
+      "sandbox": true,
+      "embedded_assets": 53,
+      "source_hash_match": true
+    },
+    "pages": {
+      "https": true,
+      "module_mime": true,
+      "identical_runtime_assets": 53
+    }
+  },
+  "jobs": [
+    {
+      "id": 129982449562,
+      "name": "quality",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/Game1/actions/runs/42859775461/job/129982449562"
+    },
+    {
+      "id": 129982647831,
+      "name": "windows / build",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/Game1/actions/runs/42859775461/job/129982647831"
+    },
+    {
+      "id": 129982647855,
+      "name": "android / build",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/Game1/actions/runs/42859775461/job/129982647855"
+    },
+    {
+      "id": 129986978995,
+      "name": "publish / publish",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/Game1/actions/runs/42859775461/job/129986978995"
+    },
+    {
+      "id": 129987325725,
+      "name": "pages / deploy",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/Game1/actions/runs/42859775461/job/129987325725"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13785740133,
+      "name": "Android-package",
+      "digest": "sha256:46bfd613a07176ab3e02d8400e18e9481d8fa8334187862f422ee4799c0d71c0"
+    },
+    {
+      "id": 13784801595,
+      "name": "canonical-web",
+      "digest": "sha256:96574447e71303773b67bf092d52ed0e03056e13428e89adf50fabf61e51c798"
+    },
+    {
+      "id": 13784672040,
+      "name": "Windows-desktop-QA",
+      "digest": "sha256:6bf55b65ee88e12a8b70ea22a94bd40b94a5db17448e993cfbeb0fe534fb8c25"
+    },
+    {
+      "id": 13784364828,
+      "name": "github-pages-1",
+      "digest": "sha256:6e15657c3d459664ef15c66831dba9ec6c32e8151f1a73231774f81ea8c959d3"
+    },
+    {
+      "id": 13784128778,
+      "name": "Pages-live-verification",
+      "digest": "sha256:098b70f27ee27c158232ae7abfb9bca0e2dee526488374554024ec8e537ce1f7"
+    },
+    {
+      "id": 13784078738,
+      "name": "Ember-Courier-release",
+      "digest": "sha256:b8c30c7fb7e7c5bed7a66f4fda02b8a8bff3f8d59d365646f0faafa2394193e3"
+    },
+    {
+      "id": 13783529039,
+      "name": "Windows-package",
+      "digest": "sha256:d0de22e4a54e7eef9aa3c28321efd1d9da74f597ec306708e57c82deb1251c6b"
+    },
+    {
+      "id": 13783469721,
+      "name": "Android-device-QA",
+      "digest": "sha256:62165aa143494b833842d82948ac41e0e8ca754847265710c8d1b971fe5ec0f4"
+    }
+  ],
+  "release_assets": [
+    {
+      "name": "Ember-Courier-Android-v1.12.0-provenance.json",
+      "bytes": 5012,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-Android-v1.12.0-provenance.json"
+    },
+    {
+      "name": "Ember-Courier-v1.12.0-provenance.json",
+      "bytes": 20594,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-v1.12.0-provenance.json"
+    },
+    {
+      "name": "Ember-Courier-v1.12.0-Windows-x64.exe",
+      "bytes": 115612062,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-v1.12.0-Windows-x64.exe"
+    },
+    {
+      "name": "Ember-Courier-v1.12.0.apk",
+      "bytes": 6875175,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-v1.12.0.apk"
+    },
+    {
+      "name": "Ember-Courier-Web-v1.12.0-provenance.json",
+      "bytes": 4830,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-Web-v1.12.0-provenance.json"
+    },
+    {
+      "name": "Ember-Courier-web-v1.12.0.zip",
+      "bytes": 5280226,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-web-v1.12.0.zip"
+    },
+    {
+      "name": "Ember-Courier-Windows-v1.12.0-provenance.json",
+      "bytes": 5109,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/Ember-Courier-Windows-v1.12.0-provenance.json"
+    },
+    {
+      "name": "SHA256SUMS.txt",
+      "bytes": 728,
+      "url": "https://github.com/AureliusWu/Game1/releases/download/v1.12.0/SHA256SUMS.txt"
+    }
+  ],
+  "visuals": {
+    "new_atlas_files": 10,
+    "new_sprite_regions": 74,
+    "art_manifest": "../art/v1.12-assets.json",
+    "review": "../art/v1.12-review.md",
+    "native_screenshots": "../art/v1.12-native/",
+    "comparison_is_visual_fixture": true,
+    "animation_scope": "Static original sprite paintings with existing facing, bob, hit recoil and trails; no frame-by-frame animation claim."
+  }
+}
