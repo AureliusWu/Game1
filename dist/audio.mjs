@@ -20,7 +20,7 @@ export class AudioEngine {
   play(type,data={}){
     const interval=({impact:.07,death:.085,collect:.065,shoot:.06})[type];
     if(interval){const now=this.ctx?.currentTime||0;if(now-(this.lastSounds.get(type)??-Infinity)<interval)return;this.lastSounds.set(type,now);}
-    if(type==='impact'){this.tone(data.heavy?205:165,.065,'triangle',data.critical?.11:.08,0,75);this.tone(data.critical?1220:1000,.04,'sine',data.critical?.055:.025,0,350);}
+    if(type==='impact'){this.tone(data.heavy?185:165,.065,'triangle',data.critical?.11:.08,0,75);this.tone(data.critical?1220:1000,.04,'sine',data.critical?.055:.025,0,350);if(data.heavy)this.tone(90,.09,'triangle',.045,0,48);}
     if(type==='dash-hit'){this.tone(320,.13,'sawtooth',.055,0,85);this.tone(900,.08,'triangle',.07);}
     if(type==='flow-charge'){this.tone(580+Math.min(3,data.chain||0)*65,.12,'triangle',.085,0,940);}
     if(type==='flow-surge'){this.tone(130,.26,'sawtooth',.11,0,240);[523,659,880,1175].forEach((n,i)=>this.tone(n,.28,'triangle',.10,i*.055));}
@@ -33,7 +33,7 @@ export class AudioEngine {
     if(type==='hurt')this.tone(120,.25,'triangle',.22,0,55);
     if(type==='beacon'||type==='won'||type==='boss-defeated') [261.63,329.63,392,523.25,659.25].forEach((n,i)=>this.tone(n,1.7,'sine',.16,i*.13));
     if(type==='shoot')this.tone(540,.09,'sine',.035,0,880);
-    if(type==='death'){const note=220+Math.min(12,data.combo||0)*23;this.tone(note,.12,'triangle',.075,0,note*.65);}
+    if(type==='death'){const note=220+Math.min(12,data.combo||0)*23;this.tone(note,.12,'triangle',.075,0,note*.65);if(data.elite||data.boss)this.tone(data.boss?65:100,.2,'triangle',.1,0,42);}
     if(type==='boss')this.tone(65,.9,'triangle',.16,0,55);
     if(type==='boss-warning'){this.tone(220,.25,'triangle',.12);this.tone(330,.35,'triangle',.12,.2);}
     if(type==='shield'||type==='interrupt'){this.tone(740,.2,'sine',.13);this.tone(990,.35,'sine',.08,.06);}

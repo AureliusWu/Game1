@@ -9,6 +9,8 @@ import * as combat from '../dist/combat.mjs';
 import * as content from '../dist/content.mjs';
 import * as growth from '../dist/growth.mjs';
 import {playEndless} from './endless-bot.mjs';
+import {HitFeedback} from '../dist/feedback.mjs';
+import {ENDLESS_MAPS} from '../dist/endless-maps.mjs';
 
 // Execute the shipped UI functions, including reentrant reward processing. The
 // simulation policy earns every room/offer through normal combat and choices.
@@ -23,6 +25,7 @@ function earnedRoom(floor){
  if(!checkpoints){
   checkpoints=new Map();
   const result=playEndless({seed:1301,starter:'thunder',floors:5,maxTime:600,observe(s){
+   if(s.phase==='upgrade'&&!s.endless.clearedRoom&&!checkpoints.has('live'))checkpoints.set('live',{raw:core.serialize(s),events:structuredClone(s.events)});
    if(s.phase==='upgrade'&&s.endless.clearedRoom&&!checkpoints.has(s.endless.floor)){
     checkpoints.set(s.endless.floor,{raw:core.serialize(s),events:structuredClone(s.events)});
    }
@@ -41,11 +44,11 @@ function ui(s){
    show(){this.open=true;},showModal(){this.open=true;},close(){this.open=false;}});
   return nodes.get(id);
  };
- const context=vm.createContext({...core,...endless,...draft,...combat,...content,...growth,
+ const context=vm.createContext({...core,...endless,...draft,...combat,...content,...growth,ENDLESS_MAPS,
   run:s,screen:'game',paused:false,ended:false,frameFault:false,saveTimer:0,hudTimer:0,
   last:0,bannerUntil:0,letterUntil:0,toastUntil:0,achievementUntil:0,
   joy:{x:0,y:0},keys:new Set(),destination:null,stuckFor:0,
-  landscapeGate:{blocked:false},settings:{lowMotion:true},
+  landscapeGate:{blocked:false},settings:{lowMotion:true,hitstop:true},feedback:new HitFeedback(),
   document:{hidden:false,body:{dataset:{}},createElement:()=>node(Symbol()),
    querySelector:selector=>[...nodes.values()].find(n=>n.open&&(!selector.includes(':not(#upgrade-dialog)')||n.id!=='upgrade-dialog'))||null,
    querySelectorAll:()=>[...nodes.values()].filter(n=>n.open)},$:node,
@@ -59,7 +62,7 @@ function ui(s){
   toast(text){node('game-toast').textContent=text;},
   requestAnimationFrame(fn){scheduled.push(fn);},console:{error(...args){errors.push(args);}}
  });
- const names=['processEvents','autoResolveOrdinaryRoom','showUpgrade','showEndlessDraft',
+ const names=['processEvents','autoResolveOrdinaryRoom','showUpgrade','showEndlessDraft','announceChapter',
   'appendDraftCards','openDraftPane','updateDraftClock','interactiveDraft','frame',
   'animateFrame','resumeGame','returnToMenu'];
  vm.runInContext(names.map(shippedFunction).join('\n'),context);
@@ -124,4 +127,36 @@ test('a failed recovery write does not claim progress was saved',()=>{
  view.context.storage.set=()=>false;view.context.renderer.draw=()=>{throw Error('Injected Canvas failure');};
  view.context.animateFrame(50);assert.equal(view.node('pause-dialog').open,true);
  assert.doesNotMatch(view.node('runtime-error').textContent,/已保存/);assert.equal(view.scheduled.length,1);
+});
+
+test('hit stop consumes frame time without catch-up or changing input and saved run identity',()=>{
+ const s=core.createGame({seed:1301,mode:'endless'}),view=ui(s),identity=s.journeyId;
+ view.context.settings.lowMotion=false;view.context.keys.add('KeyD');
+ view.context.feedback.react([{type:'dash-hit',hits:1}]);
+ view.frame(10);view.frame(20);assert.equal(s.totalTime,0);
+ view.frame(50);assert.ok(Math.abs(s.totalTime-.024)<1e-8);
+ assert.ok(s.player.x>940);assert.equal(view.context.keys.has('KeyD'),true);
+ const saved=core.restore(core.serialize(s));assert.ok(saved);assert.equal(saved.journeyId,identity);
+ assert.equal(Object.hasOwn(saved,'feedback'),false);
+});
+
+test('an earned live draft and combat share the same hit-stop clock',()=>{
+ const s=earnedRoom('live'),view=ui(s);view.process(s.events);view.context.settings.lowMotion=false;
+ const clock=draft.ensureDraft(s),remaining=clock.remaining,at=s.totalTime;
+ view.context.feedback.react([{type:'impact',heavy:true}]);view.frame(10);
+ assert.equal(clock.remaining,remaining);assert.equal(s.totalTime,at);
+ view.frame(40);assert.ok(Math.abs((s.totalTime-at)-.016)<1e-8);
+ assert.ok(Math.abs((remaining-clock.remaining)-.016)<1e-8);
+});
+
+test('portrait, background, manual pause and held drafts clear pending hit stop',()=>{
+ for(const mode of ['portrait','background','pause','held']){
+  const s=mode==='held'?earnedRoom('live'):core.createGame({seed:1301,mode:'endless'}),view=ui(s);
+  if(mode==='held'){view.process(s.events);draft.ensureDraft(s).held=true;}
+  view.context.settings.lowMotion=false;view.context.feedback.react([{type:'death',boss:true}]);
+  if(mode==='portrait')view.context.landscapeGate.blocked=true;
+  if(mode==='background')view.context.document.hidden=true;
+  if(mode==='pause')view.context.paused=true;
+  const at=s.totalTime;view.frame(16);assert.equal(s.totalTime,at,mode);assert.equal(view.context.feedback.hold,0,mode);
+ }
 });

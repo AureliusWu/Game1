@@ -9,6 +9,7 @@ import {ENDLESS_MAPS} from './endless-maps.mjs';
 import {nativePlatform,safeWebRestart,UPDATE_MESSAGE} from './update.mjs';
 import {VERSION} from './core.mjs';
 import {AudioEngine} from './audio.mjs';
+import {HitFeedback} from './feedback.mjs';
 import {GEAR_BY_ID,CONTRACTS,ACHIEVEMENTS,ENDINGS,CONDITIONS,SETS} from './content.mjs';
 import {XP_THRESHOLDS} from './systems.mjs';
 import {readProfile,recordProgress,rank,dailySeed,challengeKey} from './progress.mjs';
@@ -20,6 +21,7 @@ import {banishEndless} from './endless.mjs';
 import {Hub} from './hub.mjs';
 const $=id=>document.getElementById(id);
 const audio=new AudioEngine();
+const feedback=new HitFeedback();
 const STORE={settings:'ember-courier.settings.v1',stats:'ember-courier.stats.v1',save:'ember-courier.save.v1',profile:'ember-courier.profile.v1'};
 let storageWarned=false;
 const storage={
@@ -29,14 +31,14 @@ const storage={
 };
 function warnStorage(){if(storageWarned)return;storageWarned=true;$('storage-warning').hidden=false;setTimeout(()=>$('storage-warning').hidden=true,6500);}
 function readJSON(key,fallback){try{return JSON.parse(storage.get(key))??fallback;}catch{return fallback;}}
-const defaults={mode:'endless',starter:'cinder',difficulty:'normal',sound:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false,conditions:[]};
+const defaults={mode:'endless',starter:'cinder',difficulty:'normal',sound:true,hitstop:true,lowMotion:window.matchMedia('(prefers-reduced-motion: reduce)').matches,touch:window.matchMedia('(pointer: coarse)').matches,contract:'lamps',daily:false,conditions:[]};
 const storedSettings=readJSON(STORE.settings,{});
 const settings={...defaults};
 if(storedSettings&&typeof storedSettings==='object'){
   if(['endless','story'].includes(storedSettings.mode))settings.mode=storedSettings.mode;
   if(SKILLS.some(u=>u.kind==='weapon'&&u.id===storedSettings.starter))settings.starter=storedSettings.starter;
   if(DIFFICULTIES[storedSettings.difficulty])settings.difficulty=storedSettings.difficulty;
-  for(const k of ['sound','lowMotion','touch','daily'])if(typeof storedSettings[k]==='boolean')settings[k]=storedSettings[k];
+  for(const k of ['sound','hitstop','lowMotion','touch','daily'])if(typeof storedSettings[k]==='boolean')settings[k]=storedSettings[k];
   if(Array.isArray(storedSettings.conditions))settings.conditions=storedSettings.conditions.filter(id=>CONDITIONS.some(c=>c.id===id));
   if(CONTRACTS.some(c=>c.id===storedSettings.contract))settings.contract=storedSettings.contract;
 }
@@ -73,6 +75,7 @@ function updateSettings(){
   document.documentElement.classList.toggle('touch-mode',settings.touch);
   document.documentElement.classList.toggle('no-touch',!settings.touch);
   renderer.lowMotion=settings.lowMotion;audio.setEnabled(settings.sound);
+  $('hitstop-setting').checked=settings.hitstop;$('hitstop-setting').disabled=settings.lowMotion;if(!settings.hitstop||settings.lowMotion)feedback.cancel();
   $('sound-setting').checked=settings.sound;$('motion-setting').checked=settings.lowMotion;$('touch-setting').checked=settings.touch;
   for(const button of document.querySelectorAll('.sound-toggle')){
     button.setAttribute('aria-label',settings.sound?'关闭声音':'开启声音');button.querySelector('use').setAttribute('href',settings.sound?'#i-sound':'#i-muted');
@@ -98,11 +101,12 @@ function updateMenu(){
 function formatTime(time){const n=Math.floor(time);return `${String(Math.floor(n/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`;}
 function interactiveDraft(){return !!run&&liveDraft(run)&&$('upgrade-dialog').open&&!ensureDraft(run)?.held&&!document.querySelector('dialog[open]:not(#upgrade-dialog)');}
 function clearInput(){keys.clear();joystickId=null;joy={x:0,y:0};destination=null;renderer.destination=null;stuckFor=0;$('joystick-thumb').style.transform='translate(0,0)';}
-function showDialog(id){const d=$(id);if(!d.open)d.showModal();clearInput();}
+function showDialog(id){feedback.cancel();const d=$(id);if(!d.open)d.showModal();clearInput();}
 function closeDialogs(){for(const d of document.querySelectorAll('dialog[open]'))if(d.id!=='orientation-dialog')d.close();renderer.selection=false;delete document.body.dataset.draft;delete document.body.dataset.liveDraft;}
 function checkpoint(){if(run&&!ended){syncProgress();const data=serialize(run);if(data)storage.set(STORE.save,data);}persistProfile();}
 function setScreen(next){screen=next;document.body.dataset.screen=next;$('menu').hidden=next!=='menu';$('game').hidden=next!=='game';document.body.style.overflow=next==='game'?'hidden':'';clearInput();if(next==='game')renderer.resize();else{updateMenu();window.scrollTo(0,0);queueMicrotask(()=>applyWebUpdateIfSafe());}}
 function announceChapter(){
+  feedback.reset();renderer.trails=[];renderer.recoils?.clear();renderer.deathBursts=[];
   const ch=CHAPTERS[run.chapter];$('banner-number').textContent=isEndless(run)?`FLOOR ${run.endless.floor} · ${run.endless.floor%5===0?'BOSS':'ENDLESS NIGHT'}`:`CHAPTER ${ch.number}`;$('banner-title').textContent=isEndless(run)?ENDLESS_MAPS[run.endless.mapIndex]?.name||ch.name:ch.name;$('banner-subtitle').textContent=isEndless(run)?'清开敌潮 · 拾取经验 · 打出你的构筑':ch.subtitle;
   $('chapter-banner').hidden=false;$('chapter-banner').style.animation='none';void $('chapter-banner').offsetWidth;$('chapter-banner').style.animation='';bannerUntil=run.totalTime+(isCombat(run)?run.endless.floor===1?2.4:1.4:4.2);
   $('letter-toast').hidden=true;$('game-toast').hidden=true;letterUntil=0;toastUntil=0;
@@ -117,15 +121,15 @@ async function begin(resume=false){
   setScreen('game');announceChapter();updateHUD();checkpoint();$('world').focus({preventScroll:true});
   if(run.phase==='upgrade')showUpgrade();else toast(isEndless(run)?'光弹自动攻击。空格冲刺切敌，E 光环清弹；击杀蓄满后进入破晓超载！':'拾起火种点灯，也别忘了街角等待来信的居民。',5);
 }
-function pauseGame(){if(screen!=='game'||!run||ended)return;if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
-function resumeGame(){if(!run||ended)return;audio.unlock();$('pause-dialog').close();paused=false;frameFault=false;$('runtime-error').hidden=true;clearInput();last=performance.now();if(run.phase==='upgrade')showUpgrade();$('world').focus({preventScroll:true});}
-function returnToMenu(){checkpoint();closeDialogs();paused=false;frameFault=false;$('runtime-error').hidden=true;setScreen('menu');}
+function pauseGame(){if(screen!=='game'||!run||ended)return;feedback.cancel();if(run.phase==='upgrade'){const c=ensureDraft(run);if(c)c.held=true;updateDraftClock();checkpoint();clearInput();return;}if(run.phase!=='playing'||paused)return;if(document.querySelector('dialog[open]')){checkpoint();clearInput();return;}paused=true;checkpoint();clearInput();showDialog('pause-dialog');}
+function resumeGame(){if(!run||ended)return;feedback.cancel();audio.unlock();$('pause-dialog').close();paused=false;frameFault=false;$('runtime-error').hidden=true;clearInput();last=performance.now();if(run.phase==='upgrade')showUpgrade();$('world').focus({preventScroll:true});}
+function returnToMenu(){checkpoint();feedback.cancel();closeDialogs();paused=false;frameFault=false;$('runtime-error').hidden=true;setScreen('menu');}
 function toast(text,seconds=3){$('game-toast').textContent=text;$('game-toast').hidden=false;toastUntil=(run?.totalTime||0)+seconds;}
 function doDash(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(dash(run)){processEvents(run.events);updateHUD();}}
 function doPulse(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(pulse(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function doPotion(){if(screen!=='game'||paused||(document.querySelector('dialog[open]')&&!interactiveDraft()))return;run.events=[];if(usePotion(run)){processEvents(run.events);checkpoint();updateHUD();}}
 function openDraftPane(){
-  const live=liveDraft(run);if(!live)clearInput();renderer.selection=!live;document.body.dataset.draft=run.endless?.choice||'story';if(live)document.body.dataset.liveDraft='true';else delete document.body.dataset.liveDraft;$('chapter-banner').hidden=true;$('game-toast').hidden=true;
+  const live=liveDraft(run);if(!live){feedback.cancel();clearInput();}renderer.selection=!live;document.body.dataset.draft=run.endless?.choice||'story';if(live)document.body.dataset.liveDraft='true';else delete document.body.dataset.liveDraft;$('chapter-banner').hidden=true;$('game-toast').hidden=true;
   const d=$('upgrade-dialog');if(!d.open)d.show();ensureDraft(run);updateDraftClock();updateHUD();checkpoint();
 }
 function updateDraftClock(){
@@ -221,6 +225,7 @@ function finish(){
   showDialog('result-dialog');
 }
 function processEvents(events){
+  if(!events.length)return;
   // Choices can append to run.events while this batch is being presented.
   // Never consume newly appended upgrade notifications against a later floor.
   events=events.slice();let upgrade=false;
@@ -258,7 +263,8 @@ function processEvents(events){
     if(e.type==='upgrade')upgrade=true;
     if(e.type==='won'||e.type==='lost')finish();
   }
-  renderer.react(events);
+  renderer.react(events,run);
+  feedback.react(events,{enabled:settings.hitstop&&!settings.lowMotion&&!paused&&!document.hidden&&!landscapeGate.blocked&&screen==='game'&&(run.phase==='playing'||liveDraft(run))});
   if(events.some(e=>['collect','death','beacon','delivery','gear','equip','forge','purchase','contract','level','story','followup','specialize'].includes(e.type)))syncProgress();
   if(upgrade)showUpgrade();
 }
@@ -296,7 +302,7 @@ for(const b of document.querySelectorAll('[data-difficulty]'))b.addEventListener
 for(const b of document.querySelectorAll('[data-dialog]'))b.addEventListener('click',()=>showDialog(b.dataset.dialog));
 for(const b of document.querySelectorAll('[data-close]'))b.addEventListener('click',()=>b.closest('dialog').close());
 for(const d of document.querySelectorAll('dialog'))d.addEventListener('click',e=>{if(e.target!==d||['pause-dialog','upgrade-dialog','result-dialog'].includes(d.id))return;const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();});
-$('draft-hold').addEventListener('click',()=>{toggleDraft(run);updateDraftClock();checkpoint();});
+$('draft-hold').addEventListener('click',()=>{if(toggleDraft(run))feedback.cancel();updateDraftClock();checkpoint();});
 $('build-open').addEventListener('click',showBuild);$('draft-reroll').addEventListener('click',()=>{if(rerollEndless(run)){audio.play('click');showEndlessDraft();checkpoint();}});$('endless-retire').addEventListener('click',()=>{run.events=[];if(retireEndless(run)){closeDialogs();processEvents(run.events);}});
 $('difficulty-info').addEventListener('click',()=>showDialog('guide'));
 $('contract-select').addEventListener('change',e=>{settings.contract=e.target.value;saveSettings();updateSettings();});$('daily-setting').addEventListener('change',e=>{settings.daily=e.target.checked;saveSettings();updateSettings();});
@@ -309,9 +315,10 @@ $('build-content').addEventListener('click',e=>{const b=e.target.closest('[data-
 $('draft-banish').addEventListener('click',()=>{const panel=$('banish-panel');panel.replaceChildren();const key=ensureDraft(run)?.key;showDialog('banish-dialog');checkpoint();for(const id of run.offered.filter(id=>SKILL_BY_ID[id]&&!rankOf(run,id))){const b=document.createElement('button');b.className='secondary';b.textContent='放逐 '+SKILL_BY_ID[id].name;b.addEventListener('click',()=>{if(ensureDraft(run)?.key!==key)return;run.events=[];if(banishEndless(run,id)){$('banish-dialog').close();processEvents(run.events);showEndlessDraft();checkpoint();}});panel.append(b);}});
 $('game-hub').addEventListener('click',()=>isEndless(run)?showBuild():hub.show('inventory'));$('result-office').addEventListener('click',()=>hub.show('office'));$('interact').addEventListener('click',()=>hub.interact());$('potion').addEventListener('click',doPotion);
 $('pause').addEventListener('click',pauseGame);$('resume').addEventListener('click',resumeGame);$('save-exit').addEventListener('click',returnToMenu);$('upgrade-exit').addEventListener('click',returnToMenu);$('result-menu').addEventListener('click',returnToMenu);$('game-settings').addEventListener('click',()=>showDialog('settings'));
-$('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>{e.preventDefault();toggleDraft(run);updateDraftClock();checkpoint();});$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
+$('pause-dialog').addEventListener('cancel',e=>{e.preventDefault();resumeGame();});$('upgrade-dialog').addEventListener('cancel',e=>{e.preventDefault();if(toggleDraft(run))feedback.cancel();updateDraftClock();checkpoint();});$('result-dialog').addEventListener('cancel',e=>{e.preventDefault();returnToMenu();});
 for(const b of document.querySelectorAll('.sound-toggle'))b.addEventListener('click',()=>{settings.sound=!settings.sound;saveSettings();updateSettings();});
 $('sound-setting').addEventListener('change',e=>{settings.sound=e.target.checked;saveSettings();updateSettings();});$('motion-setting').addEventListener('change',e=>{settings.lowMotion=e.target.checked;saveSettings();updateSettings();});
+$('hitstop-setting').addEventListener('change',e=>{settings.hitstop=e.target.checked;saveSettings();updateSettings();});
 $('touch-setting').addEventListener('change',e=>{settings.touch=e.target.checked;saveSettings();updateSettings();});
 $('update-check').addEventListener('click',triggerUpdateCheck);
 $('fullscreen').addEventListener('click',async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();else $('fullscreen').textContent='当前浏览器暂不支持全屏';}catch{$('fullscreen').textContent='请通过浏览器菜单开启全屏';}});
@@ -323,7 +330,7 @@ window.addEventListener('keydown',e=>{
   const modal=document.querySelector('dialog[open]');
   if(screen==='game'&&!modal&&['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   if(!e.repeat&&(e.code==='KeyP'||e.code==='Escape')&&screen==='game'){
-    if(modal?.id==='upgrade-dialog'){e.preventDefault();toggleDraft(run);if(ensureDraft(run)?.held)clearInput();updateDraftClock();checkpoint();return;}if(modal&&modal.id!=='pause-dialog')return;
+    if(modal?.id==='upgrade-dialog'){e.preventDefault();toggleDraft(run);if(ensureDraft(run)?.held){feedback.cancel();clearInput();}updateDraftClock();checkpoint();return;}if(modal&&modal.id!=='pause-dialog')return;
     e.preventDefault();paused?resumeGame():pauseGame();return;
   }
   if(modal){if(modal.id==='upgrade-dialog'){if(!e.repeat&&['Digit1','Digit2','Digit3'].includes(e.code)){e.preventDefault();$('upgrade-options').children[Number(e.code.at(-1))-1]?.click();return;}if(interactiveDraft()){if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();keys.add(e.code);if(!e.repeat){if(e.code==='Space')doDash();if(e.code==='KeyE')doPulse();if(e.code==='KeyH')doPotion();}}}return;}
@@ -352,19 +359,20 @@ function frame(now){
   }else if(run){
     const playing=run.phase==='playing'&&!document.querySelector('dialog[open]');
     const active=!landscapeGate.blocked&&!paused&&!document.hidden&&(playing||interactiveDraft());
+    let playElapsed=feedback.advance(elapsed,{enabled:active&&settings.hitstop&&!settings.lowMotion});
     if(active){
       let x=joy.x+(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0);
       let y=joy.y+(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0);
       if(Math.hypot(x,y)>.08){destination=null;renderer.destination=null;}
       if(destination){const d=Math.hypot(destination.x-run.player.x,destination.y-run.player.y);if(d>10){x=(destination.x-run.player.x)/d;y=(destination.y-run.player.y)/d;}else{destination=null;renderer.destination=null;}}
-      const previous={x:run.player.x,y:run.player.y};let budget=elapsed;while(budget>1e-6&&!paused&&!landscapeGate.blocked&&!document.hidden&&((run.phase==='playing'&&!document.querySelector('dialog[open]'))||interactiveDraft())){const step=Math.min(.05,budget);processEvents(tick(run,{x,y},step));saveTimer+=step;hudTimer+=step;budget-=step;}
+      const previous={x:run.player.x,y:run.player.y};let budget=playElapsed;while(budget>1e-6&&!paused&&!landscapeGate.blocked&&!document.hidden&&((run.phase==='playing'&&!document.querySelector('dialog[open]'))||interactiveDraft())){const step=Math.min(.05,budget);processEvents(tick(run,{x,y},step));saveTimer+=step;hudTimer+=step;budget-=step;const held=feedback.consume(budget);budget-=held;playElapsed-=held;}
       if(destination){stuckFor=Math.hypot(run.player.x-previous.x,run.player.y-previous.y)<.05?stuckFor+dt:0;if(stuckFor>.65){destination=null;renderer.destination=null;toast('换个落点，绕过前面的屋檐。',2);}}
       if(saveTimer>=8){checkpoint();saveTimer=0;}if(hudTimer>.08){updateHUD();hudTimer=0;}
       if(bannerUntil&&run.totalTime>bannerUntil){$('chapter-banner').hidden=true;bannerUntil=0;}
       if(letterUntil&&run.totalTime>letterUntil){$('letter-toast').hidden=true;letterUntil=0;}
       if(toastUntil&&run.totalTime>toastUntil){$('game-toast').hidden=true;toastUntil=0;}
     }
-    if(run.phase==='upgrade'&&$('upgrade-dialog').open){const auto=stepDraft(run,elapsed,{blocked:landscapeGate.blocked||document.hidden||paused||document.querySelectorAll('dialog[open]').length>1});updateDraftClock();if(auto&&!applyDraftChoice(auto.id,auto.key,true)){const c=ensureDraft(run);if(c){c.fired=false;c.remaining=1;}}saveTimer+=elapsed;if(saveTimer>1){checkpoint();saveTimer=0;}}
+    if(run.phase==='upgrade'&&$('upgrade-dialog').open){const auto=stepDraft(run,playElapsed,{blocked:landscapeGate.blocked||document.hidden||paused||document.querySelectorAll('dialog[open]').length>1});updateDraftClock();if(auto&&!applyDraftChoice(auto.id,auto.key,true)){const c=ensureDraft(run);if(c){c.fired=false;c.remaining=1;}}saveTimer+=playElapsed;if(saveTimer>1){checkpoint();saveTimer=0;}}
     if(!document.hidden)renderer.draw(run,active||run.phase==='upgrade'?dt:0);
     audio.update(active,run.chapter);
   }
@@ -385,7 +393,7 @@ function animateFrame(now){
 const landscapeGate=createLandscapeGate({
  viewport:()=>({width:window.innerWidth,height:window.innerHeight}),
  show:blocked=>{const d=$('orientation-dialog');document.body.dataset.orientation=blocked?'portrait':'landscape';if(blocked&&!d.open)d.showModal();else if(!blocked&&d.open)d.close();},
- suspend:()=>{clearInput();checkpoint();},
+ suspend:()=>{feedback.cancel();clearInput();checkpoint();},
  fullscreen:()=>!document.fullscreenElement&&document.documentElement.requestFullscreen?document.documentElement.requestFullscreen():undefined,
  lock:kind=>window.screen.orientation?.lock?.(kind)
 });
