@@ -22,6 +22,7 @@ export class MotionTracker{
   const phase=(prev.phase+step*(6+9*walk))%(2*Math.PI);
   this.actors.set(key,{x,y,phase,walk,frame:this.frame});
   const stride=Math.abs(Math.sin(phase))*walk;
+  if(walk===0&&!dash&&!windup)return REST_POSE;
   return {bob:-4*stride-(dash?3:0),tilt:clamp(dx/step/1250,-.1,.1),
    scaleX:1+.025*walk+(dash?.055:0)+(windup?.035:0),
    scaleY:1-.018*walk-(dash?.065:0)-(windup?.06:0)};
