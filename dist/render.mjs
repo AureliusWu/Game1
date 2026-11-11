@@ -2,6 +2,7 @@ import {drawArt,drawBrush,drawSprite,skinArt,WEAPON_ART,ENEMY_SPRITES,GROUND_SPR
 import {followupAvailable} from './narrative.mjs';
 import {drawWeapons,drawProjectile,drawBattleEffect,drawEnemyIntent,drawFirePool,WEAPON_COLORS} from './battlefx.mjs';
 import {impactPose} from './feedback.mjs';
+import {MotionTracker} from './motion.mjs';
 import {isTactical,AFFIXES} from './tactics.mjs';
 import { WORLD, CHAPTERS, distance, clamp } from './core.mjs';
 import {isEndless,orbitPositions,rankOf,evolved} from './endless.mjs';
@@ -151,8 +152,9 @@ function drawBuildingFallback(c,o,chapter){
   for(let i=0;i<5;i++){const x=w*(.12+i*.16);circle(c,x,h*.5,4+i%3,'#517560');}
   c.restore();
 }
-function drawEnemy(c,e,t,flash=0,recoil=null,facing=1){
+function drawEnemy(c,e,t,flash=0,recoil=null,facing=1,motion=null){
   c.save();c.translate(e.x,e.y);
+  if(motion){c.translate(0,motion.bob);c.rotate(motion.tilt);c.scale(motion.scaleX,motion.scaleY);}
   if(recoil){const pose=impactPose(recoil.age,recoil.strength*(e.kind==='boss'?.55:1),recoil.pose);c.translate(Math.cos(recoil.angle)*pose.offset,Math.sin(recoil.angle)*pose.offset);c.rotate(recoil.angle);c.scale(pose.x,pose.y);c.rotate(-recoil.angle);}
   if(e.warning>0){circle(c,0,0,e.r*1.6,null,'#ce859a99',1.5);line(c,[[-10,0],[10,0]],'#d89c9c',2);c.globalAlpha=.3;}
   const bob=Math.sin(t*4+e.id)*3;c.translate(0,bob);
@@ -192,10 +194,10 @@ function drawEnemy(c,e,t,flash=0,recoil=null,facing=1){
 }
 function runeBoss(c,r,t){for(let i=0;i<5;i++){const a=-Math.PI+i*Math.PI/4;line(c,[[Math.cos(a)*(r+15),Math.sin(a)*(r+15)],[Math.cos(a)*(r+27),Math.sin(a)*(r+27)]],'#ffbfd8',3);}}
 export class Renderer{
-  constructor(canvas,mini){this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.mini=mini;this.particles=[];this.impacts=[];this.recoils=new Map();this.trails=[];this.deathBursts=[];this.shake=0;this.chapter=-1;this.lowMotion=false;this.camera={x:0,y:0};this.resize();}
+  constructor(canvas,mini){this.canvas=canvas;this.ctx=canvas.getContext('2d',{alpha:false});this.mini=mini;this.particles=[];this.impacts=[];this.recoils=new Map();this.motion=new MotionTracker();this.trails=[];this.deathBursts=[];this.shake=0;this.chapter=-1;this.lowMotion=false;this.camera={x:0,y:0};this.resize();}
   resize(){const r=this.canvas.getBoundingClientRect();this.w=r.width;this.h=r.height;const dpr=Math.min(window.devicePixelRatio||1,1.75);this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);this.dpr=dpr;this.zoom=this.w<650?.77:1;this.ctx.setTransform(dpr,0,0,dpr,0,0);}
   buildMap(s){
-    this.chapter=s.chapter;this.seed=s.seed;this.floor=s.endless?.floor||0;const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
+    this.chapter=s.chapter;this.seed=s.seed;this.floor=s.endless?.floor||0;this.motion.clear();const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
     const fresh=s.endless?.draftSerial!==undefined,variant=fresh?(s.endless.mapIndex??0):(s.v12.layout??0);
     const c=map.getContext('2d'),rand=rng(9281+s.chapter*477+(fresh?variant*1807+(s.endless.floor||0)*31:0));c.fillStyle=fresh?ENDLESS_MAPS[variant]?.tone||'#193c3d':['#193c3d','#1d383f','#303a40'][s.chapter];c.fillRect(0,0,map.width,map.height);
     this.sceneArt=fresh?GROUND_SPRITES[variant]:STORY_GROUNDS[s.chapter];
@@ -285,6 +287,7 @@ export class Renderer{
   draw(s,dt=1/60){
     if(!s||!this.w)return;
     if(this.chapter!==s.chapter||this.seed!==s.seed||this.floor!==(s.endless?.floor||0))this.buildMap(s);
+    this.motion.beginFrame();
     const c=this.ctx,z=this.zoom,p=s.player,t=this.lowMotion?0:s.time;
     const vw=this.w/z,vh=this.h/z;
     this.camera.x=clamp(p.x-vw/2,-35,Math.max(-35,WORLD.width-vw+35));
@@ -318,12 +321,14 @@ export class Renderer{
     const actors=s.obstacles.map(o=>({y:o.y+o.h,draw:()=>drawBuilding(c,o,buildingTheme,p)}));
     for(const poi of s.pois||[])actors.push({y:poi.y,draw:()=>drawPOI(c,poi,t,s)});
     for(const b of s.beacons)actors.push({y:b.y,draw:()=>drawBeacon(c,b,t,s.totalTime)});
-    for(const e of s.enemies)actors.push({y:e.y,draw:()=>drawEnemy(c,e,t,this.lowMotion?0:this.flashes?.get(e.id)||0,this.lowMotion?null:this.recoils.get(e.id),p.x<e.x?-1:1)});
+    for(const e of s.enemies)actors.push({y:e.y,draw:()=>drawEnemy(c,e,t,this.lowMotion?0:this.flashes?.get(e.id)||0,this.lowMotion?null:this.recoils.get(e.id),p.x<e.x?-1:1,this.motion.sample('enemy-'+e.id,e.x,e.y,dt,{windup:e.cast>0,lowMotion:this.lowMotion}))});
     actors.push({y:p.y,draw:()=>{
       glow(c,p.x,p.y-8,105,'#f8ca7a28');
       if(overdriving(s)){circle(c,p.x,p.y,43,null,'#ffd18c',3);if(!this.lowMotion)for(let i=0;i<6;i++){const a=t*5+i*TAU/6;line(c,[[p.x+Math.cos(a)*47,p.y+Math.sin(a)*47],[p.x+Math.cos(a-.2)*57,p.y+Math.sin(a-.2)*57]],'#ffd18caa',2);}}
       if(p.invincible>0&&Math.sin(t*28)>.6)c.globalAlpha=.5;
-      drawCourier(c,p.x,p.y,.92,t,p.facing,this.skin);c.globalAlpha=1;drawWeapons(c,s,t,this.lowMotion);if(this.muzzle>0&&!this.lowMotion){const x=p.x+p.aimX*28,y=p.y+p.aimY*28;circle(c,x,y,6+this.muzzle*80,'#ffe5a655');line(c,[[x-p.aimY*10,y+p.aimX*10],[x+p.aimY*10,y-p.aimX*10]],'#fff5d4',2);}
+      const pose=this.motion.sample('courier',p.x,p.y,dt,{dash:p.dash>0,lowMotion:this.lowMotion});
+      c.save();c.translate(p.x,p.y+pose.bob);c.rotate(pose.tilt);c.scale(pose.scaleX,pose.scaleY);drawCourier(c,0,0,.92,t,p.facing,this.skin);c.restore();
+      c.globalAlpha=1;drawWeapons(c,s,t,this.lowMotion);if(this.muzzle>0&&!this.lowMotion){const x=p.x+p.aimX*28,y=p.y+p.aimY*28;circle(c,x,y,6+this.muzzle*80,'#ffe5a655');line(c,[[x-p.aimY*10,y+p.aimX*10],[x+p.aimY*10,y-p.aimX*10]],'#fff5d4',2);}
       const outfit=GEAR_BY_ID[s.gear?.slots.cape]?.set;
       if(outfit==='warden')circle(c,p.x,p.y+1,33,null,'#a2c8b755',1.5);
       if(outfit==='dawn')for(let i=0;i<3;i++){const a=t*.9+i*TAU/3;circle(c,p.x+Math.cos(a)*32,p.y-4+Math.sin(a)*18,2.1,'#e1c392');}
