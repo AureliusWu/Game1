@@ -6,7 +6,7 @@ import {ART_FILES,SPRITES,ENEMY_SPRITES,GROUND_SPRITES,STORY_GROUNDS,registerArt
 import {WORLD_ART_FILES} from '../dist/world-art.mjs';
 import {BESTIARY,GEAR} from '../dist/content.mjs';
 import {SKILLS,RELICS} from '../dist/endless.mjs';
-import {createGame,serialize} from '../dist/core.mjs';
+import {createGame,serialize,restore} from '../dist/core.mjs';
 import {Renderer,drawTitle,drawResidentPortrait} from '../dist/render.mjs';
 
 test('every shipped monster, boss, gear, passive and relic has a bounded, nonempty atlas crop',()=>{
@@ -76,6 +76,13 @@ test('all seven arenas, story props and five bosses draw shipped art without mut
    assert.equal(serialize(s),before);assert.equal(r.sceneArt,GROUND_SPRITES[map]);assert.equal(r.paintedGround,true);
   }
   const story=createGame({seed:3}),before=serialize(story),r=new Renderer(canvas(),null);r.draw(story,0);assert.equal(serialize(story),before);
+  const legacyFixture=JSON.parse(fs.readFileSync(new URL('./fixtures/v1.1.1-compat.json',import.meta.url)));
+  for(const saved of [legacyFixture.before,legacyFixture.after]){
+   const legacy=restore(JSON.stringify(saved));assert.ok(legacy);assert.equal(legacy.rulesVersion,111);assert.equal(legacy.v12,undefined);
+   const before=serialize(legacy),r=new Renderer(canvas(),null);r.draw(legacy,0);
+   assert.equal(serialize(legacy),before);assert.equal(r.sceneArt,STORY_GROUNDS[legacy.chapter]);
+  }
+
   for(let i=0;i<3;i++)drawResidentPortrait(canvas(144,144),i);
   drawTitle(canvas(680,640),0,true);
   for(const name of ['enemies','bosses','props','decor','residents','grounds-a','grounds-b','title'])assert.ok(calls.some(x=>x.src==='./world-'+name+'.webp'),name);

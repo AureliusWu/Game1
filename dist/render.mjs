@@ -198,7 +198,7 @@ export class Renderer{
   resize(){const r=this.canvas.getBoundingClientRect();this.w=r.width;this.h=r.height;const dpr=Math.min(window.devicePixelRatio||1,1.75);this.canvas.width=Math.round(this.w*dpr);this.canvas.height=Math.round(this.h*dpr);this.dpr=dpr;this.zoom=this.w<650?.77:1;this.ctx.setTransform(dpr,0,0,dpr,0,0);}
   buildMap(s){
     this.chapter=s.chapter;this.seed=s.seed;this.floor=s.endless?.floor||0;this.motion.clear();const map=document.createElement('canvas');map.width=WORLD.width;map.height=WORLD.height;
-    const fresh=s.endless?.draftSerial!==undefined,variant=fresh?(s.endless.mapIndex??0):(s.v12.layout??0);
+    const fresh=s.endless?.draftSerial!==undefined,variant=fresh?(s.endless.mapIndex??0):(s.v12?.layout??0);
     const c=map.getContext('2d'),rand=rng(9281+s.chapter*477+(fresh?variant*1807+(s.endless.floor||0)*31:0));c.fillStyle=fresh?ENDLESS_MAPS[variant]?.tone||'#193c3d':['#193c3d','#1d383f','#303a40'][s.chapter];c.fillRect(0,0,map.width,map.height);
     this.sceneArt=fresh?GROUND_SPRITES[variant]:STORY_GROUNDS[s.chapter];
     // Mirrored quadrants keep material detail near native resolution and join at identical edge pixels.
