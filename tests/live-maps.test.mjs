@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createGame,tick,chooseUpgrade,dash,pulse,serialize,restore} from '../dist/core.mjs';
+import {createGame,tick,chooseUpgrade,dash,pulse,usePotion,serialize,restore} from '../dist/core.mjs';
 import {ENDLESS_MAPS,nextEndlessMap} from '../dist/endless-maps.mjs';
 import {blocked,findPath} from '../dist/routes.mjs';
 import {liveDraft,advanceEndlessChoices,OATHS,oathRank,endlessEnemy} from '../dist/endless.mjs';
@@ -46,4 +46,28 @@ test('charger, sniper, bulwark and five bosses telegraph real attacks',()=>{
   let hits=0;assert.ok(tickEnemy(s,e,.05,()=>hits++,()=>{}),kind);assert.ok(e.cast>0,kind);assert.equal(hits,0);}
  assert.equal(AFFIXES.length,5);
  for(let type=0;type<5;type++){const e={...enemy(700+type,1000),kind:'boss',bossType:type,hp:300,maxHp:500,aiCd:0};s.enemies=[e];prepareEnemy(s,e);e.aiCd=0;assert.ok(tickEnemy(s,e,.05,()=>{},()=>{}));assert.ok(e.cast>0);}
+});
+
+test('healing supplies work during live skill combat without changing the draft',()=>{
+ const s=game();s.endless.pending=1;advanceEndlessChoices(s);
+ s.player.hp=10;s.journal.potions=2;
+ const offered=[...s.offered],key=ensureDraft(s).key,hp=s.player.hp;
+ assert.ok(liveDraft(s));assert.ok(usePotion(s));
+ assert.equal(s.player.hp,Math.min(s.player.maxHp,hp+s.player.potionHeal));
+ assert.equal(s.journal.potions,1);assert.equal(s.metrics.potionsUsed,1);
+ assert.equal(s.phase,'upgrade');assert.deepEqual(s.offered,offered);assert.equal(ensureDraft(s).key,key);
+ assert.equal(usePotion(s),false); // The live draft does not bypass the cooldown.
+ const copy=restore(serialize(s));assert.ok(copy);assert.equal(copy.journal.potions,1);assert.equal(copy.journal.potionCd,1);
+});
+test('live drafts retain full-health and empty-inventory supply guards',()=>{
+ const s=game();s.endless.pending=1;advanceEndlessChoices(s);
+ assert.equal(usePotion(s),false);s.player.hp=10;s.journal.potions=0;assert.equal(usePotion(s),false);
+ assert.equal(s.metrics.potionsUsed,0);
+});
+test('legacy frozen drafts and noncombat decisions still reject healing supplies',()=>{
+ const legacy=game();delete legacy.endless.draftSerial;legacy.endless.pending=1;advanceEndlessChoices(legacy);
+ legacy.player.hp=10;assert.equal(usePotion(legacy),false);assert.equal(legacy.journal.potions,1);
+ const fresh=game();fresh.endless.pending=1;advanceEndlessChoices(fresh);fresh.player.hp=10;
+ for(const kind of ['route','oath','relic']){fresh.endless.choice=kind;assert.equal(usePotion(fresh),false);}
+ for(const phase of ['lost','won']){fresh.phase=phase;fresh.endless.choice='skill';assert.equal(usePotion(fresh),false);}
 });

@@ -2,7 +2,7 @@
 import {GEAR,GEAR_BY_ID,NPCS,EVENTS,CONTRACTS,TALENTS} from './content.mjs';
 import {modern,has,condition,randomStream,heal} from './expedition.mjs';
 import {safePoint} from './routes.mjs';
-import {isEndless,applyEndlessStats,gainEndlessXP} from './endless.mjs';
+import {isEndless,liveDraft,applyEndlessStats,gainEndlessXP} from './endless.mjs';
 import {applyGrowthStats,growthXP} from './growth.mjs';
 import {applyNarrativeStats,followupAvailable} from './narrative.mjs';
 const emit=(s,type,data={})=>s.events.push({type,...data});
@@ -81,7 +81,7 @@ export function salvage(s,id){
   s.gear.inventory=s.gear.inventory.filter(g=>g.id!==id);addCoins(s,6+def.tier*2+(item.level-1)*4);emit(s,'salvage',{id});return true;
 }
 export function usePotion(s){
-  if(s.phase!=='playing'||s.journal.potions<=0||s.journal.potionCd>0||s.player.hp>=s.player.maxHp)return false;
+  if((s.phase!=='playing'&&!liveDraft(s))||s.journal.potions<=0||s.journal.potionCd>0||s.player.hp>=s.player.maxHp)return false;
   s.journal.potions--;s.journal.potionCd=1;s.metrics.potionsUsed++;
   const excess=Math.max(0,s.player.hp+s.player.potionHeal-s.player.maxHp);heal(s,s.player.potionHeal);
   if(modern(s)&&has(s,'seal')&&excess>0){s.v12.shield=Math.min(20,excess);s.v12.shieldUntil=s.totalTime+8;}
