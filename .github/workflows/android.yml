@@ -49,7 +49,7 @@ jobs:
             done
           done
           adb pull /sdcard/Download/ember-art-landscape.png artifacts/android-qa/art-landscape.png
-          for panel in world inventory codex; do
+          for panel in world inventory codex update-combat update-draft; do
             adb pull "/sdcard/Download/ember-$panel-landscape.png" "artifacts/android-qa/$panel-landscape.png"
           done
           python3 scripts/check_draft_screenshots.py artifacts/android-qa

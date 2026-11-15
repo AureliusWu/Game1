@@ -185,12 +185,12 @@ export function updateEndlessCombat(s,dt,{spawn,hurt}){
    else if(r.draftSerial!==undefined&&r.floor>=10&&roll<.10)kind='bulwark';
    else if(r.draftSerial!==undefined&&r.floor>=7&&roll<.22)kind='sniper';
    else if(r.draftSerial!==undefined&&r.floor>=3&&roll<.39)kind='charger';
-   else if(r.floor>=3&&roll<(r.route==='cache'?.48:r.draftSerial!==undefined?.21:.13))kind='caster';
+   else if(r.floor>=3&&roll<(r.route==='cache'?(r.draftSerial!==undefined?.48:.3):r.draftSerial!==undefined?.21:.13))kind='caster';
    else if(r.floor>=4&&roll<.23)kind='warder';
    else if(r.floor>=2&&roll>.83)kind='brute';else if(roll>.52)kind='runner';
    if(!spawn(s,kind))break;r.remaining--;if(kind==='boss'){r.bossMade=true;s.bossSpawned=true;emit(s,'boss');}
   }
-  r.spawnIn=(isCombat(s)?(r.draftSerial!==undefined?Math.max(.72,1.38-r.floor*.045):Math.max(1.0,1.95-r.floor*.035)):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
+  r.spawnIn=(isCombat(s)?(r.draftSerial!==undefined?Math.max(.72,1.38-r.floor*.045):Math.max(1.1,1.95-r.floor*.035)):Math.max(1.15,3.1-r.floor*.07))*(s.difficulty==='wander'?1.25:s.difficulty==='night'?.85:1);
  }
  // Pressure belongs to readable enemy actions, never an idle-position timer.
  // Cancel queued tracking zones from already saved modern runs as well.

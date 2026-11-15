@@ -74,18 +74,30 @@ final class UpdateManager {
                         .setMessage("从官方 GitHub Release 下载、校验签名后覆盖安装。旧存档与设置会保留；Android 仍会要求你确认安装。")
                         .setNegativeButton("稍后", null)
                         .setPositiveButton("下载并更新", (d, which) -> download(release)).show();
-                    if (manual) present.run();
+                    if (manual) presentPaused(present);
                     else {
                         // Do not cover an active fight with a native update prompt.
                         android.webkit.WebView view = activity.findViewById(R.id.game_webview);
                         if (view != null) view.evaluateJavascript(
                             "document.body.dataset.screen==='menu' && !document.querySelector('dialog[open]')",
-                            idle -> { if ("true".equals(idle) && !closed) present.run(); });
+                            idle -> { if ("true".equals(idle) && !closed) presentPaused(present); });
                     }
                 });
             } catch (Exception error) {
                 if (manual && !closed) ui.post(() -> toast("无法连接更新服务，离线游戏不受影响"));
             } finally { busy.set(false); }
+        });
+    }
+    // Native dialogs do not trigger Activity.onPause. Wait for the existing WebView
+    // hook to checkpoint and hold combat/draft time before presenting any updater UI.
+    void presentPaused(Runnable present) {
+        if (closed || activity.isFinishing() || activity.isDestroyed()) return;
+        android.webkit.WebView view = activity.findViewById(R.id.game_webview);
+        if (view == null) return;
+        view.evaluateJavascript("window.emberCourierNative?.pause() ?? false", paused -> {
+            if (closed || activity.isFinishing() || activity.isDestroyed()) return;
+            if ("true".equals(paused)) present.run();
+            else toast("游戏尚未就绪，请稍后再试更新");
         });
     }
     private static boolean newer(String remote, String local) {
@@ -223,24 +235,27 @@ final class UpdateManager {
     }
     private void confirmInstall(File file) {
         if (closed) return;
-        new AlertDialog.Builder(activity).setTitle("校验完成")
+        presentPaused(() -> new AlertDialog.Builder(activity).setTitle("校验完成")
             .setMessage("安装包哈希、官方签名和版本号均已通过验证。现在由 Android 系统覆盖安装，游戏数据不会主动清理。")
             .setNegativeButton("稍后", null)
-            .setPositiveButton("覆盖安装", (d, w) -> install(file)).show();
+            .setPositiveButton("覆盖安装", (d, w) -> install(file)).show());
     }
     private void install(File file) {
         if (Build.VERSION.SDK_INT >= 26 && !activity.getPackageManager().canRequestPackageInstalls()) {
             pendingInstall = file;
-            new AlertDialog.Builder(activity).setTitle("允许从此来源安装")
+            presentPaused(() -> new AlertDialog.Builder(activity).setTitle("允许从此来源安装")
                 .setMessage("Android 需要你在系统设置里允许本应用安装更新。授权后返回游戏继续安装。")
                 .setPositiveButton("打开设置", (d, w) -> activity.startActivity(
                     new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + activity.getPackageName()))))
-                .setNegativeButton("取消", (d, w) -> pendingInstall = null).show();
+                .setNegativeButton("取消", (d, w) -> pendingInstall = null).show());
             return;
         }
         launchInstaller(file);
     }
     private void launchInstaller(File file) {
+        presentPaused(() -> launchPausedInstaller(file));
+    }
+    private void launchPausedInstaller(File file) {
         try {
             Uri content = FileProvider.getUriForFile(activity, activity.getPackageName() + ".updates", file);
             Intent intent = new Intent(Intent.ACTION_VIEW);

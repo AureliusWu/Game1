@@ -47,7 +47,7 @@ public final class OfflineGameTest {
         event.recycle();
     }
     private void capture(String name) throws Exception {
-        assertTrue("Unexpected screenshot name", name.matches("(draft|star|art|world|inventory|codex)-landscape(-reverse)?\\.png"));
+        assertTrue("Unexpected screenshot name", name.matches("(draft|star|art|world|inventory|codex|update-combat|update-draft)-landscape(-reverse)?\\.png"));
         CountDownLatch rendered = new CountDownLatch(1);
         getInstrumentation().runOnMainSync(() -> {
             WebView web = activity.findViewById(R.id.game_webview);
@@ -71,6 +71,73 @@ public final class OfflineGameTest {
             while (in.read(buffer) != -1) { /* Wait for the real screen capture to finish. */ }
         }
     }
+    private android.app.AlertDialog showUpdateProbe(UpdateManager manager) throws Exception {
+        CountDownLatch shown = new CountDownLatch(1);
+        AtomicReference<android.app.AlertDialog> dialog = new AtomicReference<>();
+        getInstrumentation().runOnMainSync(() -> manager.presentPaused(() -> {
+            dialog.set(new android.app.AlertDialog.Builder(activity).setTitle("更新暂停验收")
+                .setMessage("旅途已保存，返回后由你继续。").setNegativeButton("稍后", null).show());
+            shown.countDown();
+        }));
+        assertTrue("Updater must wait for the game pause acknowledgement", shown.await(15, TimeUnit.SECONDS));
+        return dialog.get();
+    }
+
+    @Test public void testUpdatePromptsCheckpointAndHoldRealCombatAndDraft() throws Exception {
+        Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        activity = (MainActivity) getInstrumentation().startActivitySync(intent);
+        UpdateManager manager = new UpdateManager(activity);
+        android.app.AlertDialog prompt = null;
+        try {
+            await("typeof window.emberCourierNative === 'object'");
+            // Observe the real renderer without changing health, XP, enemies or clock.
+            js("(async()=>{const {Renderer}=await import(new URL('./render.mjs',location.href).href);const draw=Renderer.prototype.draw;Renderer.prototype.draw=function(s,...args){window.__updateClock=s.totalTime;return draw.call(this,s,...args);};window.__updateProbeReady=true;})()");
+            await("window.__updateProbeReady===true");
+            js("document.querySelector('[data-mode=endless]').click();document.querySelector('[data-starter=thunder]').click();document.querySelector('[data-difficulty=normal]').click();document.getElementById('start').click()");
+            await("window.__updateClock>.2 && !document.getElementById('upgrade-dialog').open");
+            prompt = showUpdateProbe(manager);
+            assertEquals("true", js("document.getElementById('pause-dialog').open"));
+            await("window.__updateClock===JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime");
+            String combatTime = js("window.__updateClock");
+            String journey = js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId");
+            Thread.sleep(1300);
+            assertEquals("Combat must stop behind a native update dialog", combatTime, js("window.__updateClock"));
+            capture("update-combat-landscape.png");
+            android.app.AlertDialog combatPrompt = prompt;
+            getInstrumentation().runOnMainSync(combatPrompt::dismiss);
+            prompt = null;
+            assertEquals("Cancelling an update must leave the game paused", "true", js("document.getElementById('pause-dialog').open"));
+            js("document.getElementById('resume').click()");
+            // Earn a live draft through real kills and pickups.
+            await("document.getElementById('upgrade-dialog').open", 600);
+            prompt = showUpdateProbe(manager);
+            await("JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection?.held===true");
+            await("window.__updateClock===JSON.parse(localStorage.getItem('ember-courier.save.v1')).totalTime");
+            String selection = js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection)");
+            String clock = js("document.getElementById('draft-countdown').textContent");
+            String draftTime = js("window.__updateClock");
+            Thread.sleep(1300);
+            assertEquals("Live draft simulation must stop", draftTime, js("window.__updateClock"));
+            assertEquals(clock, js("document.getElementById('draft-countdown').textContent"));
+            assertEquals(selection, js("JSON.stringify(JSON.parse(localStorage.getItem('ember-courier.save.v1')).selection)"));
+            assertEquals(journey, js("JSON.parse(localStorage.getItem('ember-courier.save.v1')).journeyId"));
+            capture("update-draft-landscape.png");
+            android.app.AlertDialog draftPrompt = prompt;
+            getInstrumentation().runOnMainSync(draftPrompt::dismiss);
+            prompt = null;
+            assertEquals("true", js("document.getElementById('draft-hold').getAttribute('aria-pressed')==='true'"));
+        } finally {
+            android.app.AlertDialog remainingPrompt = prompt;
+            getInstrumentation().runOnMainSync(() -> {
+                if (remainingPrompt != null) remainingPrompt.dismiss();
+                manager.shutdown();
+                activity.finish();
+            });
+            getInstrumentation().waitForIdleSync();
+        }
+    }
+
     @Test public void testStarChartPurchaseRefundAndRotation() throws Exception {
         Intent intent = new Intent(getInstrumentation().getTargetContext(), MainActivity.class);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
